@@ -1,0 +1,657 @@
+*{
+    font-family: sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing: border-box;
+}
+body{
+    width:100%;
+    height:fit-content;
+    padding:2rem 3rem;
+    
+}
+.form_container_class{
+
+
+    width:100%;
+    height: fit-content;
+    margin-top:1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-bottom:2rem;
+    padding:2rem 1rem;
+    border-radius:20px;
+    box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
+ 
+}
+.inner_row{
+  width:100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  gap:2rem;
+  
+
+  
+}
+.form-contianer-0-1{
+  width:100%;
+ /* text-transform: capitalize; */
+    color: rgb(2, 156, 222);
+    letter-spacing:1px;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    row-gap:0.5rem;
+   font-size:1.2rem;
+    align-items: flex-start;
+  grid-area: inputfield0;
+  flex-direction: column;
+}
+
+.form-contianer-22,
+.form-contianer-21,
+.form-contianer-20,
+.form-contianer-19,
+.form-contianer-18{
+  width:100%;
+  /* text-transform: capitalize; */
+     color: rgb(2, 156, 222);
+     letter-spacing:1px;
+     display: flex;
+     justify-content: space-evenly;
+     border-radius:1rem;
+     padding:1rem;
+     row-gap:0.5rem;
+    font-size:1.2rem;
+     align-items: flex-start;
+   grid-area: inputfield1;
+   flex-direction: column;
+}
+.form-contianer-14,
+.form-contianer-15,
+.form-contianer-13,
+.form-contianer-9,
+.form-contianer-8,
+.form-contianer-4,
+.form-contianer-5,
+.form-contianer-2,
+.form-contianer-1{
+  width:100%;
+ /* text-transform: capitalize; */
+    color: rgb(2, 156, 222);
+    letter-spacing:1px;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    row-gap:0.5rem;
+   font-size:1.2rem;
+    align-items: flex-start;
+  grid-area: inputfield1;
+  flex-direction: column;
+  }
+  .form-contianer_form_input-container_inner-container_input-container_class{
+    padding-top:1rem ;
+    width:100%;
+    column-gap:1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+  }
+  .form-contianer_form_input-container_inner-container_input-container_class input{
+    width:60%;
+    height:3.5rem;
+    padding:1rem;
+    font-size:1.2rem;
+    border:none;
+    outline: none;
+    border-radius:5px;
+    border-bottom:3px solid rgba(2, 156, 222, 0.2);
+   
+    transition-duration: .3s;
+   
+  }
+  .form-contianer_form_input-container_inner-container_input-container_class input[type=text]:focus{
+   
+    border-bottom:3px solid rgb(2, 156, 222);
+  }
+  .form-contianer_form_input-container_inner-container_input-container_class input::placeholder{
+    color: rgba(38, 38, 38, 0.201);
+  }
+  .form-contianer_form_input-container_inner-container_input-container_class input:focus::placeholder{
+    color: transparent;
+   }
+   .form-contianer-22 input,
+   .form-contianer-21 input,
+   .form-contianer-20 input,
+   .form-contianer-19 input,
+   .form-contianer-18 input{
+        width:100%;
+    height:3.5rem;
+    padding:1rem;
+    font-size:1.2rem;
+    border:none;
+    outline: none;
+    border-radius:5px;
+    border-bottom:3px solid rgba(2, 156, 222, 0.2);
+   
+    transition-duration: .3s;
+    background-color: rgba(32, 32, 32, 0.1);
+   }
+   .form-contianer-0-1 input,
+   .form-contianer-14 textarea,
+   .form-contianer-15 input,
+   .form-contianer-13 input,
+   .form-contianer-8 input,
+  .form-contianer-4 input,
+  .form-contianer-5 input,
+  .form-contianer-2 input,
+  .form-contianer-1 input{
+    width:100%;
+    height:3.5rem;
+    padding:1rem;
+    font-size:1.2rem;
+    border:none;
+    outline: none;
+    border-radius:5px;
+    border-bottom:3px solid rgba(2, 156, 222, 0.2);
+   
+    transition-duration: .3s;
+    background-color: rgba(32, 32, 32, 0.1);
+  }
+  .form-contianer-9 input{
+    width:100%;
+    height:3.5rem;
+    padding:1rem;
+    font-size:1.2rem;
+    border:none;
+    outline: none;
+    border-radius:5px;
+    border-bottom:3px solid rgba(2, 156, 222, 0.2);
+   
+    transition-duration: .3s;
+    background-color: rgba(32, 32, 32, 0.1);
+
+  }
+  .form-contianer-22 input[type=tel]:focus,
+  .form-contianer-21 input[type=tel]:focus,
+  .form-contianer-20 input[type=text]:focus,
+  .form-contianer-19 input[type=text]:focus,
+  .form-contianer-18 input[type=text]:focus,
+  .form-contianer-0-1 input[type=tel]:focus,
+  .form-contianer-15 textarea:focus,
+  .form-contianer-15 input[type=tel]:focus,
+  .form-contianer-13 input[type=text]:focus,
+  .form-contianer-8 input[type=text]:focus,
+  .form-contianer-5 input[type=text]:focus,
+  .form-contianer-4 input[type=text]:focus,
+  .form-contianer-9 input[name="student_nameofthepresentclass"]:focus,
+  .form-contianer-2 input[name="student_name_of_the_game"]:focus,
+  .form-contianer-1 input[type=tel]:focus{
+    background-color: rgba(32, 32, 32, 0.1);
+    border-bottom:3px solid rgb(2, 156, 222);
+   
+  }
+  .form-contianer-22 input::placeholder,
+  .form-contianer-21 input::placeholder,
+  .form-contianer-20 input::placeholder,
+  .form-contianer-19 input::placeholder,
+  .form-contianer-18 input::placeholder,
+  .form-contianer-15 input::placeholder,
+  .form-contianer-13 input::placeholder,
+  .form-contianer-8 input::placeholder,
+  .form-contianer-4 input::placeholder,
+  .form-contianer-5 input::placeholder,
+  .form-contianer-2 input::placeholder,
+  .form-contianer-9 input::placeholder,
+  .form-contianer-1 input::placeholder,
+  .form-contianer-0-1 input::placeholder
+  {
+    color: rgba(38, 38, 38, 0.201);
+  }
+  .form-contianer-22 input:focus::placeholder,
+  .form-contianer-21 input:focus::placeholder,
+  .form-contianer-20 input:focus::placeholder,
+  .form-contianer-19 input:focus::placeholder,
+  .form-contianer-18 input:focus::placeholder,
+  .form-contianer-15 input:focus::placeholder,
+  .form-contianer-13 input:focus::placeholder,
+  .form-contianer-8 input:focus::placeholder,
+  .form-contianer-5 input:focus::placeholder,
+  .form-contianer-4 input:focus::placeholder,
+  .form-contianer-9 input:focus::placeholder,
+  .form-contianer-2 input:focus::placeholder,
+  .form-contianer-1 input:focus::placeholder,
+  .form-contianer-0-1 input:focus::placeholder{
+   color: transparent;
+  }
+  .form-contianer-2{
+  
+    grid-area: inputfield2;
+  }
+  .form-contianer-3{
+    width:100%;
+    height:4rem;
+    flex-direction: row;
+    color: rgb(2, 156, 222);
+   column-gap:4rem;
+    display: flex;
+    border-radius:1rem;
+
+    padding:1.5rem;
+    align-items: center;
+    grid-area: inputfield3;
+    background-color: rgba(32, 32, 32, 0.1);
+  }
+  .form-contianer-3 b{
+ color: whitesmoke;
+ background-color:rgb(2, 156, 222);
+ border-radius:5px;
+ font-size:0.9rem;
+ letter-spacing:1px;
+ padding:0.6rem;
+  }
+  .inner_gender{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    column-gap:0.6rem;
+  }
+  .form-contianer-4{
+    /* width:100%;
+    background-color: brown;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    align-items: center; */
+    grid-area: inputfield4;
+  }
+  .form-contianer-5{
+    /* width:100%;
+    background-color: brown;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    align-items: center; */
+    grid-area: inputfield5;
+  }
+  .form-contianer-9{
+    width:100%;
+    height:4rem;
+    flex-direction:column;
+    color: rgb(2, 156, 222);
+   column-gap:0rem;
+    display: flex;
+    border-radius:1rem;
+    padding:1rem;
+    align-items: flex-start;
+
+    grid-area: inputfield6;
+    margin-bottom:2rem;
+  }
+  .form-contianer-10,
+
+  .form-contianer-6{
+    width:100%;
+    height:4rem;
+    flex-direction: row;
+    color: rgb(2, 156, 222);
+   column-gap:2rem;
+    display: flex;
+    border-radius:1rem;
+    padding:1.5rem;
+    align-items: center;
+  
+    background-color: rgba(32, 32, 32, 0.1);
+    grid-area: inputfield6;
+  }
+  .form-contianer-10 label,
+  .form-contianer-9 label{ 
+
+    color: rgb(2, 156, 222);
+   
+    border-radius:5px;
+    font-size:1rem;
+    letter-spacing:0.5px;
+    padding:0.4rem;
+    padding-left:0;
+  }
+  .form-contianer-12 select{
+    width:50%;
+    border-radius: 5px;
+      padding: 0.5rem;
+      padding-left: 0.8rem;
+      padding-right:0.8rem;
+   border:2px solid rgb(2, 156, 222);
+   outline: none;
+  }
+  .form-contianer-10 select{
+    width:40%;
+    border-radius: 5px;
+      padding: 0.5rem;
+      padding-left: 0.8rem;
+      padding-right:0.8rem;
+   border:2px solid rgb(2, 156, 222);
+   outline: none;
+  }
+  .form-contianer-9 select{
+    width:60%;
+  border-radius: 5px;
+    padding: 0.5rem;
+    padding-left: 0.8rem;
+    padding-right:0.8rem;
+ border:2px solid rgb(2, 156, 222);
+ outline: none;
+  }
+  .form-contianer-10 select optgroup,
+  .form-contianer-9 select optgroup{
+    background: transparent;
+ border:0;
+ outline: none;
+  }
+  .form-contianer-10 select optgroup option,
+  .form-contianer-9 select optgroup option{
+    background: transparent;
+ border:0;
+ outline: none;
+  }
+  .form-contianer-6 input[type="date"]{
+    padding:0.6rem;
+    width:60%;
+  border: none;
+  outline: none;
+  border-radius:5px;
+
+  }
+  .form-contianer-6 label{
+    font-weight: bold;
+    color: whitesmoke;
+    background-color:rgb(2, 156, 222);
+    border-radius:5px;
+    font-size:0.9rem;
+    letter-spacing:0.5px;
+    padding:0.4rem 0.4rem;
+  }
+  .form-contianer-12,
+  .form-contianer-11,
+  .form-contianer-7{
+    width:100%;
+    
+    background-color: rgba(32, 32, 32, 0.1);
+    color: rgb(2, 156, 222);
+    
+    display: flex;
+    justify-content: space-around;
+    border-radius:1rem;
+    padding:1.5rem;
+    gap:1rem;
+    align-items: center;
+    
+    width:100%;
+    grid-area: inputfield7;
+    display: flex;
+    flex-direction: column;
+  }
+  .form-contianer-12 p,
+  .form-contianer-11 p,
+  .form-contianer-7 p{
+ width:100%;
+ text-align: center;
+    font-weight: bold;
+    color: whitesmoke;
+    background-color:rgb(2, 156, 222);
+    border-radius:5px;
+    font-size:1.1rem;
+    letter-spacing:0.5px;
+    padding:0.8rem;
+  }
+  .form-contianer-8{
+  
+    grid-area: inputfield8;
+  }
+  .form-contianer-9{
+    /* width:100%;
+    background-color: brown;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    align-items: center; */
+    grid-area: inputfield9;
+  }
+  .form-contianer-18{
+   
+    grid-area: inputfield18;
+  
+  }
+  .form-contianer-19{
+   
+    grid-area: inputfield19;
+  
+  }
+  .form-contianer-20{
+   
+    grid-area: inputfield20;
+  
+  }
+  .form-contianer-21{
+   
+    grid-area: inputfield21;
+  
+  }
+  .form-contianer-22{
+   
+    grid-area: inputfield22;
+  
+  }
+  .form-contianer-10{
+   
+    grid-area: inputfield10;
+  }
+  .form-contianer-11{
+   
+    grid-area: inputfield11;
+  
+  }
+  .form-contianer-12{
+
+    grid-area: inputfield12;
+    
+  }
+  .form-contianer-13{
+
+    grid-area: inputfield13;
+  }
+  .form-contianer-14{
+  
+    grid-area: inputfield14;
+  }
+  .form-contianer-14 textarea {
+    resize: none;
+   
+ }
+  .form-contianer-15{
+   
+    grid-area: inputfield15;
+  }
+  .form-contianer-16{
+    width:100%;
+    background-color:rgba(32, 32, 32, 0.1);
+    color: rgb(2, 156, 222);
+   
+    font-weight: bold;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    align-items: center;
+    grid-area: inputfield16;
+  }
+  .form-contianer-17{
+    width:100%;
+    background-color: brown;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+
+    align-items: center;
+    grid-area: inputfield17;
+  }
+  /* .form-contianer-18{
+    width:100%;
+   text-decoration: none;
+    color:  #0693cd;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-evenly;
+    border-radius:1rem;
+    padding:1rem;
+    align-items: center;
+    grid-area: inputfield18;
+    border:2px solid #0693cd;
+    transition-duration:0.5s;
+  }
+  .form-contianer-18:hover{
+    background-color:rgba(32, 32, 32, 0.1) ;
+  } */
+.form-contianer_form_class{
+    grid-template-areas:
+     'inputfield2 inputfield1'
+    'inputfield4 inputfield3'
+    'inputfield5 inputfield18'
+    'inputfield19 inputfield6'
+    'inputfield7 inputfield7'
+    'inputfield8 inputfield10'
+    'inputfield9 inputfield9'
+    'inputfield11 inputfield11'
+    'inputfield12 inputfield12'
+    'inputfield20 inputfield0'
+    'inputfield21 inputfield22'
+    'inputfield13 inputfield14'
+    'inputfield15 inputfield16'
+    'inputfield17 inputfield17';
+    gap:1.5rem;
+    width: 80%;
+    place-items:center;
+    height:fit-content;
+    display: grid;
+
+}
+.form-contianer-17 input{
+  width:100%;
+  height:4rem;
+  cursor: pointer;
+
+}
+.form-contianer-17 input[type=submit] {
+  background-color: #0693cd;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #fff;
+  font-size:16px;
+  font-weight: bold;
+  line-height: 1.4;
+  padding: 1rem;
+  width: 100%;
+  transition-duration:0.5s;
+}
+.form-contianer-17 input[type=submit]:hover{
+background-color: rgb(5, 76, 138);
+}
+.upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.btn {
+  border: 2px solid rgb(2, 156, 222);
+  color: rgb(2, 156, 222);
+  background-color: white;
+  padding: 14px 0px;
+  width:100%;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition-duration:0.3s;
+}
+
+.upload-btn-wrapper input[type=file] {
+  width:100%;
+  font-size: 5rem;
+  position: absolute;
+  cursor: pointer;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+.upload-btn-wrapper:hover .btn{
+  background-color: rgb(2, 156, 222);
+  color:whitesmoke;
+}
+.btn2{
+  border: 2px solid rgb(2, 156, 222);
+  color: whitesmoke;
+  background-color: rgb(2, 156, 222);
+  padding: 14px 0px;
+  width:80%;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition-duration:0.3s;
+  
+}
+.card-header{
+  display: flex;
+  justify-content:space-between;
+  align-items: center;
+  border-bottom:none;
+  border-radius:15px;
+  padding:0.5rem 2rem;
+}
+.card-header:first-child{
+  border-radius:15px;
+}
+.card-header .hero{
+  margin-bottom:none;
+  font-size:1.6rem;
+  padding:1rem 0rem;
+}
+h4{
+  margin-bottom:0;
+}
+.cc{
+  background-color: rgb(204, 26, 26);
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+    transition-duration:0.3s;
+    text-decoration: none;
+    color: #fff;
+}
+.cc:hover{
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
+  color: rgba(255, 255, 255, 0.7);
+}

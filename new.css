@@ -1,0 +1,28 @@
+
+*{
+    padding:0;
+    box-sizing: border-box;
+
+   
+}
+body{
+    width:100%;
+    height:100vh;
+
+}
+.phy_Logo{
+width:300px;
+height:fit-content;
+}
+#sup{
+    display: flex;
+    justify-content:center;
+    flex-direction: column;
+    align-items: center;
+}
+.container{
+
+    width:100%;
+    height:100%;
+
+}

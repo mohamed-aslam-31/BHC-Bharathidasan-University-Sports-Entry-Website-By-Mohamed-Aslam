@@ -1,0 +1,94 @@
+
+  body{
+    width:100%;
+    background-color: rgb(255, 255, 255);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  .aslam{
+  position: relative;
+    width:100%;
+    padding:1rem;
+
+   
+  }
+.field-1{
+    grid-area:inputfield1;
+}
+.field-2{
+    grid-area:inputfield2;
+}
+.field-3{
+    grid-area:inputfield3;
+}
+.field-4{
+    grid-area:inputfield4;
+}
+.field-5{
+    grid-area:inputfield5;
+}
+.field-6{
+    grid-area:inputfield6;
+}
+.field-7{
+    grid-area:inputfield7;
+}
+  .grid-aslam{
+    display: grid;
+    grid-template-areas: 'inputfield1 inputfield1 inputfield1'
+     'inputfield2 inputfield3 inputfield4'
+    'inputfield5 inputfield6 inputfield7'
+    
+    ;
+    gap:1.5rem;
+    width: 100%;
+   
+    height:fit-content;
+    
+
+}
+.table_details{
+    width:100%;
+display: flex;
+justify-content:center;
+flex-direction: column;
+align-items: center;
+row-gap:0.5rem;
+padding:0.5rem 0.6rem;
+border:2px solid black;
+margin-bottom:0.5rem;
+border-radius:3px;
+}
+.kkk:nth-child(1){
+    border-bottom:2px solid black;
+    padding:0.3rem 0;
+}
+.kkk{
+  
+    width:100%;
+display: flex;
+justify-content: space-between;
+flex-direction: row;
+align-items: center;
+}
+@media print {
+    .grid-aslam,.noPrint{
+      display:none;
+    }
+    .card-header{
+        display: none;
+    }
+  }
+  
+@page{ 
+
+    margin: 0pt 0pt 0pt 0pt;
+   
+
+}
+tr td{
+    text-transform: uppercase;
+    font-size:14px;
+}
