@@ -663,7 +663,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('fatherName', form.fatherName)}
             />
-            <FieldMeta value={form.fatherName} max={40} error={errors.fatherName} />
+            <FieldMeta value={form.fatherName} max={40} always error={errors.fatherName} />
           </Field>
 
           {/* Mother's Name */}
@@ -680,7 +680,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('motherName', form.motherName)}
             />
-            <FieldMeta value={form.motherName} max={40} error={errors.motherName} />
+            <FieldMeta value={form.motherName} max={40} always error={errors.motherName} />
           </Field>
 
           {/* Aadhar Number */}
@@ -698,7 +698,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('aadharNumber', form.aadharNumber)}
             />
-            <FieldMeta value={form.aadharNumber} max={12} error={errors.aadharNumber} />
+            <FieldMeta value={form.aadharNumber} max={12} always error={errors.aadharNumber} />
           </Field>
 
           {/* Phone Number */}
@@ -716,7 +716,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('phoneNumber', form.phoneNumber)}
             />
-            <FieldMeta value={form.phoneNumber} max={10} error={errors.phoneNumber} />
+            <FieldMeta value={form.phoneNumber} max={10} always error={errors.phoneNumber} />
           </Field>
 
           {/* Address */}
@@ -734,7 +734,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('address', form.address)}
             />
-            <FieldMeta value={form.address} max={80} error={errors.address} />
+            <FieldMeta value={form.address} max={80} always error={errors.address} />
           </Field>
 
         </Section>
