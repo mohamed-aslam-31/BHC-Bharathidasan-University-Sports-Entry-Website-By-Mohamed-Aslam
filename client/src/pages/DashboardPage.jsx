@@ -411,19 +411,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Row 2: multi-selects */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Row 2: multi-selects + sort */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <MultiSelect label="Sport / Game"   options={gameOptions}   value={games}    onChange={setGames}   placeholder="All Games"       />
           <MultiSelect label="Gender"         options={genderOptions} value={genders}  onChange={setGenders} placeholder="All Genders"     />
           <MultiSelect label="Department"     options={deptOptions}   value={departments} onChange={setDepts} placeholder="All Departments" />
           <MultiSelect label="Academic Year"  options={yearOptions}   value={years}    onChange={setYears}   placeholder="All Years"       />
-        </div>
-      </div>
-
-      {/* ── Table toolbar: sort + rows per page ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Sort */}
-        <div className="w-56">
           <MultiSelect
             label="Sort by"
             options={['New to Old', 'Old to New', 'A to Z', 'Z to A']}
@@ -431,14 +424,8 @@ export default function DashboardPage() {
             onChange={labels => {
               const toKey = l => ({ 'New to Old': 'new-to-old', 'Old to New': 'old-to-new', 'A to Z': 'a-to-z', 'Z to A': 'z-to-a' }[l] || l);
               const prev = sortBy.map(v => ({ 'new-to-old': 'New to Old', 'old-to-new': 'Old to New', 'a-to-z': 'A to Z', 'z-to-a': 'Z to A' }[v] || v));
-              // find newly added option
               const added = labels.find(l => !prev.includes(l));
-              if (!added) {
-                // removal — just apply
-                setSortBy(labels.map(toKey));
-                return;
-              }
-              // enforce mutual exclusivity within each group
+              if (!added) { setSortBy(labels.map(toKey)); return; }
               const dateGroup = new Set(['New to Old', 'Old to New']);
               const nameGroup = new Set(['A to Z', 'Z to A']);
               let next = labels.filter(l => {
@@ -446,7 +433,6 @@ export default function DashboardPage() {
                 if (nameGroup.has(added) && nameGroup.has(l) && l !== added) return false;
                 return true;
               });
-              // enforce max 2
               if (next.length > 2) next = next.slice(-2);
               setSortBy(next.map(toKey));
             }}
@@ -454,7 +440,10 @@ export default function DashboardPage() {
             noSearch
           />
         </div>
+      </div>
 
+      {/* ── Table toolbar: rows per page ── */}
+      <div className="flex justify-end">
         {/* Rows per page */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-sm text-gray-500 dark:text-gray-400">Show:</span>
