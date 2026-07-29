@@ -283,12 +283,12 @@ export default function DashboardPage() {
   const filteredStats = useMemo(() => {
     const all = [...pinnedRows, ...filteredRows];
     return {
-      total:   all.length,
-      sports:  [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].length,
-      depts:   [...new Set(all.map(s => s.nameOfThePresentClass).filter(Boolean))].length,
-      years:   [...new Set(all.map(s => s.year).filter(Boolean))].length,
-      male:    all.filter(s => s.gender === 'MALE').length,
-      female:  all.filter(s => s.gender === 'FEMALE').length,
+      total:      all.length,
+      sportsList: [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].sort(),
+      deptList:   [...new Set(all.map(s => s.nameOfThePresentClass).filter(Boolean))].sort(),
+      yearList:   [...new Set(all.map(s => s.year).filter(Boolean))].sort(),
+      male:       all.filter(s => s.gender === 'MALE').length,
+      female:     all.filter(s => s.gender === 'FEMALE').length,
     };
   }, [pinnedRows, filteredRows]);
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
@@ -457,35 +457,70 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Live filter summary ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { icon: Users,         label: 'Students',    value: filteredStats.total,  color: 'blue'   },
-          { icon: Trophy,        label: 'Sports',      value: filteredStats.sports, color: 'purple' },
-          { icon: GraduationCap, label: 'Departments', value: filteredStats.depts,  color: 'indigo' },
-          { icon: CalendarDays,  label: 'Years',       value: filteredStats.years,  color: 'yellow' },
-          { icon: User2,          label: 'Male',        value: filteredStats.male,   color: 'cyan'   },
-          { icon: PersonStanding, label: 'Female',     value: filteredStats.female, color: 'pink'   },
-        ].map(({ icon: Icon, label, value, color }) => {
-          const colors = {
-            blue:   'bg-blue-50   dark:bg-blue-900/20   text-blue-600   dark:text-blue-400',
-            purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-            indigo: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400',
-            yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
-            cyan:   'bg-cyan-50   dark:bg-cyan-900/20   text-cyan-600   dark:text-cyan-400',
-            pink:   'bg-pink-50   dark:bg-pink-900/20   text-pink-600   dark:text-pink-400',
-          };
-          return (
-            <div key={label} className="card px-4 py-3 flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${colors[color]}`}>
-                <Icon className="w-4 h-4" />
+      <div className="space-y-3">
+        {/* Row 1: count cards */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { icon: Users,         label: 'Students', value: filteredStats.total,  color: 'blue' },
+            { icon: User2,         label: 'Male',     value: filteredStats.male,   color: 'cyan' },
+            { icon: PersonStanding,label: 'Female',   value: filteredStats.female, color: 'pink' },
+          ].map(({ icon: Icon, label, value, color }) => {
+            const colors = {
+              blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+              cyan: 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400',
+              pink: 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400',
+            };
+            return (
+              <div key={label} className="card px-4 py-3 flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${colors[color]}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{value}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{value}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{label}</p>
+            );
+          })}
+        </div>
+
+        {/* Row 2: list cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { icon: Trophy,        label: 'Sports',        list: filteredStats.sportsList, color: 'purple' },
+            { icon: GraduationCap, label: 'Departments',   list: filteredStats.deptList,   color: 'indigo' },
+            { icon: CalendarDays,  label: 'Academic Year', list: filteredStats.yearList,   color: 'yellow' },
+          ].map(({ icon: Icon, label, list, color }) => {
+            const colors = {
+              purple: { bg: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400', dot: 'bg-purple-400 dark:bg-purple-500' },
+              indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-400 dark:bg-indigo-500' },
+              yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400', dot: 'bg-yellow-400 dark:bg-yellow-500' },
+            };
+            return (
+              <div key={label} className="card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colors[color].bg}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{label}</span>
+                  <span className="ml-auto text-xs font-medium text-gray-400 dark:text-gray-500">{list.length}</span>
+                </div>
+                {list.length === 0 ? (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 italic">None</p>
+                ) : (
+                  <ul className="max-h-32 overflow-y-auto space-y-1 pr-1">
+                    {list.map(item => (
+                      <li key={item} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors[color].dot}`} />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Table ── */}
