@@ -242,10 +242,11 @@ export default function StudentViewPage() {
 
       {/* Print CSS */}
       <style>{`
+        @page { margin: 10mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
           body { margin: 0; background: #fff; }
-          #element-to-print { padding: 16px !important; max-width: 100% !important; }
+          #element-to-print { padding: 0 !important; max-width: 100% !important; }
         }
       `}</style>
     </div>
