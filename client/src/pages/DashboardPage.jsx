@@ -551,7 +551,7 @@ export default function DashboardPage() {
                       const v = parseInt(e.target.value, 10);
                       if (v > 0) setRowsPerPage(v);
                     }}
-                    className="w-16 text-sm text-center px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-20 text-sm text-center px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
