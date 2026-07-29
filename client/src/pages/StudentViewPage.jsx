@@ -67,8 +67,8 @@ export default function StudentViewPage() {
         {/* ── HEADER ── */}
         <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '6px' }}>
           {/* Logo */}
-          <div style={{ width: '80px', flexShrink: 0 }}>
-            <img src="/university-logo.gif" alt="BU Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
+          <div style={{ width: '110px', flexShrink: 0 }}>
+            <img src="/university-logo.gif" alt="BU Logo" style={{ width: '105px', height: '105px', objectFit: 'contain' }} />
           </div>
 
           {/* Center title block */}
@@ -79,24 +79,19 @@ export default function StudentViewPage() {
             <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
           </div>
 
-          {/* Photo + note box */}
-          <div style={{ width: '110px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-            {/* Note box */}
-            <div style={{ border: '1px solid #000', padding: '4px 5px', fontSize: '9px', lineHeight: 1.3, textAlign: 'center', width: '100px', fontFamily: 'Arial, sans-serif' }}>
-              Candidate's Signature should be on top of the <strong>PHOTO</strong> with Attestation by the Principal/HOD
-            </div>
-            {/* Photo */}
-            <div style={{ border: '1px solid #000', width: '80px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', marginTop: '4px' }}>
+          {/* Photo box */}
+          <div style={{ width: '110px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <div style={{ border: '1px solid #000', width: '90px', height: '105px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {student.image
                 ? <img src={`/uploads/${student.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ fontSize: '10px', color: '#666', textAlign: 'center' }}>Photo</span>
+                : <span style={{ fontSize: '10px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>Photo</span>
               }
             </div>
           </div>
         </div>
 
         {/* ── College / Game line ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '2px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '2px', fontFamily: 'Arial, sans-serif' }}>
           <div>Name of the College: <strong>Bishop Heber College, Trichy</strong></div>
           <div>Name of the Game: <strong>{student.nameOfTheGame}{student.gender ? ' - ' + student.gender : ''}</strong></div>
         </div>
@@ -217,18 +212,18 @@ export default function StudentViewPage() {
         </table>
 
         {/* ── Footer notes ── */}
-        <div style={{ marginTop: '10px', fontSize: '11px' }}>
+        <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
           <div>Strike out whichever is not applicable</div>
           <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
         </div>
 
         {/* Signature of student */}
-        <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px' }}>
+        <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
           Signature of the student
         </div>
 
         {/* ── Bottom signatures ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', fontSize: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
           <div style={{ textAlign: 'left' }}>
             Signature of the<br />Director of Physical Education
           </div>
@@ -239,7 +234,7 @@ export default function StudentViewPage() {
 
         {/* ── Eligibility verified box ── */}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
-          <div style={{ border: '1px solid #000', padding: '10px 28px', textAlign: 'center', fontSize: '12px' }}>
+          <div style={{ border: '1px solid #000', padding: '10px 28px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
             Eligibility verified<br />Local organiser Signature &amp; Seal
           </div>
         </div>
