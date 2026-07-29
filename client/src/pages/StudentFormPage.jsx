@@ -44,7 +44,22 @@ const DEFAULT_YEARS = (() => {
 })();
 
 const DEFAULT_CLASSES = [
-  'I YEAR','II YEAR','III YEAR','IV YEAR','V YEAR',
+  'I B.A','II B.A','III B.A',
+  'I B.Sc','II B.Sc','III B.Sc',
+  'I B.Com','II B.Com','III B.Com',
+  'I B.C.A','II B.C.A','III B.C.A',
+  'I B.B.A','II B.B.A','III B.B.A',
+  'I B.COM(CA)','II B.COM(CA)','III B.COM(CA)',
+  'I B.Ed','II B.Ed',
+  'I B.P.Ed','II B.P.Ed',
+  'I M.A','II M.A',
+  'I M.Sc','II M.Sc',
+  'I M.Com','II M.Com',
+  'I M.B.A','II M.B.A',
+  'I M.C.A','II M.C.A',
+  'I M.Ed','II M.Ed',
+  'I M.P.Ed','II M.P.Ed',
+  'I Ph.D','II Ph.D','III Ph.D',
 ];
 
 const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
@@ -127,7 +142,7 @@ const validateMinMax = (v, label, min, max, required = false) =>
   v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
   v.length > max        ? `${label} must be at most ${max} characters` : '';
 
-const validateUniversity = (v) => validateMinMax(v, 'University', 3, 60, true);
+const validateUniversity = (v) => validateMinMax(v, 'Month & year of first admission to university', 3, 30, true);
 
 const validateExamName = (v) =>
   !v ? 'Name of exam is required' :
@@ -472,9 +487,9 @@ export default function StudentFormPage() {
       case 'address':              msg = validateAddress(value);                                      break;
       case 'aadharNumber':         msg = validateAadhar(value);                                       break;
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
-      case 'university':           msg = validateUniversity(value);                                   break;
-      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 15, true);          break;
-      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Department', 3, 40, true);            break;
+      case 'university':           msg = validateUniversity(value);                                                              break;
+      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 30, true);                                break;
+      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Month & year of first admission to present course', 3, 30, true); break;
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
       case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40, true);        break;
       case 'nameOfExam':           msg = validateExamName(value);                                     break;
@@ -499,8 +514,8 @@ export default function StudentFormPage() {
       aadharNumber:        validateAadhar(form.aadharNumber),
       phoneNumber:         validatePhone(form.phoneNumber),
       university:          validateUniversity(form.university),
-      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 15, true),
-      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Department', 3, 40, true),
+      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 30, true),
+      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Month & year of first admission to present course', 3, 30, true),
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
       presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
       nameOfExam:          validateExamName(form.nameOfExam),
@@ -1137,39 +1152,38 @@ export default function StudentFormPage() {
           </Field>
         </Section>
 
-        {/* ── Academic Details ────────────────────────────────────────────── */}
-        <Section title="Academic Details">
+        {/* ── Academic Details ( Currently ) ──────────────────────────────── */}
+        <Section title="Academic Details ( Currently )">
 
-          {/* University */}
-          <Field label="University" required>
+          {/* Present Class */}
+          <Field label="Present Class" required>
             <ComboBox
-              value={form.university}
-              onChange={(v) => { set('university')(v); touch('university', v); }}
-              options={universityOptions}
-              placeholder="Select or type university"
-              required
-              error={errors.university}
+              value={form.presentClass}
+              onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
+              options={classOptions}
+              placeholder="e.g. I B.C.A, II B.COM(CA)"
+              error={errors.presentClass}
               sanitizer={sanitizeAcademic}
-              maxLength={60}
-              minCreate={3}
+              maxLength={30}
+              minCreate={1}
             />
-            <FieldMeta value={form.university} max={60} always error={errors.university} />
+            <FieldMeta value={form.presentClass} max={30} always error={errors.presentClass} />
           </Field>
 
-          {/* Department */}
-          <Field label="Department" required>
+          {/* Name of Present Course */}
+          <Field label="Name of Present Course" required>
             <ComboBox
-              value={form.nameOfThePresentClass}
-              onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
-              options={deptOptions}
-              placeholder="Select or type department"
+              value={form.presentCourse}
+              onChange={(v) => { set('presentCourse')(v); touch('presentCourse', v); }}
+              options={courseOptions}
+              placeholder="Select or type course"
               required
-              error={errors.nameOfThePresentClass}
+              error={errors.presentCourse}
               sanitizer={sanitizeAcademic}
               maxLength={40}
-              minCreate={3}
+              minCreate={2}
             />
-            <FieldMeta value={form.nameOfThePresentClass} max={40} always error={errors.nameOfThePresentClass} />
+            <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
           </Field>
 
           {/* Duration of Course */}
@@ -1187,35 +1201,41 @@ export default function StudentFormPage() {
             <FieldMeta value={form.durationOfCourse} max={15} always error={errors.durationOfCourse} />
           </Field>
 
-          {/* Present Course */}
-          <Field label="Present Course" required>
-            <ComboBox
-              value={form.presentCourse}
-              onChange={(v) => { set('presentCourse')(v); touch('presentCourse', v); }}
-              options={courseOptions}
-              placeholder="Select or type course"
-              required
-              error={errors.presentCourse}
-              sanitizer={sanitizeAcademic}
-              maxLength={40}
-              minCreate={2}
-            />
-            <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
-          </Field>
+          {/* Divider */}
+          <div className="col-span-full">
+            <hr className="border-gray-200 dark:border-gray-700" />
+          </div>
 
-          {/* Present Class */}
-          <Field label="Present Class" required>
+          {/* Month & Year of First Admission to University */}
+          <Field label="Month & Year of First Admission to University" required>
             <ComboBox
-              value={form.presentClass}
-              onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
+              value={form.university}
+              onChange={(v) => { set('university')(v); touch('university', v); }}
               options={classOptions}
-              placeholder="e.g. I YEAR, II YEAR"
-              error={errors.presentClass}
+              placeholder="e.g. I B.C.A, II B.COM(CA)"
+              required
+              error={errors.university}
               sanitizer={sanitizeAcademic}
-              maxLength={15}
+              maxLength={30}
               minCreate={1}
             />
-            <FieldMeta value={form.presentClass} max={15} always error={errors.presentClass} />
+            <FieldMeta value={form.university} max={30} always error={errors.university} />
+          </Field>
+
+          {/* Month & Year of First Admission to Present Course */}
+          <Field label="Month & Year of First Admission to Present Course" required>
+            <ComboBox
+              value={form.nameOfThePresentClass}
+              onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
+              options={classOptions}
+              placeholder="e.g. I B.C.A, II B.COM(CA)"
+              required
+              error={errors.nameOfThePresentClass}
+              sanitizer={sanitizeAcademic}
+              maxLength={30}
+              minCreate={1}
+            />
+            <FieldMeta value={form.nameOfThePresentClass} max={30} always error={errors.nameOfThePresentClass} />
           </Field>
 
         </Section>
