@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, X,
   Users, CheckCircle, Clock, Trophy, AlertTriangle, Check,
-  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding
+  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding, User
 } from 'lucide-react';
 
 /* ─── Circular checkbox ───────────────────────────────────────────────────── */
@@ -182,6 +182,116 @@ function BulkDeleteModal({ students, onConfirm, onCancel, loading }) {
   );
 }
 
+/* ─── Group view modal ────────────────────────────────────────────────────── */
+function StudentCard({ s }) {
+  const dob = s.dateOfBirth ? new Date(s.dateOfBirth) : null;
+  const age = dob ? Math.floor((Date.now() - dob) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+  const Row = ({ label, value }) => value ? (
+    <div className="flex flex-col sm:flex-row sm:items-center border-b border-gray-100 dark:border-gray-800 py-2 last:border-0">
+      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide sm:w-48 flex-shrink-0">{label}</span>
+      <span className="text-sm text-gray-900 dark:text-white font-medium">{value}</span>
+    </div>
+  ) : null;
+  const Section = ({ title, children }) => (
+    <div className="mb-4">
+      <h4 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2 pb-1.5 border-b-2 border-blue-100 dark:border-blue-900">{title}</h4>
+      {children}
+    </div>
+  );
+  return (
+    <div className="card overflow-hidden mb-6 print-student">
+      {/* Header */}
+      <div className="bg-blue-600 dark:bg-blue-700 text-white p-4 flex items-center gap-4">
+        <div className="flex-1 text-center">
+          <h2 className="text-base font-bold">BHARATHIDASAN UNIVERSITY</h2>
+          <p className="text-xs opacity-80">TIRUCHIRAPPALLI - 620 024</p>
+          <p className="text-sm font-semibold mt-0.5">ELIGIBILITY PROFORMA OF PLAYERS</p>
+          <p className="text-xs opacity-70">Division: Trichy / Thanjavur · {s.year}</p>
+        </div>
+        <div className="flex-shrink-0">
+          {s.image ? (
+            <img src={`/uploads/${s.image}`} alt={s.nameOfTheSportsperson} className="w-20 h-24 object-cover rounded-lg border-2 border-white/30" />
+          ) : (
+            <div className="w-20 h-24 rounded-lg bg-white/20 flex items-center justify-center border-2 border-white/30">
+              <User className="w-8 h-8 text-white/60" />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="p-4">
+        {/* Badges */}
+        <div className="flex items-center gap-2 flex-wrap mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-3 py-1 rounded-full text-xs">{s.nameOfTheGame}</span>
+          <span className={`font-medium px-3 py-1 rounded-full text-xs ${s.gender === 'MALE' ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400' : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'}`}>{s.gender}</span>
+          <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">Roll No: <strong className="text-gray-900 dark:text-white">{s.rollNo}</strong></span>
+        </div>
+        <Section title="Personal Information">
+          <Row label="Name of Sportsperson" value={s.nameOfTheSportsperson} />
+          <Row label="Father's Name" value={s.fathersName} />
+          <Row label="Mother's Name" value={s.motherName} />
+          <Row label="Date of Birth" value={dob ? `${dob.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}${age ? ` (Age: ${age} yrs)` : ''}` : null} />
+          <Row label="Aadhar Number" value={s.aadharNumber} />
+          <Row label="Phone Number" value={s.phoneNumber} />
+          <Row label="Address" value={s.address} />
+        </Section>
+        <Section title="Academic Information">
+          <Row label="Present Class" value={s.presentClass} />
+          <Row label="Department" value={s.nameOfThePresentClass} />
+          <Row label="Duration of Course" value={s.durationOfCourse} />
+          <Row label="University" value={s.university} />
+          <Row label="Present Course" value={s.presentCourse} />
+        </Section>
+        <Section title="Qualifying Examination">
+          <Row label="Name of Exam" value={s.nameOfExam} />
+          <Row label="Date & Year of Passing" value={s.dateAndYear} />
+        </Section>
+        <Section title="Previous IUT Participation">
+          <Row label="Graduate Course (Years)" value={s.graduateCourse} />
+          <Row label="PG Course (Years)" value={s.pgCourse} />
+          <Row label="Previous Course Details" value={s.previousCourse} />
+        </Section>
+        <Section title="Sports Details">
+          <Row label="Tournament Number" value={s.tournament} />
+          <Row label="T-Shirt Size" value={s.tshirt} />
+          <Row label="Track Size" value={s.track} />
+        </Section>
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-4 text-center">
+          {['Student Signature', 'HOD / Principal', 'Physical Director'].map(lbl => (
+            <div key={lbl}><div className="h-10 border-b border-gray-300 dark:border-gray-600 mb-1" /><p className="text-xs text-gray-500 dark:text-gray-400">{lbl}</p></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GroupViewModal({ students, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-gray-950">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 no-print flex-shrink-0">
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Group View</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{students.length} student{students.length !== 1 ? 's' : ''} selected</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+            Print All
+          </button>
+          <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-5 max-w-4xl w-full mx-auto">
+        {students.map(s => <StudentCard key={s._id} s={s} />)}
+      </div>
+    </div>
+  );
+}
+
 /* ─── SORT OPTIONS ────────────────────────────────────────────────────────── */
 const ROWS_OPTIONS = [10, 20, 30, 40, 50, 100];
 
@@ -210,6 +320,7 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState(new Set());
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [groupViewOpen, setGroupViewOpen] = useState(false);
 
   /* filters */
   const [rollNo, setRollNo]       = useState('');
@@ -388,9 +499,14 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {selected.size > 0 && (
-            <button onClick={() => setBulkModalOpen(true)} className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
-              <Trash2 className="w-4 h-4" />Delete Selected ({selected.size})
-            </button>
+            <>
+              <button onClick={() => setGroupViewOpen(true)} className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
+                <Eye className="w-4 h-4" />View Selected ({selected.size})
+              </button>
+              <button onClick={() => setBulkModalOpen(true)} className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
+                <Trash2 className="w-4 h-4" />Delete Selected ({selected.size})
+              </button>
+            </>
           )}
           <Link to="/students/new" className="btn-primary flex items-center gap-2 text-sm">
             <Plus className="w-4 h-4" />Add Student
@@ -697,6 +813,14 @@ export default function DashboardPage() {
           onConfirm={handleBulkDelete}
           onCancel={() => setBulkModalOpen(false)}
           loading={bulkDeleting}
+        />
+      )}
+
+      {/* Group view modal */}
+      {groupViewOpen && (
+        <GroupViewModal
+          students={selectedStudents}
+          onClose={() => setGroupViewOpen(false)}
         />
       )}
     </div>
