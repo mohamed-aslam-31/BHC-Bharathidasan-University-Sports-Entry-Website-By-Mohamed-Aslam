@@ -34,6 +34,8 @@ const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
 const sanitizeYear    = (v) => v.replace(/[^\d-]/g, '');
 const sanitizeRollNo  = (v) => v.replace(/\D/g, '').slice(0, 12);
 const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, ' ');
+/** Game: no digits, no special chars, single spaces only */
+const sanitizeGame    = (v) => v.replace(/[^a-zA-Z &\-/]/g, '').replace(/ {2,}/g, ' ');
 const sanitizeDigits  = (v, max) => v.replace(/\D/g, '').slice(0, max);
 const sanitizeAddress = (v) => v.replace(/ {2,}/g, ' ');
 
@@ -495,13 +497,14 @@ export default function StudentFormPage() {
               options={gameOptions}
               placeholder="Select or type a game"
               required
+              sanitizer={sanitizeGame}
             />
             <FieldMeta value={form.nameOfTheGame} />
           </Field>
 
           {/* Gender */}
           <Field label="Gender" required>
-            <div className="flex gap-2 mt-1 flex-wrap">
+            <div className="grid grid-cols-3 gap-2 mt-1">
               {['MALE', 'FEMALE', 'OTHER'].map((g) => (
                 <label
                   key={g}
@@ -535,9 +538,9 @@ export default function StudentFormPage() {
           <Field label="Name of Sportsperson" required span={2}>
             <input
               className={`input-field ${errors.studentName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="Full name (letters only, max 50)"
+              placeholder="Full name (letters only, max 40)"
               value={form.studentName}
-              maxLength={50}
+              maxLength={40}
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('studentName')(v);
@@ -545,7 +548,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('studentName', form.studentName)}
             />
-            <FieldMeta value={form.studentName} max={50} error={errors.studentName} />
+            <FieldMeta value={form.studentName} max={40} error={errors.studentName} />
           </Field>
 
           {/* Date of Birth */}
@@ -559,7 +562,7 @@ export default function StudentFormPage() {
               className={`input-field ${errors.fatherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Father's full name"
               value={form.fatherName}
-              maxLength={50}
+              maxLength={40}
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('fatherName')(v);
@@ -567,7 +570,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('fatherName', form.fatherName)}
             />
-            <FieldMeta value={form.fatherName} max={50} error={errors.fatherName} />
+            <FieldMeta value={form.fatherName} max={40} error={errors.fatherName} />
           </Field>
 
           {/* Mother's Name */}
@@ -576,7 +579,7 @@ export default function StudentFormPage() {
               className={`input-field ${errors.motherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Mother's full name"
               value={form.motherName}
-              maxLength={50}
+              maxLength={40}
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('motherName')(v);
@@ -584,7 +587,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('motherName', form.motherName)}
             />
-            <FieldMeta value={form.motherName} max={50} error={errors.motherName} />
+            <FieldMeta value={form.motherName} max={40} error={errors.motherName} />
           </Field>
 
           {/* Aadhar Number */}
@@ -630,9 +633,10 @@ export default function StudentFormPage() {
               rows={2}
               placeholder="Full address"
               value={form.address}
+              maxLength={80}
               onChange={(e) => set('address')(sanitizeAddress(e.target.value))}
             />
-            <FieldMeta value={form.address} />
+            <FieldMeta value={form.address} max={80} />
           </Field>
 
         </Section>
