@@ -218,8 +218,7 @@ export default function DashboardPage() {
   const [years, setYears]         = useState([]);
 
   /* sort + pagination */
-  const [dateSort, setDateSort]   = useState('new-to-old');
-  const [nameSort, setNameSort]   = useState('');
+  const [sortBy, setSortBy]       = useState(['new-to-old']);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage]           = useState(1);
 
@@ -245,19 +244,17 @@ export default function DashboardPage() {
   }, []);
 
   /* reset to page 1 whenever a filter/sort/rows changes */
-  useEffect(() => { setPage(1); }, [rollNo, name, games, genders, departments, years, dateSort, nameSort, rowsPerPage]);
+  useEffect(() => { setPage(1); }, [rollNo, name, games, genders, departments, years, sortBy, rowsPerPage]);
 
   /* ── computed: sorted + filtered ── */
   const sortFn = (a, b) => {
-    // Primary: date sort
     let dateCmp = 0;
-    if (dateSort === 'new-to-old') dateCmp = new Date(b.createdAt) - new Date(a.createdAt);
-    else if (dateSort === 'old-to-new') dateCmp = new Date(a.createdAt) - new Date(b.createdAt);
+    if (sortBy.includes('new-to-old'))      dateCmp = new Date(b.createdAt) - new Date(a.createdAt);
+    else if (sortBy.includes('old-to-new')) dateCmp = new Date(a.createdAt) - new Date(b.createdAt);
 
-    // Secondary: name sort
     let nameCmp = 0;
-    if (nameSort === 'a-to-z') nameCmp = (a.nameOfTheSportsperson || '').localeCompare(b.nameOfTheSportsperson || '');
-    else if (nameSort === 'z-to-a') nameCmp = (b.nameOfTheSportsperson || '').localeCompare(a.nameOfTheSportsperson || '');
+    if (sortBy.includes('a-to-z'))      nameCmp = (a.nameOfTheSportsperson || '').localeCompare(b.nameOfTheSportsperson || '');
+    else if (sortBy.includes('z-to-a')) nameCmp = (b.nameOfTheSportsperson || '').localeCompare(a.nameOfTheSportsperson || '');
 
     return dateCmp !== 0 ? dateCmp : nameCmp;
   };
@@ -277,7 +274,7 @@ export default function DashboardPage() {
     const pinned  = sorted.filter(s => selected.has(s._id));
     const rest    = sorted.filter(s => !selected.has(s._id) && matchesFilter(s));
     return { pinnedRows: pinned, filteredRows: rest, totalVisible: pinned.length + rest.length };
-  }, [allStudents, selected, rollNo, name, games, genders, departments, years, dateSort, nameSort]);
+  }, [allStudents, selected, rollNo, name, games, genders, departments, years, sortBy]);
 
   const combined = [...pinnedRows, ...filteredRows];
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
@@ -424,25 +421,14 @@ export default function DashboardPage() {
       {/* ── Table toolbar: sort + rows per page ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Sort */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Sort by:</span>
-          <select
-            value={dateSort}
-            onChange={e => setDateSort(e.target.value)}
-            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-          >
-            <option value="new-to-old">New to Old</option>
-            <option value="old-to-new">Old to New</option>
-          </select>
-          <select
-            value={nameSort}
-            onChange={e => setNameSort(e.target.value)}
-            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-          >
-            <option value="">Name (no sort)</option>
-            <option value="a-to-z">A → Z</option>
-            <option value="z-to-a">Z → A</option>
-          </select>
+        <div className="w-56">
+          <MultiSelect
+            label="Sort by"
+            options={['New to Old', 'Old to New', 'A to Z', 'Z to A']}
+            value={sortBy.map(v => ({ 'new-to-old': 'New to Old', 'old-to-new': 'Old to New', 'a-to-z': 'A to Z', 'z-to-a': 'Z to A' }[v] || v))}
+            onChange={labels => setSortBy(labels.map(l => ({ 'New to Old': 'new-to-old', 'Old to New': 'old-to-new', 'A to Z': 'a-to-z', 'Z to A': 'z-to-a' }[l] || l)))}
+            placeholder="Sort order…"
+          />
         </div>
 
         {/* Rows per page */}
