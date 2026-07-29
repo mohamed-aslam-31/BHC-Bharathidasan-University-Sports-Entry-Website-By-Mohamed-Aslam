@@ -33,10 +33,14 @@ const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
 const sanitizeYear    = (v) => v.replace(/[^\d-]/g, '').slice(0, 9);
 const sanitizeRollNo  = (v) => v.replace(/\D/g, '').slice(0, 12);
 const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, ' ');
-/** Game: no digits, no special chars, single spaces only */
-const sanitizeGame    = (v) => v.replace(/[^a-zA-Z &\-/]/g, '').replace(/ {2,}/g, ' ');
+/** Game: letters/digits/spaces + allowed specials: " \u201C \u201D ' \u2018 \u2019 ( ) & [ ] . , */
+const sanitizeGame    = (v) => v.replace(/[^a-zA-Z0-9 "'\u201C\u201D\u2018\u2019()&[\].,]/g, '').replace(/ {2,}/g, ' ');
 const sanitizeDigits  = (v, max) => v.replace(/\D/g, '').slice(0, max);
-const sanitizeAddress = (v) => v.replace(/ {2,}/g, ' ');
+/** Address: letters/digits/spaces + allowed specials: " \u201C \u201D ' \u2018 \u2019 - _ | / \ & # @ ( ) ; : , [ ] */
+const sanitizeAddress = (v) => v.replace(/[^a-zA-Z0-9 "'\u201C\u201D\u2018\u2019\-_|/\\&#@();:,[\]]/g, '').replace(/ {2,}/g, ' ');
+/** Academic fields (class/dept/duration/course/university): letters/digits/spaces +
+ *  allowed specials: [ ] ( ) : ; ' \u2018 \u2019 " \u201C \u201D / \ & # @ , . | */
+const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u201C\u201D/\\&#@,.|]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Class / dept / course: letters + numbers + single spaces, no leading space */
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Like sanitizeText but allows special characters — for department, course names etc. */
@@ -71,6 +75,8 @@ const validateMinMax = (v, label, min, max, required = false) =>
   !v                    ? '' :
   v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
   v.length > max        ? `${label} must be at most ${max} characters` : '';
+
+const validateUniversity = (v) => validateMinMax(v, 'University', 3, 40, true);
 
 const validateDob = (v) =>
   !v ? 'Date of birth is required' : '';
@@ -391,6 +397,7 @@ export default function StudentFormPage() {
       case 'address':              msg = validateAddress(value);                                      break;
       case 'aadharNumber':         msg = validateAadhar(value);                                       break;
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
+      case 'university':           msg = validateUniversity(value);                                   break;
       case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 15, true);          break;
       case 'nameOfThePresentClass':msg = validateMinMax(value, 'Department', 3, 40, true);            break;
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
@@ -414,6 +421,7 @@ export default function StudentFormPage() {
       address:        validateAddress(form.address),
       aadharNumber:        validateAadhar(form.aadharNumber),
       phoneNumber:         validatePhone(form.phoneNumber),
+      university:          validateUniversity(form.university),
       presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 15, true),
       nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Department', 3, 40, true),
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
@@ -744,19 +752,21 @@ export default function StudentFormPage() {
         {/* ── Academic Details ────────────────────────────────────────────── */}
         <Section title="Academic Details">
 
-          {/* Present Class */}
-          <Field label="Present Class" required>
-            <ComboBox
-              value={form.presentClass}
-              onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
-              options={classOptions}
-              placeholder="e.g. I YEAR, II YEAR"
-              error={errors.presentClass}
-              sanitizer={sanitizeText}
-              maxLength={15}
-              minCreate={1}
+          {/* University */}
+          <Field label="University" required>
+            <input
+              className={`input-field ${errors.university ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+              placeholder="e.g. Bharathidasan University"
+              value={form.university}
+              maxLength={40}
+              onChange={(e) => {
+                const v = sanitizeAcademic(e.target.value);
+                set('university')(v);
+                touch('university', v);
+              }}
+              onBlur={() => touch('university', form.university)}
             />
-            <FieldMeta value={form.presentClass} max={15} always error={errors.presentClass} />
+            <FieldMeta value={form.university} max={40} always error={errors.university} />
           </Field>
 
           {/* Department */}
@@ -768,7 +778,7 @@ export default function StudentFormPage() {
               placeholder="Select or type department"
               required
               error={errors.nameOfThePresentClass}
-              sanitizer={sanitizeTextSpl}
+              sanitizer={sanitizeAcademic}
               maxLength={40}
               minCreate={3}
             />
@@ -783,7 +793,7 @@ export default function StudentFormPage() {
               options={durationOptions}
               placeholder="e.g. 3"
               error={errors.durationOfCourse}
-              sanitizer={sanitizeText}
+              sanitizer={sanitizeAcademic}
               maxLength={15}
               minCreate={1}
             />
@@ -798,13 +808,28 @@ export default function StudentFormPage() {
               value={form.presentCourse}
               maxLength={40}
               onChange={(e) => {
-                const v = sanitizeTextSpl(e.target.value);
+                const v = sanitizeAcademic(e.target.value);
                 set('presentCourse')(v);
                 touch('presentCourse', v);
               }}
               onBlur={() => touch('presentCourse', form.presentCourse)}
             />
             <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
+          </Field>
+
+          {/* Present Class */}
+          <Field label="Present Class" required>
+            <ComboBox
+              value={form.presentClass}
+              onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
+              options={classOptions}
+              placeholder="e.g. I YEAR, II YEAR"
+              error={errors.presentClass}
+              sanitizer={sanitizeAcademic}
+              maxLength={15}
+              minCreate={1}
+            />
+            <FieldMeta value={form.presentClass} max={15} always error={errors.presentClass} />
           </Field>
 
         </Section>
