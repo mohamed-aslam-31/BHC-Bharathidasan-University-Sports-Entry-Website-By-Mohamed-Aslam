@@ -51,7 +51,7 @@ export default function StudentViewPage() {
 
   if (!student) return null;
 
-  const dob = student.DATE_OF_BIRTH ? new Date(student.DATE_OF_BIRTH) : null;
+  const dob = student.dateOfBirth ? new Date(student.dateOfBirth) : null;
   const age = dob ? Math.floor((Date.now() - dob) / (365.25 * 24 * 60 * 60 * 1000)) : null;
 
   return (
@@ -86,13 +86,13 @@ export default function StudentViewPage() {
             <p className="text-sm opacity-90">TIRUCHIRAPPALLI - 620 024</p>
             <h2 className="text-base font-semibold mt-1">ELIGIBILITY PROFORMA OF PLAYERS</h2>
             <p className="text-sm opacity-80 mt-0.5">Division: Trichy / Thanjavur</p>
-            <p className="text-sm opacity-80">{student.YEAR}</p>
+            <p className="text-sm opacity-80">{student.year}</p>
           </div>
           <div className="flex-shrink-0">
             {student.image ? (
               <img
                 src={`/uploads/${student.image}`}
-                alt={student.NAME_OF_THE_SPORTSPERSON}
+                alt={student.nameOfTheSportsperson}
                 className="w-24 h-28 object-cover rounded-lg border-2 border-white/30 shadow-lg"
               />
             ) : (
@@ -108,53 +108,53 @@ export default function StudentViewPage() {
           {/* Game badge */}
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
             <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-4 py-1.5 rounded-full text-sm">
-              {student.NAME_OF_THE_GAME}
+              {student.nameOfTheGame}
             </span>
             <span className={`font-medium px-3 py-1 rounded-full text-sm ${
-              student.GENDER === 'MALE'
+              student.gender === 'MALE'
                 ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400'
                 : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'
             }`}>
-              {student.GENDER}
+              {student.gender}
             </span>
             <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-              Roll No: <strong className="text-gray-900 dark:text-white">{student.ROLL_NO}</strong>
+              Roll No: <strong className="text-gray-900 dark:text-white">{student.rollNo}</strong>
             </span>
           </div>
 
           <Section title="Personal Information">
-            <Row label="Name of Sportsperson" value={student.NAME_OF_THE_SPORTSPERSON} />
-            <Row label="Father's Name" value={student.FATHERS_NAME} />
-            <Row label="Mother's Name" value={student.MOTHER_NAME} />
+            <Row label="Name of Sportsperson" value={student.nameOfTheSportsperson} />
+            <Row label="Father's Name" value={student.fathersName} />
+            <Row label="Mother's Name" value={student.motherName} />
             <Row label="Date of Birth" value={dob ? `${dob.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })} (Age: ${age} yrs)` : '—'} />
-            <Row label="Aadhar Number" value={student.AADHAR_NUMBER} />
-            <Row label="Phone Number" value={student.PHONE_NUMBER} />
-            <Row label="Address" value={student.ADDRESS} />
+            <Row label="Aadhar Number" value={student.aadharNumber} />
+            <Row label="Phone Number" value={student.phoneNumber} />
+            <Row label="Address" value={student.address} />
           </Section>
 
           <Section title="Academic Information">
-            <Row label="Present Class" value={student.PRESENT_CLASS} />
-            <Row label="Department" value={student.NAME_OF_THE_PRESENT_CLASS} />
-            <Row label="Duration of Course" value={student.DURATION_OF_COURSE} />
-            <Row label="University" value={student.UNIVERSITY} />
-            <Row label="Present Course" value={student.PRESENT_COURSE} />
+            <Row label="Present Class" value={student.presentClass} />
+            <Row label="Department" value={student.nameOfThePresentClass} />
+            <Row label="Duration of Course" value={student.durationOfCourse} />
+            <Row label="University" value={student.university} />
+            <Row label="Present Course" value={student.presentCourse} />
           </Section>
 
           <Section title="Qualifying Examination">
-            <Row label="Name of Exam" value={student.NAME_OF_EXAM} />
-            <Row label="Date & Year of Passing" value={student.DATE_AND_YEAR} />
+            <Row label="Name of Exam" value={student.nameOfExam} />
+            <Row label="Date & Year of Passing" value={student.dateAndYear} />
           </Section>
 
           <Section title="Previous IUT Participation">
-            <Row label="Graduate Course (Years)" value={student.GRADUATE_COURSE} />
-            <Row label="PG Course (Years)" value={student.P_G_COURSE} />
-            <Row label="Previous Course Details" value={student.PREVIOUS_COURSE} />
+            <Row label="Graduate Course (Years)" value={student.graduateCourse} />
+            <Row label="PG Course (Years)" value={student.pgCourse} />
+            <Row label="Previous Course Details" value={student.previousCourse} />
           </Section>
 
           <Section title="Sports Details">
-            <Row label="Tournament Number" value={student.TOURNAMENT} />
-            <Row label="T-Shirt Size" value={student.TSHIRT} />
-            <Row label="Track Size" value={student.TRACK} />
+            <Row label="Tournament Number" value={student.tournament} />
+            <Row label="T-Shirt Size" value={student.tshirt} />
+            <Row label="Track Size" value={student.track} />
           </Section>
 
           {/* Signature block */}
