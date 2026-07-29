@@ -1,10 +1,32 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta } from '../api';
-import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, CropIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Cropper from 'react-easy-crop';
+
+/* ─── Crop helpers ─────────────────────────────────────────────────────────── */
+
+async function getCroppedImg(imageSrc, pixelCrop) {
+  const image = await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.addEventListener('load', () => resolve(img));
+    img.addEventListener('error', reject);
+    img.src = imageSrc;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width  = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(
+    image,
+    pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+    0, 0, pixelCrop.width, pixelCrop.height,
+  );
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+}
 
 /* ─── Static option lists ──────────────────────────────────────────────────── */
 
@@ -349,6 +371,14 @@ export default function StudentFormPage() {
   const [fetching, setFetching] = useState(isEdit);
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
 
+  /* ── crop state ── */
+  const [cropSrc, setCropSrc]               = useState(null);
+  const [showCrop, setShowCrop]             = useState(false);
+  const [crop, setCrop]                     = useState({ x: 0, y: 0 });
+  const [zoom, setZoom]                     = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     getStudentMeta().then((r) => setMeta(r.data)).catch(() => {});
   }, []);
@@ -447,8 +477,8 @@ export default function StudentFormPage() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const MIN = 200 * 1024;        // 200 KB
-    const MAX = 1 * 1024 * 1024;   // 1 MB
+    const MIN = 200 * 1024;
+    const MAX = 1 * 1024 * 1024;
     if (file.size < MIN) {
       addToast('Photo must be at least 200 KB', 'error');
       e.target.value = '';
@@ -459,10 +489,40 @@ export default function StudentFormPage() {
       e.target.value = '';
       return;
     }
-    setImageFile(file);
     const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result);
+    reader.onloadend = () => {
+      setCropSrc(reader.result);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setShowCrop(true);
+    };
     reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleCropConfirm = useCallback(async () => {
+    try {
+      const blob = await getCroppedImg(cropSrc, croppedAreaPixels);
+      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(blob));
+      setShowCrop(false);
+      setCropSrc(null);
+    } catch {
+      addToast('Failed to crop image', 'error');
+    }
+  }, [cropSrc, croppedAreaPixels]);
+
+  const handleCropCancel = () => {
+    setShowCrop(false);
+    setCropSrc(null);
+  };
+
+  const handleRemovePhoto = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setCurrentImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e) => {
@@ -548,16 +608,93 @@ export default function StudentFormPage() {
                 <User className="w-8 h-8 text-gray-300 dark:text-gray-600" />
               </div>
             )}
-            <div>
+            <div className="flex flex-col gap-2">
               <label className="btn-secondary flex items-center gap-2 text-sm cursor-pointer">
                 <Upload className="w-4 h-4" />
                 {photoSrc ? 'Change Photo' : 'Upload Photo'}
-                <input type="file" accept=".jpg,.jpeg,.png" onChange={handleImageChange} className="hidden" />
+                <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png" onChange={handleImageChange} className="hidden" />
               </label>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">JPG or PNG · 200 KB – 1 MB</p>
+              {photoSrc && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Remove Photo
+                </button>
+              )}
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">JPG or PNG · 200 KB – 1 MB</p>
             </div>
           </div>
         </div>
+
+        {/* ── Crop Modal ──────────────────────────────────────────────────── */}
+        {showCrop && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">Crop Photo</h2>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Drag to reposition · scroll to zoom</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCropCancel}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Crop area */}
+              <div className="relative w-full" style={{ height: 340 }}>
+                <Cropper
+                  image={cropSrc}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={3 / 4}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
+                  style={{ containerStyle: { borderRadius: 0 } }}
+                />
+              </div>
+
+              {/* Zoom slider */}
+              <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                <ZoomOut className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <input
+                  type="range" min={1} max={3} step={0.05}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="flex-1 accent-blue-500 h-1.5 rounded-full cursor-pointer"
+                />
+                <ZoomIn className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={handleCropCancel}
+                  className="btn-secondary text-sm px-5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCropConfirm}
+                  className="btn-primary text-sm px-5 flex items-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Apply Crop
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Basic Information ───────────────────────────────────────────── */}
         <Section title="Basic Information">
