@@ -39,6 +39,30 @@
   .no-print { display: none !important; }
   .print-exclude { display: none !important; }
   body { background: white !important; }
+
+  /* Expand the group-view modal so all selected cards print */
+  .group-view-print-root {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .group-view-scroll {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    flex: none !important;
+  }
+
+  /* Each student card starts on a new page */
+  .print-student {
+    page-break-after: always;
+    break-after: page;
+  }
+  .print-student:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
 }
 
 /* Thin glassy scrollbar for multiselect dropdowns */
