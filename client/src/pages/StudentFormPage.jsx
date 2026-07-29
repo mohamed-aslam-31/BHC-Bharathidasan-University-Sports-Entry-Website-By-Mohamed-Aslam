@@ -92,8 +92,8 @@ const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u20
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Like sanitizeText but allows special characters — for department, course names etc. */
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
-/** Name of Exam: letters/digits, NO spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
-const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9&()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').slice(0, 30);
+/** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
+const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 30);
 /** Month & Year of Passing: letters/digits/spaces, allowed specials: - " \u201C \u201D ' \u2018 \u2019 / \ | [ ] ( ) & # @ ; : , . */
 const sanitizeMonthYear = (v) => v.replace(/[^a-zA-Z0-9 \-"'\u201C\u201D\u2018\u2019/\\|[\]()&#@;:,.]/g, '').replace(/ {2,}/g, ' ').slice(0, 15);
 
