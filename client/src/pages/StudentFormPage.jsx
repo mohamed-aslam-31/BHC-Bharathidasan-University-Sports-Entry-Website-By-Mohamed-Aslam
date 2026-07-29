@@ -89,7 +89,7 @@ const validateMinMax = (v, label, min, max, required = false) =>
   v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
   v.length > max        ? `${label} must be at most ${max} characters` : '';
 
-const validateUniversity = (v) => validateMinMax(v, 'University', 3, 50, true);
+const validateUniversity = (v) => validateMinMax(v, 'University', 3, 60, true);
 
 const validateDob = (v) =>
   !v ? 'Date of birth is required' : '';
@@ -776,10 +776,10 @@ export default function StudentFormPage() {
               required
               error={errors.university}
               sanitizer={sanitizeAcademic}
-              maxLength={50}
+              maxLength={60}
               minCreate={3}
             />
-            <FieldMeta value={form.university} max={50} always error={errors.university} />
+            <FieldMeta value={form.university} max={60} always error={errors.university} />
           </Field>
 
           {/* Department */}
