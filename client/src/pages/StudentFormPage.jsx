@@ -103,9 +103,9 @@ function FieldMeta({ value, max, error, always }) {
   const len = typeof value === 'string' ? value.length : 0;
   if (!always && !len && !error) return null;
   return (
-    <div className="flex items-center justify-between mt-1 min-h-[1rem]">
+    <div className="flex items-start gap-2 mt-1 min-h-[1rem]">
       <CharCount value={value} max={max} always={always} />
-      {error && <span className="text-xs text-red-500 leading-tight">{error}</span>}
+      {error && <span className="text-xs text-red-500 leading-tight flex-1 text-right">{error}</span>}
     </div>
   );
 }
