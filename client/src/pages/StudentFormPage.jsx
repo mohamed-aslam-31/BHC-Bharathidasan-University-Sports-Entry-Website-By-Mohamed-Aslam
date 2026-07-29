@@ -64,8 +64,9 @@ const validateGender = (v) =>
 const validateGame = (v) =>
   !v ? 'Name of the game is required' : '';
 
-const validateMinMax = (v, label, min, max) =>
-  !v ? '' :
+const validateMinMax = (v, label, min, max, required = false) =>
+  (!v && required)      ? `${label} is required` :
+  !v                    ? '' :
   v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
   v.length > max        ? `${label} must be at most ${max} characters` : '';
 
@@ -388,10 +389,10 @@ export default function StudentFormPage() {
       case 'address':              msg = validateAddress(value);                                      break;
       case 'aadharNumber':         msg = validateAadhar(value);                                       break;
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
-      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 15);               break;
-      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Department', 3, 40);                  break;
-      case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15);                    break;
-      case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40);              break;
+      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 15, true);          break;
+      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Department', 3, 40, true);            break;
+      case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
+      case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40, true);        break;
       default: break;
     }
     setErrors((e) => ({ ...e, [key]: msg }));
@@ -411,10 +412,10 @@ export default function StudentFormPage() {
       address:        validateAddress(form.address),
       aadharNumber:        validateAadhar(form.aadharNumber),
       phoneNumber:         validatePhone(form.phoneNumber),
-      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 15),
-      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Department', 3, 40),
-      durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15),
-      presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40),
+      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 15, true),
+      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Department', 3, 40, true),
+      durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
+      presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
     };
     setErrors(next);
     return Object.values(next).every((e) => !e);
@@ -622,7 +623,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('studentName', form.studentName)}
             />
-            <FieldMeta value={form.studentName} max={40} error={errors.studentName} />
+            <FieldMeta value={form.studentName} max={40} always error={errors.studentName} />
           </Field>
 
           {/* Date of Birth */}
@@ -742,7 +743,7 @@ export default function StudentFormPage() {
         <Section title="Academic Details">
 
           {/* Present Class */}
-          <Field label="Present Class">
+          <Field label="Present Class" required>
             <ComboBox
               value={form.presentClass}
               onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
@@ -773,7 +774,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Duration of Course */}
-          <Field label="Duration of Course">
+          <Field label="Duration of Course" required>
             <ComboBox
               value={form.durationOfCourse}
               onChange={(v) => { set('durationOfCourse')(v); touch('durationOfCourse', v); }}
@@ -788,7 +789,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Present Course */}
-          <Field label="Present Course">
+          <Field label="Present Course" required>
             <input
               className={`input-field ${errors.presentCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="e.g. B.Sc Computer Science"
