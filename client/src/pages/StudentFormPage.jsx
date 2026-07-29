@@ -1148,7 +1148,7 @@ export default function StudentFormPage() {
         </Section>
 
         {/* ── Qualifying Examination ──────────────────────────────────────── */}
-        <Section title="Qualifying Examination">
+        <Section title="Examination for First Admission to a College or University">
           <Field label="Name of Exam" required>
             <ComboBox
               value={form.nameOfExam}
