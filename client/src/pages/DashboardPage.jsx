@@ -30,7 +30,7 @@ function CircleCheckbox({ checked, indeterminate, onChange }) {
 }
 
 /* ─── Multi-select dropdown ───────────────────────────────────────────────── */
-function MultiSelect({ label, options, value, onChange, placeholder }) {
+function MultiSelect({ label, options, value, onChange, placeholder, noSearch }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const ref = useRef(null);
@@ -72,16 +72,18 @@ function MultiSelect({ label, options, value, onChange, placeholder }) {
 
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-2 border-b border-gray-100 dark:border-gray-800">
-            <input
-              autoFocus
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search…"
-              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-            />
-          </div>
+          {!noSearch && (
+            <div className="p-2 border-b border-gray-100 dark:border-gray-800">
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+              />
+            </div>
+          )}
           <div className="max-h-52 overflow-y-auto multiselect-scroll">
             {filtered.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-4">No options found</p>
@@ -428,6 +430,7 @@ export default function DashboardPage() {
             value={sortBy.map(v => ({ 'new-to-old': 'New to Old', 'old-to-new': 'Old to New', 'a-to-z': 'A to Z', 'z-to-a': 'Z to A' }[v] || v))}
             onChange={labels => setSortBy(labels.map(l => ({ 'New to Old': 'new-to-old', 'Old to New': 'old-to-new', 'A to Z': 'a-to-z', 'Z to A': 'z-to-a' }[l] || l)))}
             placeholder="Sort order…"
+            noSearch
           />
         </div>
 
