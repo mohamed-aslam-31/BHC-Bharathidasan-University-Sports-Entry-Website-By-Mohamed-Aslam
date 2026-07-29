@@ -261,6 +261,24 @@ const upload = multer({
   }
 });
 
+// ─── IMAGE PROXY ──────────────────────────────────────────────────────────────
+
+app.get('/api/proxy-image', authMiddleware, async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'url query param required' });
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return res.status(404).json({ error: 'Image not found at remote URL' });
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.send(buffer);
+  } catch (err) {
+    res.status(502).json({ error: 'Could not reach image server: ' + err.message });
+  }
+});
+
 // ─── AUTH ROUTES ──────────────────────────────────────────────────────────────
 
 app.post('/api/auth/login', async (req, res) => {

@@ -24,3 +24,7 @@ export const deleteUser = (id) => axios.delete(`/api/admin/users/${id}`);
 
 // Auth
 export const changePassword = (data) => axios.post('/api/auth/change-password', data);
+
+// Proxy
+export const fetchProxyImage = (url) =>
+  axios.get('/api/proxy-image', { params: { url }, responseType: 'blob' });

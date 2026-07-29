@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, CropIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Cropper from 'react-easy-crop';
@@ -379,6 +379,10 @@ export default function StudentFormPage() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const fileInputRef = useRef(null);
 
+  /* ── ID card photo state ── */
+  const [showIdCardPreview, setShowIdCardPreview] = useState(false);
+  const [idCardLoading, setIdCardLoading]         = useState(false);
+
   useEffect(() => {
     getStudentMeta().then((r) => setMeta(r.data)).catch(() => {});
   }, []);
@@ -525,6 +529,34 @@ export default function StudentFormPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const idCardUrl = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${form.rollNo}.jpg`;
+
+  const handleOpenIdCardPreview = () => {
+    if (!form.rollNo) {
+      addToast('Please enter the roll number first', 'error');
+      return;
+    }
+    setShowIdCardPreview(true);
+  };
+
+  const handleIdCardConfirm = async () => {
+    setIdCardLoading(true);
+    try {
+      const res = await fetchProxyImage(idCardUrl);
+      const blob = res.data;
+      const file = new File([blob], `${form.rollNo}.jpg`, { type: 'image/jpeg' });
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(blob));
+      setCurrentImage(null);
+      setShowIdCardPreview(false);
+      addToast('ID card photo applied');
+    } catch {
+      addToast('Could not load ID card photo — check the roll number or network', 'error');
+    } finally {
+      setIdCardLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateAll()) { addToast('Please fix the errors before submitting', 'error'); return; }
@@ -614,6 +646,14 @@ export default function StudentFormPage() {
                 {photoSrc ? 'Change Photo' : 'Upload Photo'}
                 <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png" onChange={handleImageChange} className="hidden" />
               </label>
+              <button
+                type="button"
+                onClick={handleOpenIdCardPreview}
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Use ID Card Photo
+              </button>
               {photoSrc && (
                 <button
                   type="button"
@@ -690,6 +730,69 @@ export default function StudentFormPage() {
                 >
                   <Check className="w-4 h-4" />
                   Apply Crop
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ID Card Photo Preview Modal ──────────────────────────────────── */}
+        {showIdCardPreview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">ID Card Photo</h2>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Roll No: {form.rollNo}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowIdCardPreview(false)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Photo preview */}
+              <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50">
+                <img
+                  src={idCardUrl}
+                  alt={`ID card photo for ${form.rollNo}`}
+                  className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div
+                  className="w-36 h-44 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 items-center justify-center flex-col gap-2 text-center px-3"
+                  style={{ display: 'none' }}
+                >
+                  <User className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Photo not found for this roll number</p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setShowIdCardPreview(false)}
+                  className="btn-secondary text-sm px-5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleIdCardConfirm}
+                  disabled={idCardLoading}
+                  className="btn-primary text-sm px-5 flex items-center gap-2"
+                >
+                  {idCardLoading
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />Loading…</>
+                    : <><Check className="w-4 h-4" />Use This Photo</>}
                 </button>
               </div>
             </div>
