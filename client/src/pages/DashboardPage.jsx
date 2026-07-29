@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, X,
   Users, CheckCircle, Clock, Trophy, AlertTriangle, Check,
-  ChevronDown
+  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding
 } from 'lucide-react';
 
 /* ─── Circular checkbox ───────────────────────────────────────────────────── */
@@ -279,6 +279,18 @@ export default function DashboardPage() {
   }, [allStudents, selected, rollNo, name, games, genders, departments, years, sortBy]);
 
   const combined = [...pinnedRows, ...filteredRows];
+
+  const filteredStats = useMemo(() => {
+    const all = [...pinnedRows, ...filteredRows];
+    return {
+      total:   all.length,
+      sports:  [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].length,
+      depts:   [...new Set(all.map(s => s.nameOfThePresentClass).filter(Boolean))].length,
+      years:   [...new Set(all.map(s => s.year).filter(Boolean))].length,
+      male:    all.filter(s => s.gender === 'MALE').length,
+      female:  all.filter(s => s.gender === 'FEMALE').length,
+    };
+  }, [pinnedRows, filteredRows]);
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * rowsPerPage;
@@ -442,6 +454,38 @@ export default function DashboardPage() {
             noSearch
           />
         </div>
+      </div>
+
+      {/* ── Live filter summary ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { icon: Users,         label: 'Students',    value: filteredStats.total,  color: 'blue'   },
+          { icon: Trophy,        label: 'Sports',      value: filteredStats.sports, color: 'purple' },
+          { icon: GraduationCap, label: 'Departments', value: filteredStats.depts,  color: 'indigo' },
+          { icon: CalendarDays,  label: 'Years',       value: filteredStats.years,  color: 'yellow' },
+          { icon: User2,          label: 'Male',        value: filteredStats.male,   color: 'cyan'   },
+          { icon: PersonStanding, label: 'Female',     value: filteredStats.female, color: 'pink'   },
+        ].map(({ icon: Icon, label, value, color }) => {
+          const colors = {
+            blue:   'bg-blue-50   dark:bg-blue-900/20   text-blue-600   dark:text-blue-400',
+            purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+            indigo: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400',
+            yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
+            cyan:   'bg-cyan-50   dark:bg-cyan-900/20   text-cyan-600   dark:text-cyan-400',
+            pink:   'bg-pink-50   dark:bg-pink-900/20   text-pink-600   dark:text-pink-400',
+          };
+          return (
+            <div key={label} className="card px-4 py-3 flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${colors[color]}`}>
+                <Icon className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{label}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Table ── */}
