@@ -382,6 +382,8 @@ export default function StudentFormPage() {
   /* ── ID card photo state ── */
   const [showIdCardPreview, setShowIdCardPreview] = useState(false);
   const [idCardLoading, setIdCardLoading]         = useState(false);
+  const [idCardBlobUrl, setIdCardBlobUrl]         = useState(null);
+  const [idCardBlob, setIdCardBlob]               = useState(null);
 
   useEffect(() => {
     getStudentMeta().then((r) => setMeta(r.data)).catch(() => {});
@@ -531,30 +533,49 @@ export default function StudentFormPage() {
 
   const idCardUrl = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${form.rollNo}.jpg`;
 
-  const handleOpenIdCardPreview = () => {
+  const handleOpenIdCardPreview = async () => {
     if (!form.rollNo) {
       addToast('Please enter the roll number first', 'error');
       return;
     }
+    // Revoke any previous blob URL
+    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
+    setIdCardBlobUrl(null);
+    setIdCardBlob(null);
     setShowIdCardPreview(true);
-  };
-
-  const handleIdCardConfirm = async () => {
     setIdCardLoading(true);
     try {
       const res = await fetchProxyImage(idCardUrl);
       const blob = res.data;
-      const file = new File([blob], `${form.rollNo}.jpg`, { type: 'image/jpeg' });
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(blob));
-      setCurrentImage(null);
-      setShowIdCardPreview(false);
-      addToast('ID card photo applied');
+      setIdCardBlob(blob);
+      setIdCardBlobUrl(URL.createObjectURL(blob));
     } catch {
-      addToast('Could not load ID card photo — check the roll number or network', 'error');
+      // blob stays null — modal will show "not found" state
     } finally {
       setIdCardLoading(false);
     }
+  };
+
+  const handleIdCardCancel = () => {
+    setShowIdCardPreview(false);
+    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
+    setIdCardBlobUrl(null);
+    setIdCardBlob(null);
+  };
+
+  const handleIdCardConfirm = () => {
+    if (!idCardBlob) {
+      addToast('Photo could not be loaded — check the roll number', 'error');
+      return;
+    }
+    const file = new File([idCardBlob], `${form.rollNo}.jpg`, { type: 'image/jpeg' });
+    setImageFile(file);
+    setImagePreview(idCardBlobUrl);
+    setIdCardBlobUrl(null);   // transferred ownership — don't revoke
+    setIdCardBlob(null);
+    setCurrentImage(null);
+    setShowIdCardPreview(false);
+    addToast('ID card photo applied');
   };
 
   const handleSubmit = async (e) => {
@@ -769,30 +790,31 @@ export default function StudentFormPage() {
               </div>
 
               {/* Photo preview */}
-              <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50">
-                <img
-                  src={idCardUrl}
-                  alt={`ID card photo for ${form.rollNo}`}
-                  className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-                <div
-                  className="w-36 h-44 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 items-center justify-center flex-col gap-2 text-center px-3"
-                  style={{ display: 'none' }}
-                >
-                  <User className="w-10 h-10 text-gray-300 dark:text-gray-600" />
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Photo not found for this roll number</p>
-                </div>
+              <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50 min-h-[200px]">
+                {idCardLoading ? (
+                  <div className="flex flex-col items-center gap-3 text-gray-400">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <p className="text-xs">Loading photo…</p>
+                  </div>
+                ) : idCardBlobUrl ? (
+                  <img
+                    src={idCardBlobUrl}
+                    alt={`ID card photo for ${form.rollNo}`}
+                    className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow"
+                  />
+                ) : (
+                  <div className="w-36 h-44 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-col gap-2 text-center px-3">
+                    <User className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Photo not found for this roll number</p>
+                  </div>
+                )}
               </div>
 
               {/* Footer */}
               <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-800">
                 <button
                   type="button"
-                  onClick={() => setShowIdCardPreview(false)}
+                  onClick={handleIdCardCancel}
                   className="btn-secondary text-sm px-5"
                 >
                   Cancel
@@ -800,12 +822,11 @@ export default function StudentFormPage() {
                 <button
                   type="button"
                   onClick={handleIdCardConfirm}
-                  disabled={idCardLoading}
-                  className="btn-primary text-sm px-5 flex items-center gap-2"
+                  disabled={idCardLoading || !idCardBlobUrl}
+                  className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50"
                 >
-                  {idCardLoading
-                    ? <><Loader2 className="w-4 h-4 animate-spin" />Loading…</>
-                    : <><Check className="w-4 h-4" />Use This Photo</>}
+                  <Check className="w-4 h-4" />
+                  Use This Photo
                 </button>
               </div>
             </div>
