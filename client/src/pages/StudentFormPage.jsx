@@ -58,11 +58,22 @@ const validatePersonName = (v, label = 'Name') =>
   /[^a-zA-Z. ]/.test(v) ? `${label}: letters, "." and spaces only` :
   / {2,}/.test(v) ? `${label}: no consecutive spaces` : '';
 
+const validateGame = (v) =>
+  !v ? 'Name of the game is required' : '';
+
+const validateDob = (v) =>
+  !v ? 'Date of birth is required' : '';
+
+const validateAddress = (v) =>
+  !v || !v.trim() ? 'Address is required' : '';
+
 const validateAadhar = (v) =>
-  v && v.length > 0 && v.length !== 12 ? 'Aadhar must be exactly 12 digits' : '';
+  !v ? 'Aadhar number is required' :
+  v.length !== 12 ? 'Aadhar must be exactly 12 digits' : '';
 
 const validatePhone = (v) =>
-  v && v.length > 0 && v.length !== 10 ? 'Phone must be exactly 10 digits' : '';
+  !v ? 'Phone number is required' :
+  v.length !== 10 ? 'Phone must be exactly 10 digits' : '';
 
 /* ─── Sub-components ───────────────────────────────────────────────────────── */
 
@@ -70,9 +81,9 @@ const validatePhone = (v) =>
  * Shows character count (and optional max) below-left of an input.
  * Only renders when value has content.
  */
-function CharCount({ value, max }) {
-  if (!value) return null;
+function CharCount({ value, max, always }) {
   const len = typeof value === 'string' ? value.length : 0;
+  if (!always && !len) return null;
   const near = max && len > max * 0.8;
   return (
     <span className={`text-xs tabular-nums ${near ? 'text-amber-500 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
@@ -85,12 +96,12 @@ function CharCount({ value, max }) {
  * Row below an input: char count on left, error on right.
  * Only renders if either has content.
  */
-function FieldMeta({ value, max, error }) {
+function FieldMeta({ value, max, error, always }) {
   const len = typeof value === 'string' ? value.length : 0;
-  if (!len && !error) return null;
+  if (!always && !len && !error) return null;
   return (
     <div className="flex items-center justify-between mt-1 min-h-[1rem]">
-      <CharCount value={value} max={max} />
+      <CharCount value={value} max={max} always={always} />
       {error && <span className="text-xs text-red-500 leading-tight">{error}</span>}
     </div>
   );
@@ -280,7 +291,7 @@ function Field({ label, required, children, span }) {
 /* ─── Empty form state ─────────────────────────────────────────────────────── */
 
 const empty = {
-  year: '', rollNo: '', nameOfTheGame: '', gender: 'MALE',
+  year: '', rollNo: '', nameOfTheGame: '', gender: '',
   studentName: '', fatherName: '', motherName: '', dob: '',
   nameOfExam: '', dateAndYear: '',
   presentClass: '', nameOfThePresentClass: '', durationOfCourse: '',
@@ -358,13 +369,16 @@ export default function StudentFormPage() {
   const touch = (key, value) => {
     let msg = '';
     switch (key) {
-      case 'year':         msg = validateYear(value);                         break;
-      case 'rollNo':       msg = validateRollNo(value);                       break;
-      case 'studentName':  msg = validatePersonName(value, 'Sportsperson name'); break;
-      case 'fatherName':   msg = validatePersonName(value, "Father's name");  break;
-      case 'motherName':   msg = validatePersonName(value, "Mother's name");  break;
-      case 'aadharNumber': msg = validateAadhar(value);                       break;
-      case 'phoneNumber':  msg = validatePhone(value);                        break;
+      case 'year':           msg = validateYear(value);                         break;
+      case 'rollNo':         msg = validateRollNo(value);                       break;
+      case 'nameOfTheGame':  msg = validateGame(value);                         break;
+      case 'studentName':    msg = validatePersonName(value, 'Sportsperson name'); break;
+      case 'fatherName':     msg = validatePersonName(value, "Father's name");  break;
+      case 'motherName':     msg = validatePersonName(value, "Mother's name");  break;
+      case 'dob':            msg = validateDob(value);                          break;
+      case 'address':        msg = validateAddress(value);                      break;
+      case 'aadharNumber':   msg = validateAadhar(value);                       break;
+      case 'phoneNumber':    msg = validatePhone(value);                        break;
       default: break;
     }
     setErrors((e) => ({ ...e, [key]: msg }));
@@ -373,13 +387,16 @@ export default function StudentFormPage() {
 
   const validateAll = () => {
     const next = {
-      year:         validateYear(form.year),
-      rollNo:       validateRollNo(form.rollNo),
-      studentName:  validatePersonName(form.studentName, 'Sportsperson name'),
-      fatherName:   validatePersonName(form.fatherName, "Father's name"),
-      motherName:   validatePersonName(form.motherName, "Mother's name"),
-      aadharNumber: validateAadhar(form.aadharNumber),
-      phoneNumber:  validatePhone(form.phoneNumber),
+      year:           validateYear(form.year),
+      rollNo:         validateRollNo(form.rollNo),
+      nameOfTheGame:  validateGame(form.nameOfTheGame),
+      studentName:    validatePersonName(form.studentName, 'Sportsperson name'),
+      fatherName:     validatePersonName(form.fatherName, "Father's name"),
+      motherName:     validatePersonName(form.motherName, "Mother's name"),
+      dob:            validateDob(form.dob),
+      address:        validateAddress(form.address),
+      aadharNumber:   validateAadhar(form.aadharNumber),
+      phoneNumber:    validatePhone(form.phoneNumber),
     };
     setErrors(next);
     return Object.values(next).every((e) => !e);
@@ -480,7 +497,7 @@ export default function StudentFormPage() {
               maxLength={9}
               minCreate={9}
             />
-            <FieldMeta value={form.year} error={errors.year} />
+            <FieldMeta value={form.year} max={9} always error={errors.year} />
           </Field>
 
           {/* Roll Number */}
@@ -497,48 +514,60 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('rollNo', form.rollNo)}
             />
-            <FieldMeta value={form.rollNo} max={12} error={errors.rollNo} />
+            <FieldMeta value={form.rollNo} max={12} always error={errors.rollNo} />
           </Field>
 
           {/* Name of the Game */}
           <Field label="Name of the Game" required>
             <ComboBox
               value={form.nameOfTheGame}
-              onChange={set('nameOfTheGame')}
+              onChange={(v) => { set('nameOfTheGame')(v); touch('nameOfTheGame', v); }}
               options={gameOptions}
               placeholder="Select or type a game"
               required
+              error={errors.nameOfTheGame}
               sanitizer={sanitizeGame}
               maxLength={30}
               minCreate={3}
             />
-            <FieldMeta value={form.nameOfTheGame} />
+            <FieldMeta value={form.nameOfTheGame} max={30} always error={errors.nameOfTheGame} />
           </Field>
 
           {/* Gender */}
           <Field label="Gender" required>
-            <div className="grid grid-cols-3 gap-2 mt-1">
-              {['MALE', 'FEMALE', 'OTHER'].map((g) => (
-                <label
-                  key={g}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
-                    form.gender === g
-                      ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
-                      : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
-                  }`}
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                {['MALE', 'FEMALE', 'OTHER'].map((g) => (
+                  <label
+                    key={g}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
+                      form.gender === g
+                        ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
+                        : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
+                    }`}
+                  >
+                    <input type="radio" name="gender" value={g} checked={form.gender === g}
+                      onChange={() => set('gender')(g)} className="sr-only" />
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                      form.gender === g ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                    }`}>
+                      {form.gender === g && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                    <span className={`text-sm font-medium ${
+                      form.gender === g ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
+                    }`}>{g}</span>
+                  </label>
+                ))}
+              </div>
+              {form.gender && (
+                <button
+                  type="button"
+                  onClick={() => set('gender')('')}
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 >
-                  <input type="radio" name="gender" value={g} checked={form.gender === g}
-                    onChange={() => set('gender')(g)} className="sr-only" />
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                    form.gender === g ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
-                  }`}>
-                    {form.gender === g && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <span className={`text-sm font-medium ${
-                    form.gender === g ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
-                  }`}>{g}</span>
-                </label>
-              ))}
+                  <X className="w-3 h-3" /> Unselect
+                </button>
+              )}
             </div>
           </Field>
 
@@ -566,7 +595,25 @@ export default function StudentFormPage() {
 
           {/* Date of Birth */}
           <Field label="Date of Birth" required>
-            <input type="date" className="input-field" value={form.dob} onChange={setRaw('dob')} required />
+            <div className="relative">
+              <input
+                type="date"
+                className={`input-field pr-8 ${errors.dob ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+                value={form.dob}
+                onChange={(e) => { set('dob')(e.target.value); touch('dob', e.target.value); }}
+                onBlur={() => touch('dob', form.dob)}
+              />
+              {form.dob && (
+                <button
+                  type="button"
+                  onClick={() => { set('dob')(''); touch('dob', ''); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            {errors.dob && <p className="text-xs text-red-500 mt-1">{errors.dob}</p>}
           </Field>
 
           {/* Father's Name */}
@@ -604,7 +651,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Aadhar Number */}
-          <Field label="Aadhar Number">
+          <Field label="Aadhar Number" required>
             <input
               className={`input-field ${errors.aadharNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="12-digit Aadhar"
@@ -622,7 +669,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Phone Number */}
-          <Field label="Phone Number">
+          <Field label="Phone Number" required>
             <input
               className={`input-field ${errors.phoneNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="10-digit mobile number"
@@ -640,16 +687,21 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Address */}
-          <Field label="Address" span={2}>
+          <Field label="Address" required span={2}>
             <textarea
-              className="input-field resize-none"
+              className={`input-field resize-none ${errors.address ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               rows={2}
               placeholder="Full address"
               value={form.address}
               maxLength={80}
-              onChange={(e) => set('address')(sanitizeAddress(e.target.value))}
+              onChange={(e) => {
+                const v = sanitizeAddress(e.target.value);
+                set('address')(v);
+                touch('address', v);
+              }}
+              onBlur={() => touch('address', form.address)}
             />
-            <FieldMeta value={form.address} max={80} />
+            <FieldMeta value={form.address} max={80} error={errors.address} />
           </Field>
 
         </Section>
