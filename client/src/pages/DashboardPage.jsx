@@ -428,7 +428,28 @@ export default function DashboardPage() {
             label="Sort by"
             options={['New to Old', 'Old to New', 'A to Z', 'Z to A']}
             value={sortBy.map(v => ({ 'new-to-old': 'New to Old', 'old-to-new': 'Old to New', 'a-to-z': 'A to Z', 'z-to-a': 'Z to A' }[v] || v))}
-            onChange={labels => setSortBy(labels.map(l => ({ 'New to Old': 'new-to-old', 'Old to New': 'old-to-new', 'A to Z': 'a-to-z', 'Z to A': 'z-to-a' }[l] || l)))}
+            onChange={labels => {
+              const toKey = l => ({ 'New to Old': 'new-to-old', 'Old to New': 'old-to-new', 'A to Z': 'a-to-z', 'Z to A': 'z-to-a' }[l] || l);
+              const prev = sortBy.map(v => ({ 'new-to-old': 'New to Old', 'old-to-new': 'Old to New', 'a-to-z': 'A to Z', 'z-to-a': 'Z to A' }[v] || v));
+              // find newly added option
+              const added = labels.find(l => !prev.includes(l));
+              if (!added) {
+                // removal — just apply
+                setSortBy(labels.map(toKey));
+                return;
+              }
+              // enforce mutual exclusivity within each group
+              const dateGroup = new Set(['New to Old', 'Old to New']);
+              const nameGroup = new Set(['A to Z', 'Z to A']);
+              let next = labels.filter(l => {
+                if (dateGroup.has(added) && dateGroup.has(l) && l !== added) return false;
+                if (nameGroup.has(added) && nameGroup.has(l) && l !== added) return false;
+                return true;
+              });
+              // enforce max 2
+              if (next.length > 2) next = next.slice(-2);
+              setSortBy(next.map(toKey));
+            }}
             placeholder="Sort order…"
             noSearch
           />
