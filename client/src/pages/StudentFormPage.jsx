@@ -39,6 +39,8 @@ const sanitizeDigits  = (v, max) => v.replace(/\D/g, '').slice(0, max);
 const sanitizeAddress = (v) => v.replace(/ {2,}/g, ' ');
 /** Class / dept / course: letters + numbers + single spaces, no leading space */
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
+/** Like sanitizeText but allows special characters — for department, course names etc. */
+const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
 
@@ -766,7 +768,7 @@ export default function StudentFormPage() {
               placeholder="Select or type department"
               required
               error={errors.nameOfThePresentClass}
-              sanitizer={sanitizeText}
+              sanitizer={sanitizeTextSpl}
               maxLength={40}
               minCreate={3}
             />
@@ -796,7 +798,7 @@ export default function StudentFormPage() {
               value={form.presentCourse}
               maxLength={40}
               onChange={(e) => {
-                const v = sanitizeText(e.target.value);
+                const v = sanitizeTextSpl(e.target.value);
                 set('presentCourse')(v);
                 touch('presentCourse', v);
               }}
