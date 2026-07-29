@@ -1108,7 +1108,7 @@ export default function StudentFormPage() {
           <Field label="Name of Exam" required>
             <input
               className={`input-field ${errors.nameOfExam ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="e.g. HSC,SSLC,XII (no spaces)"
+              placeholder="e.g. HSC, SSLC, XII"
               value={form.nameOfExam}
               maxLength={30}
               onChange={(e) => {
