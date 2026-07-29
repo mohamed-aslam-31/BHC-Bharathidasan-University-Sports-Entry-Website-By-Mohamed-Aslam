@@ -31,18 +31,13 @@ const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
 
 /* ─── Sanitisers ───────────────────────────────────────────────────────────── */
 
-/** Only digits and '-', no whitespace */
-const sanitizeYear = (v) => v.replace(/[^\d-]/g, '');
-/** Only digits, max 12 */
-const sanitizeRollNo = (v) => v.replace(/\D/g, '').slice(0, 12);
-/** Letters, "." and single spaces only */
-const sanitizeName = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, ' ');
-/** Digits only, up to `max` chars */
-const sanitizeDigits = (v, max) => v.replace(/\D/g, '').slice(0, max);
-/** Collapse consecutive spaces */
+const sanitizeYear    = (v) => v.replace(/[^\d-]/g, '');
+const sanitizeRollNo  = (v) => v.replace(/\D/g, '').slice(0, 12);
+const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, ' ');
+const sanitizeDigits  = (v, max) => v.replace(/\D/g, '').slice(0, max);
 const sanitizeAddress = (v) => v.replace(/ {2,}/g, ' ');
 
-/* ─── Validators (return error string or '') ──────────────────────────────── */
+/* ─── Validators ───────────────────────────────────────────────────────────── */
 
 const validateYear = (v) =>
   !v ? 'Academic year is required' :
@@ -50,43 +45,66 @@ const validateYear = (v) =>
 
 const validateRollNo = (v) =>
   !v ? 'Roll number is required' :
-  /\D/.test(v) ? 'Only numbers allowed' :
-  v.length < 9 ? 'Minimum 9 digits' :
-  v.length > 12 ? 'Maximum 12 digits' : '';
+  v.length < 9 ? 'Minimum 9 digits required' :
+  v.length > 12 ? 'Maximum 12 digits allowed' : '';
 
 const validatePersonName = (v, label = 'Name') =>
   !v ? `${label} is required` :
   v.trim().length < 3 ? `${label} must be at least 3 characters` :
   v.length > 50 ? `${label} must be at most 50 characters` :
-  /[^a-zA-Z. ]/.test(v) ? `${label}: only letters, "." and spaces allowed` :
+  /[^a-zA-Z. ]/.test(v) ? `${label}: letters, "." and spaces only` :
   / {2,}/.test(v) ? `${label}: no consecutive spaces` : '';
 
 const validateAadhar = (v) =>
-  v && v.length > 0 && v.length !== 12 ? 'Aadhar must be exactly 12 digits' :
-  v && /\D/.test(v) ? 'Only digits allowed' : '';
+  v && v.length > 0 && v.length !== 12 ? 'Aadhar must be exactly 12 digits' : '';
 
 const validatePhone = (v) =>
-  v && v.length > 0 && v.length !== 10 ? 'Phone must be exactly 10 digits' :
-  v && /\D/.test(v) ? 'Only digits allowed' : '';
+  v && v.length > 0 && v.length !== 10 ? 'Phone must be exactly 10 digits' : '';
 
-/* ─── ComboBox ─────────────────────────────────────────────────────────────── */
+/* ─── Sub-components ───────────────────────────────────────────────────────── */
+
 /**
- * Single-value searchable dropdown that lets the user pick from options
- * or type a new value (shown as 'Add "…"' at the bottom).
- * 
- * Props:
- *   value, onChange – controlled value
- *   options         – string[]
- *   placeholder     – string
- *   required        – bool
- *   error           – string (shown below input)
- *   sanitizer       – (raw: string) => string (applied on every keystroke)
+ * Shows character count (and optional max) below-left of an input.
+ * Only renders when value has content.
+ */
+function CharCount({ value, max }) {
+  if (!value) return null;
+  const len = typeof value === 'string' ? value.length : 0;
+  const near = max && len > max * 0.8;
+  return (
+    <span className={`text-xs tabular-nums ${near ? 'text-amber-500 dark:text-amber-400' : 'text-gray-400 dark:text-gray-500'}`}>
+      {max ? `${len} / ${max}` : `${len}`}
+    </span>
+  );
+}
+
+/**
+ * Row below an input: char count on left, error on right.
+ * Only renders if either has content.
+ */
+function FieldMeta({ value, max, error }) {
+  const len = typeof value === 'string' ? value.length : 0;
+  if (!len && !error) return null;
+  return (
+    <div className="flex items-center justify-between mt-1 min-h-[1rem]">
+      <CharCount value={value} max={max} />
+      {error && <span className="text-xs text-red-500 leading-tight">{error}</span>}
+    </div>
+  );
+}
+
+/**
+ * Single-value searchable combo box.
+ * - Trigger button shows selected value / placeholder.
+ * - Dropdown has a search input inside it.
+ * - "Add …" option appears when typed text doesn't match any option.
+ * - `sanitizer` is applied to the search input on every keystroke.
  */
 function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer }) {
-  const [open, setOpen]   = useState(false);
+  const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
   const ref      = useRef(null);
-  const inputRef = useRef(null);
+  const searchRef = useRef(null);
 
   /* close on outside click */
   useEffect(() => {
@@ -100,14 +118,16 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  /* focus search box when dropdown opens */
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 0);
+  }, [open]);
+
   const filtered   = search
     ? options.filter((o) => o.toLowerCase().includes(search.toLowerCase()))
     : options;
   const exactMatch = options.some((o) => o.toLowerCase() === search.toLowerCase());
   const showAdd    = search.trim().length > 0 && !exactMatch;
-
-  /* while open, show typed search; when closed, show selected value */
-  const displayValue = open ? search : (value || '');
 
   const select = (opt) => {
     onChange(opt);
@@ -115,53 +135,74 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
     setOpen(false);
   };
 
-  const handleChange = (e) => {
+  const handleSearchChange = (e) => {
     let v = e.target.value;
     if (sanitizer) v = sanitizer(v);
     setSearch(v);
-    onChange(v); /* update parent so the form field always reflects typing */
+    /* also push typed value to parent so validation sees it in real time */
+    onChange(v);
   };
 
-  const handleKeyDown = (e) => {
+  const handleSearchKeyDown = (e) => {
     if (e.key === 'Escape') { setOpen(false); setSearch(''); }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (filtered.length === 1) select(filtered[0]);
+      else if (showAdd) select(search.trim());
+    }
   };
 
   const clear = (e) => {
     e.stopPropagation();
     onChange('');
     setSearch('');
-    inputRef.current?.focus();
   };
 
   return (
     <div ref={ref} className="relative">
-      <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          value={displayValue}
-          onChange={handleChange}
-          onFocus={() => setOpen(true)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          required={required}
-          className={`input-field pr-8 ${error ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-        />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-          {value && !open && (
-            <button type="button" onClick={clear}
-              className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        required={required}
+        className={`input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] ${
+          error ? 'border-red-400 dark:border-red-500' : ''
+        }`}
+      >
+        <span className="flex-1 min-w-0 truncate text-sm">
+          {value
+            ? <span className="text-gray-900 dark:text-gray-100">{value}</span>
+            : <span className="text-gray-400 dark:text-gray-500">{placeholder}</span>}
+        </span>
+        <span className="flex items-center gap-0.5 flex-shrink-0">
+          {value && (
+            <span
+              onMouseDown={(e) => { e.stopPropagation(); clear(e); }}
+              className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
               <X className="w-3.5 h-3.5" />
-            </button>
+            </span>
           )}
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform pointer-events-none ${open ? 'rotate-180' : ''}`} />
-        </div>
-      </div>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
 
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-
+      {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+          {/* Search inside dropdown */}
+          <div className="p-2 border-b border-gray-100 dark:border-gray-800">
+            <input
+              ref={searchRef}
+              type="text"
+              value={search}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+              placeholder="Search…"
+              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+          {/* Options list */}
           <div className="max-h-52 overflow-y-auto multiselect-scroll">
             {filtered.length === 0 && !showAdd && (
               <p className="text-xs text-gray-400 text-center py-4">No options found</p>
@@ -213,14 +254,14 @@ function Section({ title, children }) {
   );
 }
 
-function Field({ label, required, children, span, error }) {
+/** Pure layout wrapper — no error rendering; each child handles its own. */
+function Field({ label, required, children, span }) {
   return (
     <div className={span === 2 ? 'sm:col-span-2' : span === 3 ? 'col-span-full' : ''}>
       <label className="label">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 }
@@ -256,14 +297,10 @@ export default function StudentFormPage() {
   const [fetching, setFetching] = useState(isEdit);
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
 
-  /* fetch existing meta (departments, years, games used in DB) */
   useEffect(() => {
-    getStudentMeta()
-      .then((r) => setMeta(r.data))
-      .catch(() => {});
+    getStudentMeta().then((r) => setMeta(r.data)).catch(() => {});
   }, []);
 
-  /* fetch student when editing */
   useEffect(() => {
     if (!isEdit) return;
     setFetching(true);
@@ -271,30 +308,30 @@ export default function StudentFormPage() {
       .then((res) => {
         const s = res.data;
         setForm({
-          year:                s.year                   || '',
-          rollNo:              s.rollNo                 || '',
-          nameOfTheGame:       s.nameOfTheGame          || '',
-          gender:              s.gender                 || 'MALE',
-          studentName:         s.nameOfTheSportsperson  || '',
-          fatherName:          s.fathersName            || '',
-          motherName:          s.motherName             || '',
-          dob:                 s.dateOfBirth            || '',
-          nameOfExam:          s.nameOfExam             || '',
-          dateAndYear:         s.dateAndYear            || '',
-          presentClass:        s.presentClass           || '',
-          nameOfThePresentClass: s.nameOfThePresentClass || '',
-          durationOfCourse:    s.durationOfCourse       || '',
-          university:          s.university             || '',
-          presentCourse:       s.presentCourse          || '',
-          graduateCourse:      s.graduateCourse         || 'NIL',
-          pgCourse:            s.pgCourse               || 'NIL',
-          previousCourse:      s.previousCourse         || '',
-          address:             s.address                || '',
-          phoneNumber:         s.phoneNumber            || '',
-          aadharNumber:        s.aadharNumber           || '',
-          tournament:          s.tournament             || '',
-          tshirt:              s.tshirt                 || '',
-          track:               s.track                  || '',
+          year:                  s.year                    || '',
+          rollNo:                s.rollNo                  || '',
+          nameOfTheGame:         s.nameOfTheGame           || '',
+          gender:                s.gender                  || 'MALE',
+          studentName:           s.nameOfTheSportsperson   || '',
+          fatherName:            s.fathersName             || '',
+          motherName:            s.motherName              || '',
+          dob:                   s.dateOfBirth             || '',
+          nameOfExam:            s.nameOfExam              || '',
+          dateAndYear:           s.dateAndYear             || '',
+          presentClass:          s.presentClass            || '',
+          nameOfThePresentClass: s.nameOfThePresentClass   || '',
+          durationOfCourse:      s.durationOfCourse        || '',
+          university:            s.university              || '',
+          presentCourse:         s.presentCourse           || '',
+          graduateCourse:        s.graduateCourse          || 'NIL',
+          pgCourse:              s.pgCourse                || 'NIL',
+          previousCourse:        s.previousCourse          || '',
+          address:               s.address                 || '',
+          phoneNumber:           s.phoneNumber             || '',
+          aadharNumber:          s.aadharNumber            || '',
+          tournament:            s.tournament              || '',
+          tshirt:                s.tshirt                  || '',
+          track:                 s.track                   || '',
         });
         if (s.image) setCurrentImage(s.image);
       })
@@ -304,48 +341,37 @@ export default function StudentFormPage() {
 
   /* ── helpers ── */
 
-  const set = (key) => (val) =>
-    setForm((f) => ({ ...f, [key]: val }));
+  const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+  const setRaw = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const setRaw = (key) => (e) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
-
-  const setErr = (key, msg) =>
-    setErrors((e) => ({ ...e, [key]: msg }));
-
-  const clearErr = (key) =>
-    setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
-
-  /* validate a single field and update errors; returns true if valid */
-  const validateField = (key, value) => {
+  const touch = (key, value) => {
     let msg = '';
     switch (key) {
-      case 'year':        msg = validateYear(value);                        break;
-      case 'rollNo':      msg = validateRollNo(value);                      break;
-      case 'studentName': msg = validatePersonName(value, 'Name of Sportsperson'); break;
-      case 'fatherName':  msg = validatePersonName(value, "Father's Name"); break;
-      case 'motherName':  msg = validatePersonName(value, "Mother's Name"); break;
-      case 'aadharNumber': msg = validateAadhar(value);                     break;
-      case 'phoneNumber':  msg = validatePhone(value);                      break;
+      case 'year':         msg = validateYear(value);                         break;
+      case 'rollNo':       msg = validateRollNo(value);                       break;
+      case 'studentName':  msg = validatePersonName(value, 'Sportsperson name'); break;
+      case 'fatherName':   msg = validatePersonName(value, "Father's name");  break;
+      case 'motherName':   msg = validatePersonName(value, "Mother's name");  break;
+      case 'aadharNumber': msg = validateAadhar(value);                       break;
+      case 'phoneNumber':  msg = validatePhone(value);                        break;
       default: break;
     }
-    if (msg) setErr(key, msg); else clearErr(key);
+    setErrors((e) => ({ ...e, [key]: msg }));
     return !msg;
   };
 
-  /* validate all required / constrained fields; returns true if all pass */
   const validateAll = () => {
-    const checks = {
-      year:        validateYear(form.year),
-      rollNo:      validateRollNo(form.rollNo),
-      studentName: validatePersonName(form.studentName, 'Name of Sportsperson'),
-      fatherName:  validatePersonName(form.fatherName, "Father's Name"),
-      motherName:  validatePersonName(form.motherName, "Mother's Name"),
+    const next = {
+      year:         validateYear(form.year),
+      rollNo:       validateRollNo(form.rollNo),
+      studentName:  validatePersonName(form.studentName, 'Sportsperson name'),
+      fatherName:   validatePersonName(form.fatherName, "Father's name"),
+      motherName:   validatePersonName(form.motherName, "Mother's name"),
       aadharNumber: validateAadhar(form.aadharNumber),
       phoneNumber:  validatePhone(form.phoneNumber),
     };
-    setErrors(checks);
-    return Object.values(checks).every((e) => !e);
+    setErrors(next);
+    return Object.values(next).every((e) => !e);
   };
 
   const handleImageChange = (e) => {
@@ -359,16 +385,12 @@ export default function StudentFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateAll()) {
-      addToast('Please fix the errors before submitting', 'error');
-      return;
-    }
+    if (!validateAll()) { addToast('Please fix the errors before submitting', 'error'); return; }
     setLoading(true);
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       if (imageFile) fd.append('image', imageFile);
-
       if (isEdit) {
         await updateStudent(id, fd);
         addToast('Student updated successfully');
@@ -384,12 +406,12 @@ export default function StudentFormPage() {
     }
   };
 
-  /* ── option lists (merge DB meta with defaults) ── */
+  /* ── option lists ── */
 
-  const yearOptions  = [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
-  const gameOptions  = [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
-  const deptOptions  = [...new Set([...(meta.departments || [])])];
-  const classOptions = DEFAULT_CLASSES;
+  const yearOptions     = [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
+  const gameOptions     = [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
+  const deptOptions     = [...new Set([...(meta.departments || [])])];
+  const classOptions    = DEFAULT_CLASSES;
   const durationOptions = DEFAULT_DURATIONS;
 
   /* ── early return ── */
@@ -402,7 +424,7 @@ export default function StudentFormPage() {
 
   const photoSrc = imagePreview || (currentImage ? `/uploads/${currentImage}` : null);
 
-  /* ─── Render ─────────────────────────────────────────────────────────────── */
+  /* ─────────────────────────── Render ──────────────────────────────────── */
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -416,9 +438,7 @@ export default function StudentFormPage() {
             {isEdit ? 'Edit Student' : 'Add New Student'}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {isEdit
-              ? 'Update the student information below'
-              : 'Fill in the details to register a new sportsperson'}
+            {isEdit ? 'Update the student information below' : 'Fill in the details to register a new sportsperson'}
           </p>
         </div>
       </div>
@@ -436,21 +456,22 @@ export default function StudentFormPage() {
         {/* ── Basic Information ───────────────────────────────────────────── */}
         <Section title="Basic Information">
 
-          {/* Academic Year — combo box, format YYYY-YYYY */}
-          <Field label="Academic Year" required error={errors.year}>
+          {/* Academic Year */}
+          <Field label="Academic Year" required>
             <ComboBox
               value={form.year}
-              onChange={(v) => { set('year')(v); validateField('year', v); }}
+              onChange={(v) => { set('year')(v); touch('year', v); }}
               options={yearOptions}
               placeholder="e.g. 2023-2024"
               required
               error={errors.year}
               sanitizer={sanitizeYear}
             />
+            <FieldMeta value={form.year} error={errors.year} />
           </Field>
 
-          {/* Roll Number — digits only, 9-12 digits */}
-          <Field label="Roll Number" required error={errors.rollNo}>
+          {/* Roll Number */}
+          <Field label="Roll Number" required>
             <input
               className={`input-field ${errors.rollNo ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="9–12 digit roll number"
@@ -459,15 +480,14 @@ export default function StudentFormPage() {
               onChange={(e) => {
                 const v = sanitizeRollNo(e.target.value);
                 set('rollNo')(v);
-                validateField('rollNo', v);
+                touch('rollNo', v);
               }}
-              onBlur={() => validateField('rollNo', form.rollNo)}
-              required
+              onBlur={() => touch('rollNo', form.rollNo)}
             />
-            {errors.rollNo && <p className="text-xs text-red-500 mt-1">{errors.rollNo}</p>}
+            <FieldMeta value={form.rollNo} max={12} error={errors.rollNo} />
           </Field>
 
-          {/* Name of the Game — combo box */}
+          {/* Name of the Game */}
           <Field label="Name of the Game" required>
             <ComboBox
               value={form.nameOfTheGame}
@@ -476,9 +496,10 @@ export default function StudentFormPage() {
               placeholder="Select or type a game"
               required
             />
+            <FieldMeta value={form.nameOfTheGame} />
           </Field>
 
-          {/* Gender — glass-theme radio buttons */}
+          {/* Gender */}
           <Field label="Gender" required>
             <div className="flex gap-2 mt-1 flex-wrap">
               {['MALE', 'FEMALE', 'OTHER'].map((g) => (
@@ -490,30 +511,16 @@ export default function StudentFormPage() {
                       : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
                   }`}
                 >
-                  <input
-                    type="radio"
-                    name="gender"
-                    value={g}
-                    checked={form.gender === g}
-                    onChange={() => set('gender')(g)}
-                    className="sr-only"
-                  />
+                  <input type="radio" name="gender" value={g} checked={form.gender === g}
+                    onChange={() => set('gender')(g)} className="sr-only" />
                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                    form.gender === g
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                    form.gender === g ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
                   }`}>
-                    {form.gender === g && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                    )}
+                    {form.gender === g && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
                   <span className={`text-sm font-medium ${
-                    form.gender === g
-                      ? 'text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {g}
-                  </span>
+                    form.gender === g ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
+                  }`}>{g}</span>
                 </label>
               ))}
             </div>
@@ -524,8 +531,8 @@ export default function StudentFormPage() {
         {/* ── Personal Details ────────────────────────────────────────────── */}
         <Section title="Personal Details">
 
-          {/* Name of Sportsperson — letters + "." + single spaces, 3-50 chars */}
-          <Field label="Name of Sportsperson" required span={2} error={errors.studentName}>
+          {/* Name of Sportsperson */}
+          <Field label="Name of Sportsperson" required span={2}>
             <input
               className={`input-field ${errors.studentName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Full name (letters only, max 50)"
@@ -534,27 +541,20 @@ export default function StudentFormPage() {
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('studentName')(v);
-                if (errors.studentName) validateField('studentName', v);
+                touch('studentName', v);
               }}
-              onBlur={() => validateField('studentName', form.studentName)}
-              required
+              onBlur={() => touch('studentName', form.studentName)}
             />
-            {errors.studentName && <p className="text-xs text-red-500 mt-1">{errors.studentName}</p>}
+            <FieldMeta value={form.studentName} max={50} error={errors.studentName} />
           </Field>
 
           {/* Date of Birth */}
           <Field label="Date of Birth" required>
-            <input
-              type="date"
-              className="input-field"
-              value={form.dob}
-              onChange={setRaw('dob')}
-              required
-            />
+            <input type="date" className="input-field" value={form.dob} onChange={setRaw('dob')} required />
           </Field>
 
           {/* Father's Name */}
-          <Field label="Father's Name" required error={errors.fatherName}>
+          <Field label="Father's Name" required>
             <input
               className={`input-field ${errors.fatherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Father's full name"
@@ -563,16 +563,15 @@ export default function StudentFormPage() {
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('fatherName')(v);
-                if (errors.fatherName) validateField('fatherName', v);
+                touch('fatherName', v);
               }}
-              onBlur={() => validateField('fatherName', form.fatherName)}
-              required
+              onBlur={() => touch('fatherName', form.fatherName)}
             />
-            {errors.fatherName && <p className="text-xs text-red-500 mt-1">{errors.fatherName}</p>}
+            <FieldMeta value={form.fatherName} max={50} error={errors.fatherName} />
           </Field>
 
           {/* Mother's Name */}
-          <Field label="Mother's Name" required error={errors.motherName}>
+          <Field label="Mother's Name" required>
             <input
               className={`input-field ${errors.motherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Mother's full name"
@@ -581,16 +580,15 @@ export default function StudentFormPage() {
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('motherName')(v);
-                if (errors.motherName) validateField('motherName', v);
+                touch('motherName', v);
               }}
-              onBlur={() => validateField('motherName', form.motherName)}
-              required
+              onBlur={() => touch('motherName', form.motherName)}
             />
-            {errors.motherName && <p className="text-xs text-red-500 mt-1">{errors.motherName}</p>}
+            <FieldMeta value={form.motherName} max={50} error={errors.motherName} />
           </Field>
 
-          {/* Aadhar Number — 12 digits, optional but if typed must be complete */}
-          <Field label="Aadhar Number" error={errors.aadharNumber}>
+          {/* Aadhar Number */}
+          <Field label="Aadhar Number">
             <input
               className={`input-field ${errors.aadharNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="12-digit Aadhar"
@@ -600,15 +598,15 @@ export default function StudentFormPage() {
               onChange={(e) => {
                 const v = sanitizeDigits(e.target.value, 12);
                 set('aadharNumber')(v);
-                if (errors.aadharNumber) validateField('aadharNumber', v);
+                touch('aadharNumber', v);
               }}
-              onBlur={() => validateField('aadharNumber', form.aadharNumber)}
+              onBlur={() => touch('aadharNumber', form.aadharNumber)}
             />
-            {errors.aadharNumber && <p className="text-xs text-red-500 mt-1">{errors.aadharNumber}</p>}
+            <FieldMeta value={form.aadharNumber} max={12} error={errors.aadharNumber} />
           </Field>
 
-          {/* Phone Number — exactly 10 digits */}
-          <Field label="Phone Number" error={errors.phoneNumber}>
+          {/* Phone Number */}
+          <Field label="Phone Number">
             <input
               className={`input-field ${errors.phoneNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="10-digit mobile number"
@@ -618,14 +616,14 @@ export default function StudentFormPage() {
               onChange={(e) => {
                 const v = sanitizeDigits(e.target.value, 10);
                 set('phoneNumber')(v);
-                if (errors.phoneNumber) validateField('phoneNumber', v);
+                touch('phoneNumber', v);
               }}
-              onBlur={() => validateField('phoneNumber', form.phoneNumber)}
+              onBlur={() => touch('phoneNumber', form.phoneNumber)}
             />
-            {errors.phoneNumber && <p className="text-xs text-red-500 mt-1">{errors.phoneNumber}</p>}
+            <FieldMeta value={form.phoneNumber} max={10} error={errors.phoneNumber} />
           </Field>
 
-          {/* Address — special chars OK, no double spaces */}
+          {/* Address */}
           <Field label="Address" span={2}>
             <textarea
               className="input-field resize-none"
@@ -634,6 +632,7 @@ export default function StudentFormPage() {
               value={form.address}
               onChange={(e) => set('address')(sanitizeAddress(e.target.value))}
             />
+            <FieldMeta value={form.address} />
           </Field>
 
         </Section>
@@ -641,7 +640,7 @@ export default function StudentFormPage() {
         {/* ── Academic Details ────────────────────────────────────────────── */}
         <Section title="Academic Details">
 
-          {/* Present Class — combo box (renamed from "Present Class / Semester") */}
+          {/* Present Class */}
           <Field label="Present Class">
             <ComboBox
               value={form.presentClass}
@@ -649,9 +648,10 @@ export default function StudentFormPage() {
               options={classOptions}
               placeholder="e.g. I YEAR, II SEM"
             />
+            <FieldMeta value={form.presentClass} />
           </Field>
 
-          {/* Department — combo box */}
+          {/* Department */}
           <Field label="Department" required>
             <ComboBox
               value={form.nameOfThePresentClass}
@@ -660,9 +660,10 @@ export default function StudentFormPage() {
               placeholder="Select or type department"
               required
             />
+            <FieldMeta value={form.nameOfThePresentClass} />
           </Field>
 
-          {/* Duration of Course — combo box (number) */}
+          {/* Duration of Course */}
           <Field label="Duration of Course">
             <ComboBox
               value={form.durationOfCourse}
@@ -670,26 +671,21 @@ export default function StudentFormPage() {
               options={durationOptions}
               placeholder="e.g. 3"
             />
+            <FieldMeta value={form.durationOfCourse} />
           </Field>
 
           {/* University */}
           <Field label="University" span={2}>
-            <input
-              className="input-field"
-              placeholder="University name"
-              value={form.university}
-              onChange={setRaw('university')}
-            />
+            <input className="input-field" placeholder="University name"
+              value={form.university} onChange={setRaw('university')} />
+            <FieldMeta value={form.university} />
           </Field>
 
           {/* Present Course */}
           <Field label="Present Course">
-            <input
-              className="input-field"
-              placeholder="e.g. B.Sc Computer Science"
-              value={form.presentCourse}
-              onChange={setRaw('presentCourse')}
-            />
+            <input className="input-field" placeholder="e.g. B.Sc Computer Science"
+              value={form.presentCourse} onChange={setRaw('presentCourse')} />
+            <FieldMeta value={form.presentCourse} />
           </Field>
 
         </Section>
@@ -707,64 +703,43 @@ export default function StudentFormPage() {
             </select>
           </Field>
           <Field label="Previous Course Details" span={3}>
-            <textarea
-              className="input-field resize-none"
-              rows={2}
+            <textarea className="input-field resize-none" rows={2}
               placeholder="Details of previous course participation"
-              value={form.previousCourse}
-              onChange={setRaw('previousCourse')}
-            />
+              value={form.previousCourse} onChange={setRaw('previousCourse')} />
+            <FieldMeta value={form.previousCourse} />
           </Field>
         </Section>
 
         {/* ── Qualifying Examination ──────────────────────────────────────── */}
         <Section title="Qualifying Examination">
           <Field label="Name of Exam">
-            <input
-              className="input-field"
-              placeholder="e.g. HSC, SSLC"
-              value={form.nameOfExam}
-              onChange={setRaw('nameOfExam')}
-            />
+            <input className="input-field" placeholder="e.g. HSC, SSLC"
+              value={form.nameOfExam} onChange={setRaw('nameOfExam')} />
+            <FieldMeta value={form.nameOfExam} />
           </Field>
           <Field label="Date & Year of Passing">
-            <input
-              className="input-field"
-              placeholder="e.g. April 2022"
-              value={form.dateAndYear}
-              onChange={setRaw('dateAndYear')}
-            />
+            <input className="input-field" placeholder="e.g. April 2022"
+              value={form.dateAndYear} onChange={setRaw('dateAndYear')} />
+            <FieldMeta value={form.dateAndYear} />
           </Field>
         </Section>
 
         {/* ── Sports / Event Details ──────────────────────────────────────── */}
         <Section title="Sports / Event Details">
           <Field label="Tournament Number">
-            <input
-              className="input-field"
-              type="number"
-              placeholder="Tournament no."
-              value={form.tournament}
-              onChange={setRaw('tournament')}
-            />
+            <input className="input-field" type="number" placeholder="Tournament no."
+              value={form.tournament} onChange={setRaw('tournament')} />
+            <FieldMeta value={form.tournament} />
           </Field>
           <Field label="T-Shirt Size">
-            <input
-              className="input-field"
-              type="number"
-              placeholder="T-shirt size"
-              value={form.tshirt}
-              onChange={setRaw('tshirt')}
-            />
+            <input className="input-field" type="number" placeholder="T-shirt size"
+              value={form.tshirt} onChange={setRaw('tshirt')} />
+            <FieldMeta value={form.tshirt} />
           </Field>
           <Field label="Track Size">
-            <input
-              className="input-field"
-              type="number"
-              placeholder="Track size"
-              value={form.track}
-              onChange={setRaw('track')}
-            />
+            <input className="input-field" type="number" placeholder="Track size"
+              value={form.track} onChange={setRaw('track')} />
+            <FieldMeta value={form.track} />
           </Field>
         </Section>
 
@@ -773,11 +748,8 @@ export default function StudentFormPage() {
           <h3 className="section-title">Passport Size Photo</h3>
           <div className="flex items-start gap-6">
             {photoSrc ? (
-              <img
-                src={photoSrc}
-                alt="Student"
-                className="w-24 h-28 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-800 shadow-sm"
-              />
+              <img src={photoSrc} alt="Student"
+                className="w-24 h-28 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-800 shadow-sm" />
             ) : (
               <div className="w-24 h-28 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                 <User className="w-8 h-8 text-gray-300 dark:text-gray-600" />
@@ -796,11 +768,8 @@ export default function StudentFormPage() {
 
         {/* ── Submit ──────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-4 pt-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary flex items-center gap-2 px-8 py-2.5"
-          >
+          <button type="submit" disabled={loading}
+            className="btn-primary flex items-center gap-2 px-8 py-2.5">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {loading ? 'Saving…' : isEdit ? 'Update Student' : 'Submit Form'}
           </button>
