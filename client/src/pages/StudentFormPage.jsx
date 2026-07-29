@@ -541,11 +541,11 @@ export default function StudentFormPage() {
           {/* Gender */}
           <Field label="Gender" required>
             <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2 mt-1">
+              <div className="flex gap-2 mt-1">
                 {['MALE', 'FEMALE', 'OTHER'].map((g) => (
                   <label
                     key={g}
-                    className={`w-full flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
+                    className={`flex-1 flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
                       form.gender === g
                         ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
                         : errors.gender
