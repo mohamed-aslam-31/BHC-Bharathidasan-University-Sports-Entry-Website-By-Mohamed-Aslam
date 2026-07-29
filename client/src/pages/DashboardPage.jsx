@@ -908,19 +908,14 @@ export default function DashboardPage() {
       {/* Single delete dialog */}
       {deleteTarget && (() => {
         const s = allStudents.find(x => x._id === deleteTarget);
-        return (
-          <ConfirmDialog
-            open
-            title="Delete Student"
-            message={s
-              ? `Delete "${s.nameOfTheSportsperson}" (Roll No: ${s.rollNo})? This action cannot be undone.`
-              : 'This will permanently delete the student record. This action cannot be undone.'}
-            confirmLabel="Delete"
-            confirmClass="btn-danger"
+        return s ? (
+          <BulkDeleteModal
+            students={[s]}
             onConfirm={handleDelete}
             onCancel={() => setDeleteTarget(null)}
+            loading={false}
           />
-        );
+        ) : null;
       })()}
 
       {/* Floating action buttons — visible when students are selected */}
