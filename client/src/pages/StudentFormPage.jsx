@@ -31,7 +31,8 @@ const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
 
 /* ─── Sanitisers ───────────────────────────────────────────────────────────── */
 
-const sanitizeYear    = (v) => v.replace(/[^\d-]/g, '');
+/** Strip non-digit/dash and cap at 9 chars (DDDD-DDDD) */
+const sanitizeYear    = (v) => v.replace(/[^\d-]/g, '').slice(0, 9);
 const sanitizeRollNo  = (v) => v.replace(/\D/g, '').slice(0, 12);
 const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, ' ');
 /** Game: no digits, no special chars, single spaces only */
@@ -102,7 +103,11 @@ function FieldMeta({ value, max, error }) {
  * - "Add …" option appears when typed text doesn't match any option.
  * - `sanitizer` is applied to the search input on every keystroke.
  */
-function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer }) {
+/**
+ * maxLength  – caps the search input (and therefore any new value) at this many chars
+ * minCreate  – minimum typed length before the "Add …" option appears (default 1)
+ */
+function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1 }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
   const ref      = useRef(null);
@@ -129,7 +134,10 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
     ? options.filter((o) => o.toLowerCase().includes(search.toLowerCase()))
     : options;
   const exactMatch = options.some((o) => o.toLowerCase() === search.toLowerCase());
-  const showAdd    = search.trim().length > 0 && !exactMatch;
+  const trimmed    = search.trim();
+  const showAdd    = trimmed.length >= minCreate &&
+                     (!maxLength || trimmed.length <= maxLength) &&
+                     !exactMatch;
 
   const select = (opt) => {
     onChange(opt);
@@ -201,6 +209,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
               onChange={handleSearchChange}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search…"
+              maxLength={maxLength}
               className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
@@ -468,6 +477,8 @@ export default function StudentFormPage() {
               required
               error={errors.year}
               sanitizer={sanitizeYear}
+              maxLength={9}
+              minCreate={9}
             />
             <FieldMeta value={form.year} error={errors.year} />
           </Field>
@@ -498,6 +509,8 @@ export default function StudentFormPage() {
               placeholder="Select or type a game"
               required
               sanitizer={sanitizeGame}
+              maxLength={30}
+              minCreate={3}
             />
             <FieldMeta value={form.nameOfTheGame} />
           </Field>
