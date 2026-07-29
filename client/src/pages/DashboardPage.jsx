@@ -821,7 +821,7 @@ export default function DashboardPage() {
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{s.year || '—'}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
-                            <Link to={`/students/${s._id}/view`} className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="View">
+                            <Link to={`/students/${s._id}/view`} className="p-1.5 rounded-lg text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors" title="View">
                               <Eye className="w-4 h-4" />
                             </Link>
                             <Link to={`/students/${s._id}/edit`} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Edit">
@@ -906,15 +906,22 @@ export default function DashboardPage() {
       </div>
 
       {/* Single delete dialog */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete Student"
-        message="This will permanently delete the student record and photo. This action cannot be undone."
-        confirmLabel="Delete"
-        confirmClass="btn-danger"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      {deleteTarget && (() => {
+        const s = allStudents.find(x => x._id === deleteTarget);
+        return (
+          <ConfirmDialog
+            open
+            title="Delete Student"
+            message={s
+              ? `Delete "${s.nameOfTheSportsperson}" (Roll No: ${s.rollNo})? This action cannot be undone.`
+              : 'This will permanently delete the student record. This action cannot be undone.'}
+            confirmLabel="Delete"
+            confirmClass="btn-danger"
+            onConfirm={handleDelete}
+            onCancel={() => setDeleteTarget(null)}
+          />
+        );
+      })()}
 
       {/* Floating action buttons — visible when students are selected */}
       {selected.size > 0 && (
