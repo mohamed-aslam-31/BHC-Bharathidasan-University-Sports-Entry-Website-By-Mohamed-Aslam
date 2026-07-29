@@ -7,8 +7,33 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, Filter, X,
-  Users, CheckCircle, Clock, Trophy, AlertTriangle
+  Users, CheckCircle, Clock, Trophy, AlertTriangle, Check
 } from 'lucide-react';
+
+/* ── Circular checkbox ── */
+function CircleCheckbox({ checked, indeterminate, onChange }) {
+  return (
+    <label className="relative flex items-center justify-center cursor-pointer w-5 h-5 flex-shrink-0">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="sr-only"
+      />
+      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150 ${
+        checked || indeterminate
+          ? 'bg-blue-600 border-blue-600'
+          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400'
+      }`}>
+        {indeterminate && !checked ? (
+          <span className="block w-2 h-0.5 bg-white rounded-full" />
+        ) : checked ? (
+          <Check className="w-3 h-3 text-white stroke-[3]" />
+        ) : null}
+      </div>
+    </label>
+  );
+}
 
 const GAMES = [
   'CRICKET','FOOTBALL','CHESS','BASKETBALL','VOLLEYBALL','HOCKEY',
@@ -363,12 +388,10 @@ export default function DashboardPage() {
                 <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                   {/* Select-all checkbox */}
                   <th className="pl-4 pr-2 py-3 w-10">
-                    <input
-                      type="checkbox"
+                    <CircleCheckbox
                       checked={allChecked}
-                      ref={el => { if (el) el.indeterminate = someChecked; }}
+                      indeterminate={someChecked}
                       onChange={toggleAll}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 cursor-pointer accent-blue-600"
                     />
                   </th>
                   {['Roll No', 'Name', 'Game', 'Gender', 'Department', 'Year', 'Actions'].map(h => (
@@ -392,11 +415,9 @@ export default function DashboardPage() {
                     >
                       {/* Row checkbox */}
                       <td className="pl-4 pr-2 py-3">
-                        <input
-                          type="checkbox"
+                        <CircleCheckbox
                           checked={isSelected}
                           onChange={() => toggleOne(s._id)}
-                          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 cursor-pointer accent-blue-600"
                         />
                       </td>
 
