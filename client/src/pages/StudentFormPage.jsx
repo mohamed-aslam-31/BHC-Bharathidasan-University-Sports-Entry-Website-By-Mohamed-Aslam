@@ -447,6 +447,18 @@ export default function StudentFormPage() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const MIN = 200 * 1024;        // 200 KB
+    const MAX = 1 * 1024 * 1024;   // 1 MB
+    if (file.size < MIN) {
+      addToast('Photo must be at least 200 KB', 'error');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX) {
+      addToast('Photo must be no larger than 1 MB', 'error');
+      e.target.value = '';
+      return;
+    }
     setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
@@ -523,6 +535,29 @@ export default function StudentFormPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
+        {/* ── Passport Photo ──────────────────────────────────────────────── */}
+        <div className="card p-6">
+          <h3 className="section-title">Passport Size Photo</h3>
+          <div className="flex items-start gap-6">
+            {photoSrc ? (
+              <img src={photoSrc} alt="Student"
+                className="w-24 h-28 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-800 shadow-sm" />
+            ) : (
+              <div className="w-24 h-28 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                <User className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+              </div>
+            )}
+            <div>
+              <label className="btn-secondary flex items-center gap-2 text-sm cursor-pointer">
+                <Upload className="w-4 h-4" />
+                {photoSrc ? 'Change Photo' : 'Upload Photo'}
+                <input type="file" accept=".jpg,.jpeg,.png" onChange={handleImageChange} className="hidden" />
+              </label>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">JPG or PNG · 200 KB – 1 MB</p>
+            </div>
+          </div>
+        </div>
 
         {/* ── Basic Information ───────────────────────────────────────────── */}
         <Section title="Basic Information">
@@ -899,29 +934,6 @@ export default function StudentFormPage() {
             <FieldMeta value={form.track} />
           </Field>
         </Section>
-
-        {/* ── Passport Photo ──────────────────────────────────────────────── */}
-        <div className="card p-6">
-          <h3 className="section-title">Passport Size Photo</h3>
-          <div className="flex items-start gap-6">
-            {photoSrc ? (
-              <img src={photoSrc} alt="Student"
-                className="w-24 h-28 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-800 shadow-sm" />
-            ) : (
-              <div className="w-24 h-28 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                <User className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-              </div>
-            )}
-            <div>
-              <label className="btn-secondary flex items-center gap-2 text-sm cursor-pointer">
-                <Upload className="w-4 h-4" />
-                {photoSrc ? 'Change Photo' : 'Upload Photo'}
-                <input type="file" accept=".jpg,.jpeg,.png" onChange={handleImageChange} className="hidden" />
-              </label>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">JPG or PNG, max 10 MB</p>
-            </div>
-          </div>
-        </div>
 
         {/* ── Submit ──────────────────────────────────────────────────────── */}
         <div className="flex items-center gap-4 pt-2">
