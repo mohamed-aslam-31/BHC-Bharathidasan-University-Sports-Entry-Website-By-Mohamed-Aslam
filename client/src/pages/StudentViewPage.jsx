@@ -68,7 +68,7 @@ export default function StudentViewPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '6px' }}>
           {/* Logo */}
           <div style={{ width: '80px', flexShrink: 0 }}>
-            <img src="/university-logo.png" alt="BU Logo" style={{ width: '72px', height: '72px', objectFit: 'contain' }} />
+            <img src="/university-logo.gif" alt="BU Logo" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
           </div>
 
           {/* Center title block */}
@@ -82,7 +82,7 @@ export default function StudentViewPage() {
           {/* Photo + note box */}
           <div style={{ width: '110px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
             {/* Note box */}
-            <div style={{ border: '1px solid #000', padding: '4px 5px', fontSize: '9px', lineHeight: 1.3, textAlign: 'center', width: '100px' }}>
+            <div style={{ border: '1px solid #000', padding: '4px 5px', fontSize: '9px', lineHeight: 1.3, textAlign: 'center', width: '100px', fontFamily: 'Arial, sans-serif' }}>
               Candidate's Signature should be on top of the <strong>PHOTO</strong> with Attestation by the Principal/HOD
             </div>
             {/* Photo */}
@@ -102,7 +102,7 @@ export default function StudentViewPage() {
         </div>
 
         {/* ── MAIN TABLE ── */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
           <colgroup>
             <col style={{ width: '4%' }} />
             <col style={{ width: '38%' }} />
