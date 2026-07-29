@@ -136,8 +136,8 @@ const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
 const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 30);
-/** Month & Year of Passing: letters/digits/spaces, allowed specials: - " \u201C \u201D ' \u2018 \u2019 / \ | [ ] ( ) & # @ ; : , . */
-const sanitizeMonthYear = (v) => v.replace(/[^a-zA-Z0-9 \-"'\u201C\u201D\u2018\u2019/\\|[\]()&#@;:,.]/g, '').replace(/ {2,}/g, ' ').slice(0, 15);
+/** Month & Year of Passing: letters/digits and "-" only — no spaces, no other special characters */
+const sanitizeMonthYear = (v) => v.replace(/[^a-zA-Z0-9\-]/g, '').slice(0, 15);
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
 
