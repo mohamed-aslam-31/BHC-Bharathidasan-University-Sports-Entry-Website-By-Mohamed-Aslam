@@ -281,7 +281,7 @@ export default function DashboardPage() {
   const combined = [...pinnedRows, ...filteredRows];
 
   const filteredStats = useMemo(() => {
-    const all = [...pinnedRows, ...filteredRows];
+    const all = allStudents.filter(matchesFilter);
     return {
       total:      all.length,
       sportsList: [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].sort(),
@@ -290,7 +290,8 @@ export default function DashboardPage() {
       male:       all.filter(s => s.gender === 'MALE').length,
       female:     all.filter(s => s.gender === 'FEMALE').length,
     };
-  }, [pinnedRows, filteredRows]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allStudents, rollNo, name, games, genders, departments, years]);
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * rowsPerPage;
