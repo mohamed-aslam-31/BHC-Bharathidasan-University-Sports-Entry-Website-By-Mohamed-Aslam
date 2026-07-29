@@ -213,8 +213,8 @@ export default function StudentViewPage() {
 
         {/* ── Footer notes ── */}
         <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
-          <div>Strike out whichever is not applicable</div>
-          <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
+          <div>*Strike out whichever is not applicable</div>
+          <div>*Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
         </div>
 
         {/* Signature of student */}
