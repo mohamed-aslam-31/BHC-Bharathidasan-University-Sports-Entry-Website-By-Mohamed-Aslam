@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "BHC Sports Entry - Student Sports Data Management System",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "fuser -k 3001/tcp 2>/dev/null; concurrently \"npm run server\" \"npm run client\"",
     "server": "node server.js",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
