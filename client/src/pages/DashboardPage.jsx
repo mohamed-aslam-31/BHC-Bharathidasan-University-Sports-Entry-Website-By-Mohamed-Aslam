@@ -204,7 +204,7 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
     </div>
   );
   return (
-    <div className={`card overflow-hidden mb-6 print-student transition-opacity duration-200 ${checked ? '' : 'opacity-40'}`}>
+    <div className={`card overflow-hidden mb-6 print-student transition-opacity duration-200 ${checked ? '' : 'opacity-40 print-exclude'}`}>
       {/* Header — always visible */}
       <div className="bg-blue-600 dark:bg-blue-700 text-white p-4 flex items-center gap-4">
         <div className="flex-1 text-center">
