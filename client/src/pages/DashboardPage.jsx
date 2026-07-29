@@ -228,9 +228,9 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {students.map(s => (
-                  <tr key={s.SAVED_TIME} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tr key={s._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-blue-600 dark:text-blue-400">#{s.ROLL_NO}</span>
+                      <span className="text-sm font-medium text-blue-600 dark:text-blue-400">#{s.rollNo}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -239,53 +239,53 @@ export default function DashboardPage() {
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                             <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                              {s.NAME_OF_THE_SPORTSPERSON?.charAt(0)}
+                              {s.nameOfTheSportsperson?.charAt(0)}
                             </span>
                           </div>
                         )}
                         <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                          {s.NAME_OF_THE_SPORTSPERSON}
+                          {s.nameOfTheSportsperson}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full whitespace-nowrap">
-                        {s.NAME_OF_THE_GAME}
+                        {s.nameOfTheGame}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
-                        s.GENDER === 'MALE'
+                        s.gender === 'MALE'
                           ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400'
                           : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'
                       }`}>
-                        {s.GENDER}
+                        {s.gender}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[160px] truncate">
-                      {s.NAME_OF_THE_PRESENT_CLASS || '—'}
+                      {s.nameOfThePresentClass || '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      {s.YEAR || '—'}
+                      {s.year || '—'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <Link
-                          to={`/students/${s.SAVED_TIME}/view`}
+                          to={`/students/${s._id}/view`}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                           title="View"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
                         <Link
-                          to={`/students/${s.SAVED_TIME}/edit`}
+                          to={`/students/${s._id}/edit`}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                           title="Edit"
                         >
                           <Pencil className="w-4 h-4" />
                         </Link>
                         <button
-                          onClick={() => setDeleteTarget(s.SAVED_TIME)}
+                          onClick={() => setDeleteTarget(s._id)}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Delete"
                         >
