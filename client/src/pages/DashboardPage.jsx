@@ -224,23 +224,35 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
         </div>
         {/* Action buttons — right side of header */}
         <div className="flex flex-col items-center gap-2 flex-shrink-0 no-print">
-          {/* Circle checkbox */}
-          <CircleCheckbox checked={checked} onChange={onToggle} />
-          {/* Edit */}
+          {/* Circle checkbox — yellow glass */}
+          <button
+            onClick={onToggle}
+            title={checked ? 'Uncheck student' : 'Check student'}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 backdrop-blur-md border
+              ${checked
+                ? 'bg-yellow-400/40 border-yellow-300/60 hover:bg-yellow-400/60 shadow-yellow-400/30 shadow-sm'
+                : 'bg-yellow-400/20 border-yellow-300/30 hover:bg-yellow-400/40'
+              }`}
+          >
+            {checked
+              ? <Check className="w-3.5 h-3.5 text-yellow-100 stroke-[3]" />
+              : <div className="w-3 h-3 rounded-full border-2 border-yellow-200/70" />}
+          </button>
+          {/* Edit — green glass */}
           <button
             onClick={onEdit}
             title="Edit student"
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 backdrop-blur-md border bg-green-500/30 border-green-400/50 hover:bg-green-500/55 shadow-sm shadow-green-500/20"
           >
-            <Pencil className="w-3.5 h-3.5 text-white" />
+            <Pencil className="w-3.5 h-3.5 text-green-100" />
           </button>
-          {/* Delete */}
+          {/* Delete — red glass */}
           <button
             onClick={onDelete}
             title="Delete student"
-            className="w-8 h-8 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 backdrop-blur-md border bg-red-500/30 border-red-400/50 hover:bg-red-500/55 shadow-sm shadow-red-500/20"
           >
-            <Trash2 className="w-3.5 h-3.5 text-white" />
+            <Trash2 className="w-3.5 h-3.5 text-red-100" />
           </button>
         </div>
       </div>
@@ -304,7 +316,8 @@ function GroupViewModal({ students, onClose, onDeleted }) {
   const [confirm, setConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const confirmStudents = confirm === 'all' ? list : list.filter(s => s._id === confirm);
+  const checkedList = list.filter(s => visible.has(s._id));
+  const confirmStudents = confirm === 'all' ? checkedList : list.filter(s => s._id === confirm);
 
   const toggleVisible = (id) =>
     setVisible(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -340,13 +353,14 @@ function GroupViewModal({ students, onClose, onDeleted }) {
             <p className="text-xs text-gray-500 dark:text-gray-400">{list.length} student{list.length !== 1 ? 's' : ''}</p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Delete All */}
+            {/* Delete Selected */}
             <button
               onClick={() => setConfirm('all')}
-              className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+              disabled={checkedList.length === 0}
+              className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" />
-              Delete All
+              Delete Selected ({checkedList.length})
             </button>
             {/* Print All */}
             <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm">
