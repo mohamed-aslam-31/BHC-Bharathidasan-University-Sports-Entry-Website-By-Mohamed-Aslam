@@ -498,16 +498,6 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          {selected.size > 0 && (
-            <>
-              <button onClick={() => setGroupViewOpen(true)} className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
-                <Eye className="w-4 h-4" />View Selected ({selected.size})
-              </button>
-              <button onClick={() => setBulkModalOpen(true)} className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
-                <Trash2 className="w-4 h-4" />Delete Selected ({selected.size})
-              </button>
-            </>
-          )}
           <Link to="/students/new" className="btn-primary flex items-center gap-2 text-sm">
             <Plus className="w-4 h-4" />Add Student
           </Link>
@@ -805,6 +795,26 @@ export default function DashboardPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* Floating action buttons — visible when students are selected */}
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2 no-print">
+          <button
+            onClick={() => setGroupViewOpen(true)}
+            className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-2xl shadow-lg hover:shadow-xl transition-all"
+          >
+            <Eye className="w-4 h-4" />
+            View Selected ({selected.size})
+          </button>
+          <button
+            onClick={() => setBulkModalOpen(true)}
+            className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 px-5 rounded-2xl shadow-lg hover:shadow-xl transition-all"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Selected ({selected.size})
+          </button>
+        </div>
+      )}
 
       {/* Bulk delete modal */}
       {bulkModalOpen && (
