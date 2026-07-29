@@ -159,10 +159,14 @@ function BulkDeleteModal({ students, onConfirm, onCancel, loading }) {
         </div>
         <div className="p-5">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">The following student records will be permanently deleted:</p>
-          <div className="max-h-52 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="glass-scroll max-h-52 overflow-y-auto rounded-xl
+            bg-red-50/40 dark:bg-red-950/20
+            backdrop-blur-md
+            border border-red-200/60 dark:border-red-800/40
+            divide-y divide-red-100/60 dark:divide-red-900/30">
             {students.map((s, i) => (
-              <div key={s._id} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+              <div key={s._id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-red-100/40 dark:hover:bg-red-900/20 transition-colors">
+                <span className="w-6 h-6 rounded-full bg-red-500/20 dark:bg-red-500/30 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center flex-shrink-0 border border-red-300/40 dark:border-red-600/30">{i + 1}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{s.nameOfTheSportsperson}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Roll No: <span className="font-mono text-blue-600 dark:text-blue-400">{s.rollNo}</span></p>
