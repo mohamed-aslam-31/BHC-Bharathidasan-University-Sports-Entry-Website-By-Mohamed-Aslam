@@ -326,7 +326,7 @@ app.get('/api/students/meta', authMiddleware, async (req, res) => {
 
 app.get('/api/students/:id', authMiddleware, async (req, res) => {
   try {
-    const student = await Student.findOne({ savedTime: req.params.id }).lean();
+    const student = await Student.findById(req.params.id).lean();
     if (!student) return res.status(404).json({ error: 'Student not found' });
     res.json(student);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -362,7 +362,7 @@ app.post('/api/students', authMiddleware, upload.single('image'), async (req, re
 app.put('/api/students/:id', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const d = req.body;
-    const student = await Student.findOne({ savedTime: req.params.id });
+    const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
     if (req.file && student.image) {
       const old = path.join(__dirname, 'uploads', student.image);
@@ -388,7 +388,7 @@ app.put('/api/students/:id', authMiddleware, upload.single('image'), async (req,
 
 app.delete('/api/students/:id', authMiddleware, async (req, res) => {
   try {
-    const student = await Student.findOne({ savedTime: req.params.id });
+    const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
     if (student.image) {
       const imgPath = path.join(__dirname, 'uploads', student.image);
@@ -427,14 +427,14 @@ app.get('/api/admin/pending', authMiddleware, adminOnly, async (req, res) => {
 
 app.post('/api/admin/approve/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
-    await Student.findOneAndUpdate({ savedTime: req.params.id }, { status: 'approved' });
+    await Student.findByIdAndUpdate(req.params.id, { status: 'approved' });
     res.json({ message: 'Student approved successfully' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/reject/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
-    const student = await Student.findOne({ savedTime: req.params.id });
+    const student = await Student.findById(req.params.id);
     if (student?.image) {
       const imgPath = path.join(__dirname, 'uploads', student.image);
       if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
