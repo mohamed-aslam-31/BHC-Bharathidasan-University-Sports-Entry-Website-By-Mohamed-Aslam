@@ -60,9 +60,9 @@ function MultiSelect({ label, options, value, onChange, placeholder }) {
             value.map(v => (
               <span key={v} className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium">
                 {v}
-                <button type="button" onClick={e => { e.stopPropagation(); toggle(v); }} className="hover:text-blue-900 dark:hover:text-blue-100">
+                <span role="button" tabIndex={0} onClick={e => { e.stopPropagation(); toggle(v); }} onKeyDown={e => e.key === 'Enter' && toggle(v)} className="hover:text-blue-900 dark:hover:text-blue-100 cursor-pointer">
                   <X className="w-3 h-3" />
-                </button>
+                </span>
               </span>
             ))
           ) : (
@@ -91,7 +91,7 @@ function MultiSelect({ label, options, value, onChange, placeholder }) {
               className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
             />
           </div>
-          <div className="max-h-52 overflow-y-auto">
+          <div className="max-h-52 overflow-y-auto multiselect-scroll">
             {filtered.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-4">No options found</p>
             ) : (
@@ -102,11 +102,11 @@ function MultiSelect({ label, options, value, onChange, placeholder }) {
                     key={opt}
                     type="button"
                     onClick={() => toggle(opt)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${checked ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${checked ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
-                    <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${checked ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600'}`}>
-                      {checked && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
-                    </div>
+                    <span className="w-4 flex-shrink-0 flex items-center justify-center">
+                      {checked && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />}
+                    </span>
                     <span className={`${checked ? 'text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-gray-300'}`}>{opt}</span>
                   </button>
                 );
