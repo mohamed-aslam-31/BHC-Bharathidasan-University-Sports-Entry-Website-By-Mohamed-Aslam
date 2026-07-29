@@ -8,7 +8,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, X,
   Users, CheckCircle, Clock, Trophy, AlertTriangle, Check,
-  ChevronDown, ArrowUpDown, ChevronsUpDown
+  ChevronDown
 } from 'lucide-react';
 
 /* ─── Circular checkbox ───────────────────────────────────────────────────── */
@@ -53,18 +53,9 @@ function MultiSelect({ label, options, value, onChange, placeholder }) {
         onClick={() => setOpen(o => !o)}
         className="input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] py-1.5"
       >
-        <span className="flex-1 flex flex-wrap gap-1 min-w-0">
+        <span className="flex-1 min-w-0">
           {value.length === 0 ? (
             <span className="text-gray-400 dark:text-gray-500 text-sm">{placeholder || `All ${label}`}</span>
-          ) : value.length <= 2 ? (
-            value.map(v => (
-              <span key={v} className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full font-medium">
-                {v}
-                <span role="button" tabIndex={0} onClick={e => { e.stopPropagation(); toggle(v); }} onKeyDown={e => e.key === 'Enter' && toggle(v)} className="hover:text-blue-900 dark:hover:text-blue-100 cursor-pointer">
-                  <X className="w-3 h-3" />
-                </span>
-              </span>
-            ))
           ) : (
             <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">{value.length} selected</span>
           )}
@@ -190,13 +181,6 @@ function BulkDeleteModal({ students, onConfirm, onCancel, loading }) {
 }
 
 /* ─── SORT OPTIONS ────────────────────────────────────────────────────────── */
-const SORT_OPTIONS = [
-  { value: 'new-to-old', label: 'New to Old' },
-  { value: 'old-to-new', label: 'Old to New' },
-  { value: 'a-to-z',    label: 'Name A → Z' },
-  { value: 'z-to-a',    label: 'Name Z → A' },
-];
-
 const ROWS_OPTIONS = [10, 20, 30, 40, 50, 100];
 
 const GAMES = [
@@ -234,7 +218,8 @@ export default function DashboardPage() {
   const [years, setYears]         = useState([]);
 
   /* sort + pagination */
-  const [sort, setSort]           = useState('new-to-old');
+  const [dateSort, setDateSort]   = useState('new-to-old');
+  const [nameSort, setNameSort]   = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage]           = useState(1);
 
@@ -260,14 +245,21 @@ export default function DashboardPage() {
   }, []);
 
   /* reset to page 1 whenever a filter/sort/rows changes */
-  useEffect(() => { setPage(1); }, [rollNo, name, games, genders, departments, years, sort, rowsPerPage]);
+  useEffect(() => { setPage(1); }, [rollNo, name, games, genders, departments, years, dateSort, nameSort, rowsPerPage]);
 
   /* ── computed: sorted + filtered ── */
   const sortFn = (a, b) => {
-    if (sort === 'a-to-z') return (a.nameOfTheSportsperson || '').localeCompare(b.nameOfTheSportsperson || '');
-    if (sort === 'z-to-a') return (b.nameOfTheSportsperson || '').localeCompare(a.nameOfTheSportsperson || '');
-    if (sort === 'old-to-new') return new Date(a.createdAt) - new Date(b.createdAt);
-    return new Date(b.createdAt) - new Date(a.createdAt); // new-to-old
+    // Primary: date sort
+    let dateCmp = 0;
+    if (dateSort === 'new-to-old') dateCmp = new Date(b.createdAt) - new Date(a.createdAt);
+    else if (dateSort === 'old-to-new') dateCmp = new Date(a.createdAt) - new Date(b.createdAt);
+
+    // Secondary: name sort
+    let nameCmp = 0;
+    if (nameSort === 'a-to-z') nameCmp = (a.nameOfTheSportsperson || '').localeCompare(b.nameOfTheSportsperson || '');
+    else if (nameSort === 'z-to-a') nameCmp = (b.nameOfTheSportsperson || '').localeCompare(a.nameOfTheSportsperson || '');
+
+    return dateCmp !== 0 ? dateCmp : nameCmp;
   };
 
   const matchesFilter = (s) => {
@@ -285,7 +277,7 @@ export default function DashboardPage() {
     const pinned  = sorted.filter(s => selected.has(s._id));
     const rest    = sorted.filter(s => !selected.has(s._id) && matchesFilter(s));
     return { pinnedRows: pinned, filteredRows: rest, totalVisible: pinned.length + rest.length };
-  }, [allStudents, selected, rollNo, name, games, genders, departments, years, sort]);
+  }, [allStudents, selected, rollNo, name, games, genders, departments, years, dateSort, nameSort]);
 
   const combined = [...pinnedRows, ...filteredRows];
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
@@ -432,24 +424,25 @@ export default function DashboardPage() {
       {/* ── Table toolbar: sort + rows per page ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Sort */}
-        <div className="flex items-center gap-2">
-          <ChevronsUpDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Sort:</span>
-          <div className="flex flex-wrap gap-2">
-            {SORT_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setSort(opt.value)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                  sort === opt.value
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-400 dark:hover:border-blue-500'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">Sort by:</span>
+          <select
+            value={dateSort}
+            onChange={e => setDateSort(e.target.value)}
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          >
+            <option value="new-to-old">New to Old</option>
+            <option value="old-to-new">Old to New</option>
+          </select>
+          <select
+            value={nameSort}
+            onChange={e => setNameSort(e.target.value)}
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          >
+            <option value="">Name (no sort)</option>
+            <option value="a-to-z">A → Z</option>
+            <option value="z-to-a">Z → A</option>
+          </select>
         </div>
 
         {/* Rows per page */}
