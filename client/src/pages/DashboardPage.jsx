@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { getStudents, getStudentMeta, deleteStudent, getAdminStats } from '../api';
+import { getStudents, getStudentMeta, deleteStudent, getAdminStats, bulkDeleteStudents } from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
-  Search, Plus, Eye, Pencil, Trash2, Filter, X,
-  Users, CheckCircle, Clock, Trophy, Printer, ChevronDown
+  Plus, Eye, Pencil, Trash2, Filter, X,
+  Users, CheckCircle, Clock, Trophy, AlertTriangle
 } from 'lucide-react';
 
 const GAMES = [
@@ -37,6 +37,85 @@ function StatCard({ icon: Icon, label, value, color }) {
   );
 }
 
+/* ── Bulk-delete confirmation modal ── */
+function BulkDeleteModal({ students, onConfirm, onCancel, loading }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+
+      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-5 border-b border-gray-100 dark:border-gray-800">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              Delete {students.length} Student{students.length !== 1 ? 's' : ''}
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              This action cannot be undone
+            </p>
+          </div>
+        </div>
+
+        {/* Student list */}
+        <div className="p-5">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            The following student records will be permanently deleted:
+          </p>
+          <div className="max-h-52 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800">
+            {students.map((s, i) => (
+              <div key={s._id} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {s.nameOfTheSportsperson}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Roll No: <span className="font-mono text-blue-600 dark:text-blue-400">{s.rollNo}</span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 px-5 pb-5">
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="btn-secondary flex-1 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 text-sm bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Deleting…
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4" />
+                Delete {students.length} Record{students.length !== 1 ? 's' : ''}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
@@ -46,7 +125,16 @@ export default function DashboardPage() {
   const [meta, setMeta] = useState({ departments: [], years: [], games: [] });
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Single delete
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Bulk selection & delete
+  const [selected, setSelected] = useState(new Set());
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Filters
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState({
     rollNo: '', name: '', game: '', gender: '', department: '', year: ''
@@ -56,6 +144,7 @@ export default function DashboardPage() {
   const fetchStudents = useCallback(async (f = activeFilters) => {
     try {
       setLoading(true);
+      setSelected(new Set()); // clear selection on reload
       const params = Object.fromEntries(Object.entries(f).filter(([, v]) => v));
       if (user?.role === 'admin') params.status = 'approved';
       const res = await getStudents(params);
@@ -75,12 +164,12 @@ export default function DashboardPage() {
     }
   }, []);
 
+  /* ── Filter helpers ── */
   const applyFilters = () => {
     setActiveFilters({ ...filters });
     fetchStudents(filters);
     setFiltersOpen(false);
   };
-
   const clearFilters = () => {
     const empty = { rollNo: '', name: '', game: '', gender: '', department: '', year: '' };
     setFilters(empty);
@@ -88,7 +177,9 @@ export default function DashboardPage() {
     fetchStudents({});
     setFiltersOpen(false);
   };
+  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
+  /* ── Single delete ── */
   const handleDelete = async () => {
     try {
       await deleteStudent(deleteTarget);
@@ -101,7 +192,42 @@ export default function DashboardPage() {
     }
   };
 
-  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
+  /* ── Checkbox helpers ── */
+  const allChecked = students.length > 0 && selected.size === students.length;
+  const someChecked = selected.size > 0 && selected.size < students.length;
+
+  const toggleAll = () => {
+    if (allChecked) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(students.map(s => s._id)));
+    }
+  };
+
+  const toggleOne = (id) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  /* ── Bulk delete ── */
+  const selectedStudents = students.filter(s => selected.has(s._id));
+
+  const handleBulkDelete = async () => {
+    try {
+      setBulkDeleting(true);
+      await bulkDeleteStudents([...selected]);
+      addToast(`${selected.size} student${selected.size !== 1 ? 's' : ''} deleted successfully`);
+      setBulkModalOpen(false);
+      fetchStudents();
+    } catch {
+      addToast('Failed to delete selected students', 'error');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -121,9 +247,25 @@ export default function DashboardPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Student Records</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {students.length} student{students.length !== 1 ? 's' : ''} found
+            {selected.size > 0 && (
+              <span className="ml-2 text-blue-600 dark:text-blue-400 font-medium">
+                · {selected.size} selected
+              </span>
+            )}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Bulk delete button */}
+          {selected.size > 0 && (
+            <button
+              onClick={() => setBulkModalOpen(true)}
+              className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-xl transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected ({selected.size})
+            </button>
+          )}
+
           <button
             onClick={() => setFiltersOpen(o => !o)}
             className={`btn-secondary flex items-center gap-2 text-sm ${activeFilterCount > 0 ? 'border-blue-400 text-blue-600 dark:text-blue-400' : ''}`}
@@ -219,6 +361,16 @@ export default function DashboardPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                  {/* Select-all checkbox */}
+                  <th className="pl-4 pr-2 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={allChecked}
+                      ref={el => { if (el) el.indeterminate = someChecked; }}
+                      onChange={toggleAll}
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 cursor-pointer accent-blue-600"
+                    />
+                  </th>
                   {['Roll No', 'Name', 'Game', 'Gender', 'Department', 'Year', 'Actions'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {h}
@@ -227,80 +379,101 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {students.map(s => (
-                  <tr key={s._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-blue-600 dark:text-blue-400">#{s.rollNo}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {s.image ? (
-                          <img src={`/uploads/${s.image}`} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-100 dark:border-blue-900" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                              {s.nameOfTheSportsperson?.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                          {s.nameOfTheSportsperson}
+                {students.map(s => {
+                  const isSelected = selected.has(s._id);
+                  return (
+                    <tr
+                      key={s._id}
+                      className={`transition-colors ${
+                        isSelected
+                          ? 'bg-blue-50 dark:bg-blue-900/10'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'
+                      }`}
+                    >
+                      {/* Row checkbox */}
+                      <td className="pl-4 pr-2 py-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(s._id)}
+                          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 cursor-pointer accent-blue-600"
+                        />
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">#{s.rollNo}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {s.image ? (
+                            <img src={`/uploads/${s.image}`} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-100 dark:border-blue-900" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                {s.nameOfTheSportsperson?.charAt(0)}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                            {s.nameOfTheSportsperson}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full whitespace-nowrap">
+                          {s.nameOfTheGame}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-full whitespace-nowrap">
-                        {s.nameOfTheGame}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
-                        s.gender === 'MALE'
-                          ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400'
-                          : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'
-                      }`}>
-                        {s.gender}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[160px] truncate">
-                      {s.nameOfThePresentClass || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                      {s.year || '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <Link
-                          to={`/students/${s._id}/view`}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                        <Link
-                          to={`/students/${s._id}/edit`}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => setDeleteTarget(s._id)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${
+                          s.gender === 'MALE'
+                            ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400'
+                            : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'
+                        }`}>
+                          {s.gender}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[160px] truncate">
+                        {s.nameOfThePresentClass || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {s.year || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <Link
+                            to={`/students/${s._id}/view`}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            title="View"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <Link
+                            to={`/students/${s._id}/edit`}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteTarget(s._id)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
+      {/* Single delete dialog */}
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete Student"
@@ -310,6 +483,16 @@ export default function DashboardPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* Bulk delete modal */}
+      {bulkModalOpen && (
+        <BulkDeleteModal
+          students={selectedStudents}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkModalOpen(false)}
+          loading={bulkDeleting}
+        />
+      )}
     </div>
   );
 }

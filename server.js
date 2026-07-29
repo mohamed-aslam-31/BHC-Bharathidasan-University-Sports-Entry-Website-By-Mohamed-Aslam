@@ -399,6 +399,23 @@ app.delete('/api/students/:id', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.post('/api/students/bulk-delete', authMiddleware, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.status(400).json({ error: 'No IDs provided' });
+    const students = await Student.find({ _id: { $in: ids } });
+    for (const s of students) {
+      if (s.image) {
+        const imgPath = path.join(__dirname, 'uploads', s.image);
+        if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+      }
+      await s.deleteOne();
+    }
+    res.json({ message: `${students.length} student(s) deleted` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ─── ADMIN ROUTES ─────────────────────────────────────────────────────────────
 
 app.get('/api/admin/pending', authMiddleware, adminOnly, async (req, res) => {
