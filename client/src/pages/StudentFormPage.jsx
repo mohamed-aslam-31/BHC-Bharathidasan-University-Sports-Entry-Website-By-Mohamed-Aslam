@@ -62,6 +62,18 @@ const DEFAULT_UNIVERSITIES = [
   'Tamil Nadu Open University',
 ];
 
+const DEFAULT_COURSES = [
+  'B.A English','B.A Tamil','B.A History','B.A Economics','B.A Sociology',
+  'B.Sc Mathematics','B.Sc Physics','B.Sc Chemistry','B.Sc Biology',
+  'B.Sc Computer Science','B.Sc Statistics','B.Sc Biochemistry',
+  'B.Com','B.Com (CA)','B.Com (CS)','BBA','BCA',
+  'B.Ed','B.P.Ed',
+  'M.A English','M.A Tamil','M.A History','M.A Economics',
+  'M.Sc Mathematics','M.Sc Physics','M.Sc Chemistry','M.Sc Computer Science',
+  'M.Com','MBA','MCA','M.Ed','M.P.Ed',
+  'Ph.D',
+];
+
 /* ─── Sanitisers ───────────────────────────────────────────────────────────── */
 
 /** Strip non-digit/dash and cap at 9 chars (DDDD-DDDD) */
@@ -80,6 +92,10 @@ const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u20
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Like sanitizeText but allows special characters — for department, course names etc. */
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
+/** Name of Exam: letters/digits, NO spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
+const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9&()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').slice(0, 30);
+/** Month & Year of Passing: letters/digits/spaces, allowed specials: - " \u201C \u201D ' \u2018 \u2019 / \ | [ ] ( ) & # @ ; : , . */
+const sanitizeMonthYear = (v) => v.replace(/[^a-zA-Z0-9 \-"'\u201C\u201D\u2018\u2019/\\|[\]()&#@;:,.]/g, '').replace(/ {2,}/g, ' ').slice(0, 15);
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
 
@@ -112,6 +128,16 @@ const validateMinMax = (v, label, min, max, required = false) =>
   v.length > max        ? `${label} must be at most ${max} characters` : '';
 
 const validateUniversity = (v) => validateMinMax(v, 'University', 3, 60, true);
+
+const validateExamName = (v) =>
+  !v ? 'Name of exam is required' :
+  v.trim().length < 3 ? 'Minimum 3 characters required' :
+  v.length > 30 ? 'Maximum 30 characters allowed' : '';
+
+const validateMonthYear = (v) =>
+  !v ? 'Month & year of passing is required' :
+  v.trim().length < 8 ? 'Minimum 8 characters required' :
+  v.length > 15 ? 'Maximum 15 characters allowed' : '';
 
 const validateDob = (v) =>
   !v ? 'Date of birth is required' : '';
@@ -451,6 +477,8 @@ export default function StudentFormPage() {
       case 'nameOfThePresentClass':msg = validateMinMax(value, 'Department', 3, 40, true);            break;
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
       case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40, true);        break;
+      case 'nameOfExam':           msg = validateExamName(value);                                     break;
+      case 'dateAndYear':          msg = validateMonthYear(value);                                    break;
       default: break;
     }
     setErrors((e) => ({ ...e, [key]: msg }));
@@ -475,6 +503,8 @@ export default function StudentFormPage() {
       nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Department', 3, 40, true),
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
       presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
+      nameOfExam:          validateExamName(form.nameOfExam),
+      dateAndYear:         validateMonthYear(form.dateAndYear),
     };
     setErrors(next);
     return Object.values(next).every((e) => !e);
@@ -609,6 +639,7 @@ export default function StudentFormPage() {
   const universityOptions = [...new Set([...DEFAULT_UNIVERSITIES, ...(meta.universities || [])])];
   const classOptions      = DEFAULT_CLASSES;
   const durationOptions   = DEFAULT_DURATIONS;
+  const courseOptions     = [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
 
   /* ── early return ── */
 
@@ -1072,6 +1103,40 @@ export default function StudentFormPage() {
 
         </Section>
 
+        {/* ── Qualifying Examination ──────────────────────────────────────── */}
+        <Section title="Qualifying Examination">
+          <Field label="Name of Exam" required>
+            <input
+              className={`input-field ${errors.nameOfExam ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+              placeholder="e.g. HSC,SSLC,XII (no spaces)"
+              value={form.nameOfExam}
+              maxLength={30}
+              onChange={(e) => {
+                const v = sanitizeExamName(e.target.value);
+                set('nameOfExam')(v);
+                touch('nameOfExam', v);
+              }}
+              onBlur={() => touch('nameOfExam', form.nameOfExam)}
+            />
+            <FieldMeta value={form.nameOfExam} max={30} always error={errors.nameOfExam} />
+          </Field>
+          <Field label="Month & Year of Passing" required>
+            <input
+              className={`input-field ${errors.dateAndYear ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+              placeholder="e.g. April-2022"
+              value={form.dateAndYear}
+              maxLength={15}
+              onChange={(e) => {
+                const v = sanitizeMonthYear(e.target.value);
+                set('dateAndYear')(v);
+                touch('dateAndYear', v);
+              }}
+              onBlur={() => touch('dateAndYear', form.dateAndYear)}
+            />
+            <FieldMeta value={form.dateAndYear} max={15} always error={errors.dateAndYear} />
+          </Field>
+        </Section>
+
         {/* ── Academic Details ────────────────────────────────────────────── */}
         <Section title="Academic Details">
 
@@ -1124,17 +1189,16 @@ export default function StudentFormPage() {
 
           {/* Present Course */}
           <Field label="Present Course" required>
-            <input
-              className={`input-field ${errors.presentCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="e.g. B.Sc Computer Science"
+            <ComboBox
               value={form.presentCourse}
+              onChange={(v) => { set('presentCourse')(v); touch('presentCourse', v); }}
+              options={courseOptions}
+              placeholder="Select or type course"
+              required
+              error={errors.presentCourse}
+              sanitizer={sanitizeAcademic}
               maxLength={40}
-              onChange={(e) => {
-                const v = sanitizeAcademic(e.target.value);
-                set('presentCourse')(v);
-                touch('presentCourse', v);
-              }}
-              onBlur={() => touch('presentCourse', form.presentCourse)}
+              minCreate={2}
             />
             <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
           </Field>
@@ -1173,20 +1237,6 @@ export default function StudentFormPage() {
               placeholder="Details of previous course participation"
               value={form.previousCourse} onChange={setRaw('previousCourse')} />
             <FieldMeta value={form.previousCourse} />
-          </Field>
-        </Section>
-
-        {/* ── Qualifying Examination ──────────────────────────────────────── */}
-        <Section title="Qualifying Examination">
-          <Field label="Name of Exam">
-            <input className="input-field" placeholder="e.g. HSC, SSLC"
-              value={form.nameOfExam} onChange={setRaw('nameOfExam')} />
-            <FieldMeta value={form.nameOfExam} />
-          </Field>
-          <Field label="Date & Year of Passing">
-            <input className="input-field" placeholder="e.g. April 2022"
-              value={form.dateAndYear} onChange={setRaw('dateAndYear')} />
-            <FieldMeta value={form.dateAndYear} />
           </Field>
         </Section>
 
