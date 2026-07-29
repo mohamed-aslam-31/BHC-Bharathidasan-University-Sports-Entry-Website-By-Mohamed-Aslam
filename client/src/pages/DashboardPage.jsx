@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { getStudents, getStudentMeta, deleteStudent, getAdminStats, bulkDeleteStudents } from '../api';
@@ -142,9 +142,9 @@ function StatCard({ icon: Icon, label, value, color }) {
 }
 
 /* ─── Bulk-delete confirmation modal ─────────────────────────────────────── */
-function BulkDeleteModal({ students, onConfirm, onCancel, loading }) {
+function BulkDeleteModal({ students, onConfirm, onCancel, loading, zIndex = 50 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex }}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="flex items-center gap-3 p-5 border-b border-gray-100 dark:border-gray-800">
@@ -188,7 +188,7 @@ function BulkDeleteModal({ students, onConfirm, onCancel, loading }) {
 }
 
 /* ─── Group view modal ────────────────────────────────────────────────────── */
-function StudentCard({ s }) {
+function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
   const dob = s.dateOfBirth ? new Date(s.dateOfBirth) : null;
   const age = dob ? Math.floor((Date.now() - dob) / (365.25 * 24 * 60 * 60 * 1000)) : null;
   const Row = ({ label, value }) => value ? (
@@ -204,8 +204,8 @@ function StudentCard({ s }) {
     </div>
   );
   return (
-    <div className="card overflow-hidden mb-6 print-student">
-      {/* Header */}
+    <div className={`card overflow-hidden mb-6 print-student transition-opacity duration-200 ${checked ? '' : 'opacity-40'}`}>
+      {/* Header — always visible */}
       <div className="bg-blue-600 dark:bg-blue-700 text-white p-4 flex items-center gap-4">
         <div className="flex-1 text-center">
           <h2 className="text-base font-bold">BHARATHIDASAN UNIVERSITY</h2>
@@ -222,78 +222,168 @@ function StudentCard({ s }) {
             </div>
           )}
         </div>
-      </div>
-      <div className="p-4">
-        {/* Badges */}
-        <div className="flex items-center gap-2 flex-wrap mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-3 py-1 rounded-full text-xs">{s.nameOfTheGame}</span>
-          <span className={`font-medium px-3 py-1 rounded-full text-xs ${s.gender === 'MALE' ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400' : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'}`}>{s.gender}</span>
-          <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">Roll No: <strong className="text-gray-900 dark:text-white">{s.rollNo}</strong></span>
-        </div>
-        <Section title="Personal Information">
-          <Row label="Name of Sportsperson" value={s.nameOfTheSportsperson} />
-          <Row label="Father's Name" value={s.fathersName} />
-          <Row label="Mother's Name" value={s.motherName} />
-          <Row label="Date of Birth" value={dob ? `${dob.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}${age ? ` (Age: ${age} yrs)` : ''}` : null} />
-          <Row label="Aadhar Number" value={s.aadharNumber} />
-          <Row label="Phone Number" value={s.phoneNumber} />
-          <Row label="Address" value={s.address} />
-        </Section>
-        <Section title="Academic Information">
-          <Row label="Present Class" value={s.presentClass} />
-          <Row label="Department" value={s.nameOfThePresentClass} />
-          <Row label="Duration of Course" value={s.durationOfCourse} />
-          <Row label="University" value={s.university} />
-          <Row label="Present Course" value={s.presentCourse} />
-        </Section>
-        <Section title="Qualifying Examination">
-          <Row label="Name of Exam" value={s.nameOfExam} />
-          <Row label="Date & Year of Passing" value={s.dateAndYear} />
-        </Section>
-        <Section title="Previous IUT Participation">
-          <Row label="Graduate Course (Years)" value={s.graduateCourse} />
-          <Row label="PG Course (Years)" value={s.pgCourse} />
-          <Row label="Previous Course Details" value={s.previousCourse} />
-        </Section>
-        <Section title="Sports Details">
-          <Row label="Tournament Number" value={s.tournament} />
-          <Row label="T-Shirt Size" value={s.tshirt} />
-          <Row label="Track Size" value={s.track} />
-        </Section>
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-4 text-center">
-          {['Student Signature', 'HOD / Principal', 'Physical Director'].map(lbl => (
-            <div key={lbl}><div className="h-10 border-b border-gray-300 dark:border-gray-600 mb-1" /><p className="text-xs text-gray-500 dark:text-gray-400">{lbl}</p></div>
-          ))}
+        {/* Action buttons — right side of header */}
+        <div className="flex flex-col items-center gap-2 flex-shrink-0 no-print">
+          {/* Circle checkbox */}
+          <CircleCheckbox checked={checked} onChange={onToggle} />
+          {/* Edit */}
+          <button
+            onClick={onEdit}
+            title="Edit student"
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition-colors"
+          >
+            <Pencil className="w-3.5 h-3.5 text-white" />
+          </button>
+          {/* Delete */}
+          <button
+            onClick={onDelete}
+            title="Delete student"
+            className="w-8 h-8 rounded-full bg-white/20 hover:bg-red-500/70 flex items-center justify-center transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-white" />
+          </button>
         </div>
       </div>
+      {/* Body — hidden when unchecked */}
+      {checked && (
+        <div className="p-4">
+          {/* Badges */}
+          <div className="flex items-center gap-2 flex-wrap mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
+            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold px-3 py-1 rounded-full text-xs">{s.nameOfTheGame}</span>
+            <span className={`font-medium px-3 py-1 rounded-full text-xs ${s.gender === 'MALE' ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400' : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'}`}>{s.gender}</span>
+            <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">Roll No: <strong className="text-gray-900 dark:text-white">{s.rollNo}</strong></span>
+          </div>
+          <Section title="Personal Information">
+            <Row label="Name of Sportsperson" value={s.nameOfTheSportsperson} />
+            <Row label="Father's Name" value={s.fathersName} />
+            <Row label="Mother's Name" value={s.motherName} />
+            <Row label="Date of Birth" value={dob ? `${dob.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}${age ? ` (Age: ${age} yrs)` : ''}` : null} />
+            <Row label="Aadhar Number" value={s.aadharNumber} />
+            <Row label="Phone Number" value={s.phoneNumber} />
+            <Row label="Address" value={s.address} />
+          </Section>
+          <Section title="Academic Information">
+            <Row label="Present Class" value={s.presentClass} />
+            <Row label="Department" value={s.nameOfThePresentClass} />
+            <Row label="Duration of Course" value={s.durationOfCourse} />
+            <Row label="University" value={s.university} />
+            <Row label="Present Course" value={s.presentCourse} />
+          </Section>
+          <Section title="Qualifying Examination">
+            <Row label="Name of Exam" value={s.nameOfExam} />
+            <Row label="Date & Year of Passing" value={s.dateAndYear} />
+          </Section>
+          <Section title="Previous IUT Participation">
+            <Row label="Graduate Course (Years)" value={s.graduateCourse} />
+            <Row label="PG Course (Years)" value={s.pgCourse} />
+            <Row label="Previous Course Details" value={s.previousCourse} />
+          </Section>
+          <Section title="Sports Details">
+            <Row label="Tournament Number" value={s.tournament} />
+            <Row label="T-Shirt Size" value={s.tshirt} />
+            <Row label="Track Size" value={s.track} />
+          </Section>
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-4 text-center">
+            {['Student Signature', 'HOD / Principal', 'Physical Director'].map(lbl => (
+              <div key={lbl}><div className="h-10 border-b border-gray-300 dark:border-gray-600 mb-1" /><p className="text-xs text-gray-500 dark:text-gray-400">{lbl}</p></div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function GroupViewModal({ students, onClose }) {
+function GroupViewModal({ students, onClose, onDeleted }) {
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+
+  const [list, setList] = useState(students);
+  const [visible, setVisible] = useState(() => new Set(students.map(s => s._id)));
+  // confirm: null | 'all' | <studentId>
+  const [confirm, setConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmStudents = confirm === 'all' ? list : list.filter(s => s._id === confirm);
+
+  const toggleVisible = (id) =>
+    setVisible(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const ids = confirmStudents.map(s => s._id);
+      if (ids.length === 1) await deleteStudent(ids[0]);
+      else await bulkDeleteStudents(ids);
+      const gone = new Set(ids);
+      const remaining = list.filter(s => !gone.has(s._id));
+      setList(remaining);
+      setVisible(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n; });
+      setConfirm(null);
+      addToast(`${ids.length} student${ids.length !== 1 ? 's' : ''} deleted`);
+      onDeleted && onDeleted(ids);
+      if (remaining.length === 0) { onClose(); return; }
+    } catch {
+      addToast('Failed to delete', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-gray-950">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 no-print flex-shrink-0">
-        <div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">Group View</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{students.length} student{students.length !== 1 ? 's' : ''} selected</p>
+    <>
+      <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-gray-950">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 no-print flex-shrink-0">
+          <div>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">Group View</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{list.length} student{list.length !== 1 ? 's' : ''}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Delete All */}
+            <button
+              onClick={() => setConfirm('all')}
+              className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete All
+            </button>
+            {/* Print All */}
+            <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+              Print All
+            </button>
+            <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-            Print All
-          </button>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+        {/* Scrollable content */}
+        <div className="group-view-scroll flex-1 overflow-y-auto p-5 max-w-4xl w-full mx-auto">
+          {list.map(s => (
+            <StudentCard
+              key={s._id}
+              s={s}
+              checked={visible.has(s._id)}
+              onToggle={() => toggleVisible(s._id)}
+              onEdit={() => { onClose(); navigate(`/students/${s._id}/edit`); }}
+              onDelete={() => setConfirm(s._id)}
+            />
+          ))}
         </div>
       </div>
-      {/* Scrollable content */}
-      <div className="group-view-scroll flex-1 overflow-y-auto p-5 max-w-4xl w-full mx-auto">
-        {students.map(s => <StudentCard key={s._id} s={s} />)}
-      </div>
-    </div>,
+
+      {/* Delete confirmation — rendered above group view */}
+      {confirm && (
+        <BulkDeleteModal
+          students={confirmStudents}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirm(null)}
+          loading={deleting}
+          zIndex={10000}
+        />
+      )}
+    </>,
     document.body
   );
 }
@@ -867,7 +957,8 @@ export default function DashboardPage() {
       {groupViewOpen && (
         <GroupViewModal
           students={selectedStudents}
-          onClose={() => setGroupViewOpen(false)}
+          onClose={() => { setGroupViewOpen(false); setSelected(new Set()); }}
+          onDeleted={(ids) => { const gone = new Set(ids); setSelected(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n; }); fetchAll(); }}
         />
       )}
     </div>
