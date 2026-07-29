@@ -442,29 +442,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Table toolbar: rows per page ── */}
-      <div className="flex justify-end">
-        {/* Rows per page */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Show:</span>
-          <div className="flex gap-1">
-            {ROWS_OPTIONS.map(n => (
-              <button
-                key={n}
-                onClick={() => setRowsPerPage(n)}
-                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
-                  rowsPerPage === n
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-400 dark:hover:border-blue-500'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* ── Table ── */}
       <div className="card overflow-hidden">
         {loading ? (
@@ -556,9 +533,28 @@ export default function DashboardPage() {
 
             {/* ── Pagination footer ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Showing <span className="font-semibold text-gray-900 dark:text-white">{pageStart + 1}</span>–<span className="font-semibold text-gray-900 dark:text-white">{Math.min(pageStart + rowsPerPage, combined.length)}</span> of <span className="font-semibold text-gray-900 dark:text-white">{combined.length}</span>
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing <span className="font-semibold text-gray-900 dark:text-white">{pageStart + 1}</span>–<span className="font-semibold text-gray-900 dark:text-white">{Math.min(pageStart + rowsPerPage, combined.length)}</span> of <span className="font-semibold text-gray-900 dark:text-white">{combined.length}</span>
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Show:</span>
+                  <datalist id="rows-options">
+                    {ROWS_OPTIONS.map(n => <option key={n} value={n} />)}
+                  </datalist>
+                  <input
+                    type="number"
+                    list="rows-options"
+                    min={1}
+                    value={rowsPerPage}
+                    onChange={e => {
+                      const v = parseInt(e.target.value, 10);
+                      if (v > 0) setRowsPerPage(v);
+                    }}
+                    className="w-16 text-sm text-center px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPage(1)}
