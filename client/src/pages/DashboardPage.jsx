@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -270,8 +271,8 @@ function StudentCard({ s }) {
 }
 
 function GroupViewModal({ students, onClose }) {
-  return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-gray-950">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-gray-950">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 no-print flex-shrink-0">
         <div>
@@ -292,7 +293,8 @@ function GroupViewModal({ students, onClose }) {
       <div className="group-view-scroll flex-1 overflow-y-auto p-5 max-w-4xl w-full mx-auto">
         {students.map(s => <StudentCard key={s._id} s={s} />)}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
