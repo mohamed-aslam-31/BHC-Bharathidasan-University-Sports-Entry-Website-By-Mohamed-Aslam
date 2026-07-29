@@ -91,7 +91,7 @@ export default function StudentViewPage() {
         </div>
 
         {/* ── College / Game line ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '2px', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '10px', fontFamily: 'Arial, sans-serif' }}>
           <div>Name of the College: <strong>Bishop Heber College, Trichy</strong></div>
           <div>Name of the Game: <strong>{student.nameOfTheGame}{student.gender ? ' - ' + student.gender : ''}</strong></div>
         </div>
