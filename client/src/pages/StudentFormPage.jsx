@@ -27,6 +27,19 @@ const DEFAULT_CLASSES = [
 
 const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
 
+const DEFAULT_UNIVERSITIES = [
+  'Bharathidasan University',
+  'University of Madras',
+  'Anna University',
+  'Madurai Kamaraj University',
+  'Bharathiar University',
+  'Annamalai University',
+  'Manonmaniam Sundaranar University',
+  'Periyar University',
+  'Mother Teresa Women\'s University',
+  'Tamil Nadu Open University',
+];
+
 /* ─── Sanitisers ───────────────────────────────────────────────────────────── */
 
 /** Strip non-digit/dash and cap at 9 chars (DDDD-DDDD) */
@@ -465,11 +478,12 @@ export default function StudentFormPage() {
 
   /* ── option lists ── */
 
-  const yearOptions     = [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
-  const gameOptions     = [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
-  const deptOptions     = [...new Set([...(meta.departments || [])])];
-  const classOptions    = DEFAULT_CLASSES;
-  const durationOptions = DEFAULT_DURATIONS;
+  const yearOptions       = [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
+  const gameOptions       = [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
+  const deptOptions       = [...new Set([...(meta.departments || [])])];
+  const universityOptions = [...new Set([...DEFAULT_UNIVERSITIES, ...(meta.universities || [])])];
+  const classOptions      = DEFAULT_CLASSES;
+  const durationOptions   = DEFAULT_DURATIONS;
 
   /* ── early return ── */
 
@@ -754,17 +768,16 @@ export default function StudentFormPage() {
 
           {/* University */}
           <Field label="University" required>
-            <input
-              className={`input-field ${errors.university ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="e.g. Bharathidasan University"
+            <ComboBox
               value={form.university}
+              onChange={(v) => { set('university')(v); touch('university', v); }}
+              options={universityOptions}
+              placeholder="Select or type university"
+              required
+              error={errors.university}
+              sanitizer={sanitizeAcademic}
               maxLength={50}
-              onChange={(e) => {
-                const v = sanitizeAcademic(e.target.value);
-                set('university')(v);
-                touch('university', v);
-              }}
-              onBlur={() => touch('university', form.university)}
+              minCreate={3}
             />
             <FieldMeta value={form.university} max={50} always error={errors.university} />
           </Field>
