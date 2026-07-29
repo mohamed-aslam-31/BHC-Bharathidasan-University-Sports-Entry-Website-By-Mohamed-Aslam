@@ -104,6 +104,7 @@ export default function StudentViewPage() {
             <col style={{ width: '16%' }} />
             <col style={{ width: '42%' }} />
           </colgroup>
+          <tbody>
 
           {/* Row 1 – Name of sportsperson */}
           <tr>
@@ -209,6 +210,7 @@ export default function StudentViewPage() {
               {student.phoneNumber ? <><br /><strong>{student.phoneNumber}</strong></> : null}
             </td>
           </tr>
+          </tbody>
         </table>
 
         {/* ── Footer notes ── */}
