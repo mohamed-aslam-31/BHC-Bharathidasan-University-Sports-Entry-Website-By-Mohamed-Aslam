@@ -332,14 +332,16 @@ export default function DashboardPage() {
     }
   };
 
+  const nonDefaultSort = sortBy.filter(v => v !== 'new-to-old');
   const activeFilterCount = [
     rollNo, name,
-    ...games, ...genders, ...departments, ...years
+    ...games, ...genders, ...departments, ...years, ...nonDefaultSort
   ].filter(Boolean).length;
 
   const clearAllFilters = () => {
     setRollNo(''); setName('');
     setGames([]); setGenders([]); setDepts([]); setYears([]);
+    setSortBy(['new-to-old']);
   };
 
   /* ── department & year options ── */
