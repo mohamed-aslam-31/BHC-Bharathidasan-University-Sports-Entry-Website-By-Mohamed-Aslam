@@ -755,6 +755,19 @@ export default function StudentFormPage() {
                 </button>
               </div>
 
+              {/* URL display */}
+              <div className="px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Source URL</p>
+                <a
+                  href={idCardUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-500 dark:text-blue-400 break-all hover:underline"
+                >
+                  {idCardUrl}
+                </a>
+              </div>
+
               {/* Photo preview */}
               <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50">
                 <img
