@@ -58,6 +58,9 @@ const validatePersonName = (v, label = 'Name') =>
   /[^a-zA-Z. ]/.test(v) ? `${label}: letters, "." and spaces only` :
   / {2,}/.test(v) ? `${label}: no consecutive spaces` : '';
 
+const validateGender = (v) =>
+  !v ? 'Gender is required' : '';
+
 const validateGame = (v) =>
   !v ? 'Name of the game is required' : '';
 
@@ -371,6 +374,7 @@ export default function StudentFormPage() {
     switch (key) {
       case 'year':           msg = validateYear(value);                         break;
       case 'rollNo':         msg = validateRollNo(value);                       break;
+      case 'gender':         msg = validateGender(value);                       break;
       case 'nameOfTheGame':  msg = validateGame(value);                         break;
       case 'studentName':    msg = validatePersonName(value, 'Sportsperson name'); break;
       case 'fatherName':     msg = validatePersonName(value, "Father's name");  break;
@@ -389,6 +393,7 @@ export default function StudentFormPage() {
     const next = {
       year:           validateYear(form.year),
       rollNo:         validateRollNo(form.rollNo),
+      gender:         validateGender(form.gender),
       nameOfTheGame:  validateGame(form.nameOfTheGame),
       studentName:    validatePersonName(form.studentName, 'Sportsperson name'),
       fatherName:     validatePersonName(form.fatherName, "Father's name"),
@@ -543,15 +548,24 @@ export default function StudentFormPage() {
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
                       form.gender === g
                         ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
-                        : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
+                        : errors.gender
+                          ? 'bg-white/40 dark:bg-gray-800/40 border-red-300/70 dark:border-red-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                          : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
                     }`}
                   >
                     <input type="radio" name="gender" value={g} checked={form.gender === g}
-                      onChange={() => set('gender')(g)} className="sr-only" />
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                      form.gender === g ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                      onChange={() => { set('gender')(g); touch('gender', g); }} className="sr-only" />
+                    {/* Checkbox square */}
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      form.gender === g
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-300 dark:border-gray-500 bg-transparent'
                     }`}>
-                      {form.gender === g && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      {form.gender === g && (
+                        <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="2,6 5,9 10,3" />
+                        </svg>
+                      )}
                     </div>
                     <span className={`text-sm font-medium ${
                       form.gender === g ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'
@@ -559,15 +573,20 @@ export default function StudentFormPage() {
                   </label>
                 ))}
               </div>
-              {form.gender && (
-                <button
-                  type="button"
-                  onClick={() => set('gender')('')}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                >
-                  <X className="w-3 h-3" /> Unselect
-                </button>
-              )}
+              <div className="flex items-center justify-between min-h-[1rem]">
+                {errors.gender
+                  ? <span className="text-xs text-red-500">{errors.gender}</span>
+                  : <span />}
+                {form.gender && (
+                  <button
+                    type="button"
+                    onClick={() => { set('gender')(''); touch('gender', ''); }}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" /> Unselect
+                  </button>
+                )}
+              </div>
             </div>
           </Field>
 
