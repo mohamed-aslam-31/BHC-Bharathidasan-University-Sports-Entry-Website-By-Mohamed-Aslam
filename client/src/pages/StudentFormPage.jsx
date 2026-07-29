@@ -62,7 +62,34 @@ const DEFAULT_CLASSES = [
   'I Ph.D','II Ph.D','III Ph.D',
 ];
 
-const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
+const DEFAULT_DURATIONS = ['1 Year','2 Years','3 Years','4 Years','5 Years'];
+
+const DEFAULT_EXAMS = [
+  /* School board — 10th */
+  'SSLC','Matriculation (10th)','CBSE (10th)','ICSE (10th)','State Board (10th)','NIOS (10th)',
+  /* School board — 12th / Higher Secondary */
+  'HSC','Higher Secondary','CBSE (12th)','ISC (12th)','State Board (12th)','NIOS (12th)',
+  /* Engineering entrance */
+  'JEE Main','JEE Advanced','MHT-CET','TS EAMCET','AP EAMCET','KCET','UGET','SRMJEEE','VITEEE',
+  /* Medical entrance */
+  'NEET','JIPMER','AIIMS',
+  /* Management entrance */
+  'CAT','MAT','GMAT','CMAT','TANCET (MBA)','KMAT',
+  /* Law / Other */
+  'CLAT','GATE','CUET','TNPG','TANCET (ME/MTech)',
+];
+
+const DEFAULT_MONTH_YEARS = (() => {
+  const months = [
+    'January','February','March','April','May','June',
+    'July','August','September','October','November','December',
+  ];
+  const list = [];
+  for (let y = 2015; y <= 2030; y++) {
+    for (const m of months) list.push(`${m}-${y}`);
+  }
+  return list;
+})();
 
 const DEFAULT_UNIVERSITIES = [
   'Bharathidasan University',
@@ -142,7 +169,7 @@ const validateMinMax = (v, label, min, max, required = false) =>
   v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
   v.length > max        ? `${label} must be at most ${max} characters` : '';
 
-const validateUniversity = (v) => validateMinMax(v, 'Month & year of first admission to university', 3, 30, true);
+const validateUniversity = (v) => validateMinMax(v, 'Month & year of first admission to university', 8, 15, true);
 
 const validateExamName = (v) =>
   !v ? 'Name of exam is required' :
@@ -489,7 +516,7 @@ export default function StudentFormPage() {
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
       case 'university':           msg = validateUniversity(value);                                                              break;
       case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 30, true);                                break;
-      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Month & year of first admission to present course', 3, 30, true); break;
+      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Month & year of first admission to present course', 8, 15, true); break;
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
       case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40, true);        break;
       case 'nameOfExam':           msg = validateExamName(value);                                     break;
@@ -515,7 +542,7 @@ export default function StudentFormPage() {
       phoneNumber:         validatePhone(form.phoneNumber),
       university:          validateUniversity(form.university),
       presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 30, true),
-      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Month & year of first admission to present course', 3, 30, true),
+      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Month & year of first admission to present course', 8, 15, true),
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
       presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
       nameOfExam:          validateExamName(form.nameOfExam),
@@ -655,6 +682,8 @@ export default function StudentFormPage() {
   const classOptions      = DEFAULT_CLASSES;
   const durationOptions   = DEFAULT_DURATIONS;
   const courseOptions     = [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
+  const examOptions       = DEFAULT_EXAMS;
+  const monthYearOptions  = DEFAULT_MONTH_YEARS;
 
   /* ── early return ── */
 
@@ -1121,32 +1150,30 @@ export default function StudentFormPage() {
         {/* ── Qualifying Examination ──────────────────────────────────────── */}
         <Section title="Qualifying Examination">
           <Field label="Name of Exam" required>
-            <input
-              className={`input-field ${errors.nameOfExam ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="e.g. HSC, SSLC"
+            <ComboBox
               value={form.nameOfExam}
+              onChange={(v) => { set('nameOfExam')(v); touch('nameOfExam', v); }}
+              options={examOptions}
+              placeholder="e.g. HSC, SSLC"
+              required
+              error={errors.nameOfExam}
+              sanitizer={sanitizeExamName}
               maxLength={30}
-              onChange={(e) => {
-                const v = sanitizeExamName(e.target.value);
-                set('nameOfExam')(v);
-                touch('nameOfExam', v);
-              }}
-              onBlur={() => touch('nameOfExam', form.nameOfExam)}
+              minCreate={3}
             />
             <FieldMeta value={form.nameOfExam} max={30} always error={errors.nameOfExam} />
           </Field>
           <Field label="Month & Year of Passing" required>
-            <input
-              className={`input-field ${errors.dateAndYear ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="e.g. April-2022"
+            <ComboBox
               value={form.dateAndYear}
+              onChange={(v) => { set('dateAndYear')(v); touch('dateAndYear', v); }}
+              options={monthYearOptions}
+              placeholder="e.g. April-2022"
+              required
+              error={errors.dateAndYear}
+              sanitizer={sanitizeMonthYear}
               maxLength={15}
-              onChange={(e) => {
-                const v = sanitizeMonthYear(e.target.value);
-                set('dateAndYear')(v);
-                touch('dateAndYear', v);
-              }}
-              onBlur={() => touch('dateAndYear', form.dateAndYear)}
+              minCreate={3}
             />
             <FieldMeta value={form.dateAndYear} max={15} always error={errors.dateAndYear} />
           </Field>
@@ -1211,15 +1238,15 @@ export default function StudentFormPage() {
             <ComboBox
               value={form.university}
               onChange={(v) => { set('university')(v); touch('university', v); }}
-              options={classOptions}
-              placeholder="e.g. I B.C.A, II B.COM(CA)"
+              options={monthYearOptions}
+              placeholder="e.g. April-2022"
               required
               error={errors.university}
-              sanitizer={sanitizeAcademic}
-              maxLength={30}
-              minCreate={1}
+              sanitizer={sanitizeMonthYear}
+              maxLength={15}
+              minCreate={3}
             />
-            <FieldMeta value={form.university} max={30} always error={errors.university} />
+            <FieldMeta value={form.university} max={15} always error={errors.university} />
           </Field>
 
           {/* Month & Year of First Admission to Present Course */}
@@ -1227,15 +1254,15 @@ export default function StudentFormPage() {
             <ComboBox
               value={form.nameOfThePresentClass}
               onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
-              options={classOptions}
-              placeholder="e.g. I B.C.A, II B.COM(CA)"
+              options={monthYearOptions}
+              placeholder="e.g. April-2022"
               required
               error={errors.nameOfThePresentClass}
-              sanitizer={sanitizeAcademic}
-              maxLength={30}
-              minCreate={1}
+              sanitizer={sanitizeMonthYear}
+              maxLength={15}
+              minCreate={3}
             />
-            <FieldMeta value={form.nameOfThePresentClass} max={30} always error={errors.nameOfThePresentClass} />
+            <FieldMeta value={form.nameOfThePresentClass} max={15} always error={errors.nameOfThePresentClass} />
           </Field>
 
         </Section>
