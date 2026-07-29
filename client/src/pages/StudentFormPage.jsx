@@ -22,9 +22,7 @@ const DEFAULT_YEARS = (() => {
 })();
 
 const DEFAULT_CLASSES = [
-  'I','II','III','IV','V','VI',
-  'I YEAR','II YEAR','III YEAR','IV YEAR',
-  'I SEM','II SEM','III SEM','IV SEM','V SEM','VI SEM','VII SEM','VIII SEM',
+  'I YEAR','II YEAR','III YEAR','IV YEAR','V YEAR',
 ];
 
 const DEFAULT_DURATIONS = ['1','2','3','4','5','6','7','8'];
@@ -39,6 +37,8 @@ const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, '
 const sanitizeGame    = (v) => v.replace(/[^a-zA-Z &\-/]/g, '').replace(/ {2,}/g, ' ');
 const sanitizeDigits  = (v, max) => v.replace(/\D/g, '').slice(0, max);
 const sanitizeAddress = (v) => v.replace(/ {2,}/g, ' ');
+/** Class / dept / course: letters + numbers + single spaces, no leading space */
+const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
 
@@ -63,6 +63,11 @@ const validateGender = (v) =>
 
 const validateGame = (v) =>
   !v ? 'Name of the game is required' : '';
+
+const validateMinMax = (v, label, min, max) =>
+  !v ? '' :
+  v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
+  v.length > max        ? `${label} must be at most ${max} characters` : '';
 
 const validateDob = (v) =>
   !v ? 'Date of birth is required' : '';
@@ -380,9 +385,13 @@ export default function StudentFormPage() {
       case 'fatherName':     msg = validatePersonName(value, "Father's name");  break;
       case 'motherName':     msg = validatePersonName(value, "Mother's name");  break;
       case 'dob':            msg = validateDob(value);                          break;
-      case 'address':        msg = validateAddress(value);                      break;
-      case 'aadharNumber':   msg = validateAadhar(value);                       break;
-      case 'phoneNumber':    msg = validatePhone(value);                        break;
+      case 'address':              msg = validateAddress(value);                                      break;
+      case 'aadharNumber':         msg = validateAadhar(value);                                       break;
+      case 'phoneNumber':          msg = validatePhone(value);                                        break;
+      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 15);               break;
+      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Department', 3, 40);                  break;
+      case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15);                    break;
+      case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40);              break;
       default: break;
     }
     setErrors((e) => ({ ...e, [key]: msg }));
@@ -400,8 +409,12 @@ export default function StudentFormPage() {
       motherName:     validatePersonName(form.motherName, "Mother's name"),
       dob:            validateDob(form.dob),
       address:        validateAddress(form.address),
-      aadharNumber:   validateAadhar(form.aadharNumber),
-      phoneNumber:    validatePhone(form.phoneNumber),
+      aadharNumber:        validateAadhar(form.aadharNumber),
+      phoneNumber:         validatePhone(form.phoneNumber),
+      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 15),
+      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Department', 3, 40),
+      durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15),
+      presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40),
     };
     setErrors(next);
     return Object.values(next).every((e) => !e);
@@ -732,48 +745,63 @@ export default function StudentFormPage() {
           <Field label="Present Class">
             <ComboBox
               value={form.presentClass}
-              onChange={set('presentClass')}
+              onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
               options={classOptions}
-              placeholder="e.g. I YEAR, II SEM"
+              placeholder="e.g. I YEAR, II YEAR"
+              error={errors.presentClass}
+              sanitizer={sanitizeText}
+              maxLength={15}
+              minCreate={1}
             />
-            <FieldMeta value={form.presentClass} />
+            <FieldMeta value={form.presentClass} max={15} always error={errors.presentClass} />
           </Field>
 
           {/* Department */}
           <Field label="Department" required>
             <ComboBox
               value={form.nameOfThePresentClass}
-              onChange={set('nameOfThePresentClass')}
+              onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
               options={deptOptions}
               placeholder="Select or type department"
               required
+              error={errors.nameOfThePresentClass}
+              sanitizer={sanitizeText}
+              maxLength={40}
+              minCreate={3}
             />
-            <FieldMeta value={form.nameOfThePresentClass} />
+            <FieldMeta value={form.nameOfThePresentClass} max={40} always error={errors.nameOfThePresentClass} />
           </Field>
 
           {/* Duration of Course */}
           <Field label="Duration of Course">
             <ComboBox
               value={form.durationOfCourse}
-              onChange={set('durationOfCourse')}
+              onChange={(v) => { set('durationOfCourse')(v); touch('durationOfCourse', v); }}
               options={durationOptions}
               placeholder="e.g. 3"
+              error={errors.durationOfCourse}
+              sanitizer={sanitizeText}
+              maxLength={15}
+              minCreate={1}
             />
-            <FieldMeta value={form.durationOfCourse} />
-          </Field>
-
-          {/* University */}
-          <Field label="University" span={2}>
-            <input className="input-field" placeholder="University name"
-              value={form.university} onChange={setRaw('university')} />
-            <FieldMeta value={form.university} />
+            <FieldMeta value={form.durationOfCourse} max={15} always error={errors.durationOfCourse} />
           </Field>
 
           {/* Present Course */}
           <Field label="Present Course">
-            <input className="input-field" placeholder="e.g. B.Sc Computer Science"
-              value={form.presentCourse} onChange={setRaw('presentCourse')} />
-            <FieldMeta value={form.presentCourse} />
+            <input
+              className={`input-field ${errors.presentCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+              placeholder="e.g. B.Sc Computer Science"
+              value={form.presentCourse}
+              maxLength={40}
+              onChange={(e) => {
+                const v = sanitizeText(e.target.value);
+                set('presentCourse')(v);
+                touch('presentCourse', v);
+              }}
+              onBlur={() => touch('presentCourse', form.presentCourse)}
+            />
+            <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
           </Field>
 
         </Section>
