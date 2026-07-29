@@ -40,6 +40,11 @@
   .print-exclude { display: none !important; }
   body { background: white !important; }
 
+  /* Hide the entire app — only show the group-view portal */
+  body.group-view-open #root {
+    display: none !important;
+  }
+
   /* Expand the group-view modal so all selected cards print */
   .group-view-print-root {
     position: static !important;
@@ -52,6 +57,7 @@
     height: auto !important;
     max-height: none !important;
     flex: none !important;
+    padding: 0 !important;
   }
 
   /* Each student card starts on a new page */

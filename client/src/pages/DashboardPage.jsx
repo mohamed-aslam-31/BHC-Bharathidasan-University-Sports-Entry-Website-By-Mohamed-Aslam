@@ -316,6 +316,12 @@ function GroupViewModal({ students, onClose, onDeleted }) {
   const [confirm, setConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Add body class so print CSS can hide the rest of the app
+  useEffect(() => {
+    document.body.classList.add('group-view-open');
+    return () => document.body.classList.remove('group-view-open');
+  }, []);
+
   const checkedList = list.filter(s => visible.has(s._id));
   const confirmStudents = confirm === 'all' ? checkedList : list.filter(s => s._id === confirm);
 
@@ -363,9 +369,13 @@ function GroupViewModal({ students, onClose, onDeleted }) {
               Delete Selected ({checkedList.length})
             </button>
             {/* Print Selected */}
-            <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm">
+            <button
+              onClick={() => window.print()}
+              disabled={checkedList.length === 0}
+              className="btn-secondary flex items-center gap-2 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-              Print Selected
+              Print Selected ({checkedList.length})
             </button>
             <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <X className="w-5 h-5" />
