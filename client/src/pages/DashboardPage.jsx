@@ -508,7 +508,7 @@ export default function DashboardPage() {
                 {list.length === 0 ? (
                   <p className="text-xs text-gray-400 dark:text-gray-500 italic">None</p>
                 ) : (
-                  <ul className="max-h-32 overflow-y-auto space-y-1 pr-1">
+                  <ul className="space-y-1">
                     {list.map(item => (
                       <li key={item} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors[color].dot}`} />
