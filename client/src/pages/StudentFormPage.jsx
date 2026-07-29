@@ -76,7 +76,7 @@ const validateMinMax = (v, label, min, max, required = false) =>
   v.trim().length < min ? `${label} must be at least ${min} character${min > 1 ? 's' : ''}` :
   v.length > max        ? `${label} must be at most ${max} characters` : '';
 
-const validateUniversity = (v) => validateMinMax(v, 'University', 3, 40, true);
+const validateUniversity = (v) => validateMinMax(v, 'University', 3, 50, true);
 
 const validateDob = (v) =>
   !v ? 'Date of birth is required' : '';
@@ -758,7 +758,7 @@ export default function StudentFormPage() {
               className={`input-field ${errors.university ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="e.g. Bharathidasan University"
               value={form.university}
-              maxLength={40}
+              maxLength={50}
               onChange={(e) => {
                 const v = sanitizeAcademic(e.target.value);
                 set('university')(v);
@@ -766,7 +766,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('university', form.university)}
             />
-            <FieldMeta value={form.university} max={40} always error={errors.university} />
+            <FieldMeta value={form.university} max={50} always error={errors.university} />
           </Field>
 
           {/* Department */}
