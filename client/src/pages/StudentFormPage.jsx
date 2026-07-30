@@ -527,6 +527,8 @@ export default function StudentFormPage() {
       case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 30, true);                                break;
       case 'nameOfThePresentClass':msg = validateMinMax(value, 'Month & year of first admission to present course', 8, 15, true); break;
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
+      case 'graduateCourse':       msg = validateMinMax(value, 'Graduate course (No. of years)', 1, 15, true); break;
+      case 'pgCourse':             msg = validateMinMax(value, 'PG course (No. of years)', 1, 15, true);       break;
       case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40, true);        break;
       case 'nameOfExam':           msg = validateExamName(value);                                     break;
       case 'dateAndYear':          msg = validateMonthYear(value);                                    break;
@@ -553,6 +555,8 @@ export default function StudentFormPage() {
       presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 30, true),
       nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Month & year of first admission to present course', 8, 15, true),
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
+      graduateCourse:      validateMinMax(form.graduateCourse, 'Graduate course (No. of years)', 1, 15, true),
+      pgCourse:            validateMinMax(form.pgCourse, 'PG course (No. of years)', 1, 15, true),
       presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
       nameOfExam:          validateExamName(form.nameOfExam),
       dateAndYear:         validateMonthYear(form.dateAndYear),
@@ -691,6 +695,7 @@ export default function StudentFormPage() {
   const universityOptions = [...new Set([...DEFAULT_UNIVERSITIES, ...(meta.universities || [])])];
   const classOptions      = DEFAULT_CLASSES;
   const durationOptions   = DEFAULT_DURATIONS;
+  const iutOptions        = ['NIL', ...DEFAULT_DURATIONS];
   const courseOptions     = [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
   const examOptions       = DEFAULT_EXAMS;
   const monthYearOptions  = DEFAULT_MONTH_YEARS;
@@ -1285,15 +1290,33 @@ export default function StudentFormPage() {
 
         {/* ── IUT Participation ───────────────────────────────────────────── */}
         <Section title="Previous IUT Participation (While Pursuing)">
-          <Field label="Graduate Course (No. of years)">
-            <select className="input-field" value={form.graduateCourse} onChange={setRaw('graduateCourse')}>
-              {['NIL','1','2','3'].map((v) => <option key={v}>{v}</option>)}
-            </select>
+          <Field label="Graduate Course (No. of years)" required>
+            <ComboBox
+              value={form.graduateCourse}
+              onChange={(v) => { set('graduateCourse')(v); touch('graduateCourse', v); }}
+              options={iutOptions}
+              placeholder="Select or type"
+              required
+              error={errors.graduateCourse}
+              sanitizer={sanitizeAcademic}
+              maxLength={15}
+              minCreate={1}
+            />
+            <FieldMeta value={form.graduateCourse} max={15} always error={errors.graduateCourse} />
           </Field>
-          <Field label="PG Course (No. of years)">
-            <select className="input-field" value={form.pgCourse} onChange={setRaw('pgCourse')}>
-              {['NIL','1','2','3'].map((v) => <option key={v}>{v}</option>)}
-            </select>
+          <Field label="PG Course (No. of years)" required>
+            <ComboBox
+              value={form.pgCourse}
+              onChange={(v) => { set('pgCourse')(v); touch('pgCourse', v); }}
+              options={iutOptions}
+              placeholder="Select or type"
+              required
+              error={errors.pgCourse}
+              sanitizer={sanitizeAcademic}
+              maxLength={15}
+              minCreate={1}
+            />
+            <FieldMeta value={form.pgCourse} max={15} always error={errors.pgCourse} />
           </Field>
         </Section>
 
