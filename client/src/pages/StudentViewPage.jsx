@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PDFDocument } from 'pdf-lib';
-import html2canvas from 'html2canvas';
 import { getStudent, deleteStudent } from '../api';
 import { useToast } from '../components/Toast';
 import {
@@ -90,46 +89,9 @@ function DocPanel({ title, path, icon: Icon }) {
   );
 }
 
-/* ── Capture the HTML proforma as a PDF page ─────────────────────────────── */
-async function captureProformaPage() {
-  const el = document.getElementById('element-to-print');
-  if (!el) return null;
-  // Temporarily make it visible if it was off-screen
-  const prev = el.style.cssText;
-  el.style.cssText = 'font-family:Times New Roman,serif;color:#000;background:#fff;padding:24px;width:800px;position:fixed;top:0;left:0;z-index:-1;';
-  await new Promise((r) => requestAnimationFrame(r)); // let browser paint
-  try {
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
-    el.style.cssText = prev;
-    const imgData = canvas.toDataURL('image/png');
-    // Build a single-page PDF (A4: 595×842 pt)
-    const doc  = await PDFDocument.create();
-    const img  = await doc.embedPng(imgData);
-    const W = 595, H = 842;
-    const ratio = Math.min(W / img.width, H / img.height);
-    const dw = img.width * ratio, dh = img.height * ratio;
-    const page = doc.addPage([W, H]);
-    page.drawImage(img, { x: (W - dw) / 2, y: H - dh - 10, width: dw, height: dh });
-    return doc;
-  } catch {
-    el.style.cssText = prev;
-    return null;
-  }
-}
-
-/* ── Merge selected PDFs into one using pdf-lib ───────────────────────────── */
-async function buildMergedPdf(paths, includeProforma = false) {
+/* ── Merge uploaded PDFs into one using pdf-lib ───────────────────────────── */
+async function buildMergedPdf(paths) {
   const merged = await PDFDocument.create();
-
-  // Proforma goes first
-  if (includeProforma) {
-    const proformaPdf = await captureProformaPage();
-    if (proformaPdf) {
-      const [pg] = await merged.copyPages(proformaPdf, [0]);
-      merged.addPage(pg);
-    }
-  }
-
   for (const path of paths) {
     const res = await fetch(`/uploads/${path}`);
     if (!res.ok) continue;
@@ -147,6 +109,7 @@ async function buildMergedPdf(paths, includeProforma = false) {
 
 /* ── Print-select modal ────────────────────────────────────────────────────── */
 function PrintModal({ student, onClose }) {
+  const DOC_KEYS = ['aadhaar', 'idcard', 'marksheet', 'feesreceipt'];
   const pdfMap = {
     aadhaar:     student.aadhaarPdf,
     idcard:      student.idCardPdf,
@@ -155,46 +118,39 @@ function PrintModal({ student, onClose }) {
   };
 
   const [selected, setSelected] = useState(() => ({
-    proforma:    true,
     aadhaar:     !!student.aadhaarPdf,
     idcard:      !!student.idCardPdf,
     marksheet:   !!student.marksheetPdf,
     feesreceipt: !!student.feesReceiptPdf,
   }));
 
-  // 'idle' | 'generating' | 'ready'
-  const [status, setStatus]     = useState('idle');
-  const [pdfUrl, setPdfUrl]     = useState(null);
-  const [pdfBlob, setPdfBlob]   = useState(null);
-  const [error, setError]       = useState('');
+  const [status, setStatus] = useState('idle'); // 'idle' | 'generating' | 'ready'
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [error, setError]   = useState('');
 
   const toggle = (k) => {
     setSelected((p) => ({ ...p, [k]: !p[k] }));
-    // reset if selection changes after generating
     setStatus('idle');
-    if (pdfUrl) { URL.revokeObjectURL(pdfUrl); setPdfUrl(null); setPdfBlob(null); }
+    if (pdfUrl) { URL.revokeObjectURL(pdfUrl); setPdfUrl(null); }
   };
 
-  const anyDocSelected = ['aadhaar','idcard','marksheet','feesreceipt'].some(
-    (k) => selected[k] && pdfMap[k]
-  );
-  const anySelected = anyDocSelected || selected.proforma;
+  const anyDocSelected = DOC_KEYS.some((k) => selected[k] && pdfMap[k]);
+
+  const handlePrintProforma = () => {
+    onClose();
+    setTimeout(() => window.print(), 150);
+  };
 
   const handleGenerate = async () => {
     setError('');
     setStatus('generating');
     try {
-      const paths = ['aadhaar','idcard','marksheet','feesreceipt']
-        .filter((k) => selected[k] && pdfMap[k])
-        .map((k) => pdfMap[k]);
-
-      const bytes = await buildMergedPdf(paths, selected.proforma);
+      const paths = DOC_KEYS.filter((k) => selected[k] && pdfMap[k]).map((k) => pdfMap[k]);
+      const bytes = await buildMergedPdf(paths);
       const blob  = new Blob([bytes], { type: 'application/pdf' });
-      const url   = URL.createObjectURL(blob);
-      setPdfBlob(blob);
-      setPdfUrl(url);
+      setPdfUrl(URL.createObjectURL(blob));
       setStatus('ready');
-    } catch (e) {
+    } catch {
       setError('Failed to generate PDF. Please try again.');
       setStatus('idle');
     }
@@ -208,108 +164,103 @@ function PrintModal({ student, onClose }) {
     a.click();
   };
 
-  const handlePrintPdf = () => {
-    if (!pdfUrl) return;
-    const win = window.open(pdfUrl, '_blank');
-    if (win) win.focus();
-  };
-
   const handleClose = () => {
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     onClose();
   };
+
+  const DOC_ITEMS = [
+    { key: 'aadhaar',     label: 'Aadhaar Card' },
+    { key: 'idcard',      label: 'ID Card' },
+    { key: 'marksheet',   label: '12th Marksheet' },
+    { key: 'feesreceipt', label: 'Fee Receipt' },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5">
 
         {/* Title */}
-        <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Printer className="w-4 h-4" /> Select documents to combine
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Selected PDFs will be merged into one file you can download or print.
-          </p>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <Printer className="w-4 h-4" /> Print / Export
+        </h2>
+
+        {/* ── Section 1: Proforma ── */}
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Proforma</span>
+          </div>
+          <div className="p-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Uses Chrome's built-in PDF engine — perfect quality, correct layout.
+            </p>
+            <button
+              onClick={handlePrintProforma}
+              className="w-full flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+            >
+              <Printer className="w-4 h-4" /> Print / Save as PDF
+            </button>
+          </div>
         </div>
 
-        {/* Checkboxes */}
-        <div className="space-y-2">
-          {PRINT_ITEMS.map(({ key, label }) => {
-            const unavailable = key !== 'proforma' && !pdfMap[key];
-            return (
-              <label
-                key={key}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all select-none ${
+        {/* ── Section 2: Uploaded documents ── */}
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Uploaded Documents</span>
+          </div>
+          <div className="p-3 space-y-2">
+            {DOC_ITEMS.map(({ key, label }) => {
+              const unavailable = !pdfMap[key];
+              return (
+                <label key={key} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-all select-none ${
                   unavailable
                     ? 'opacity-40 cursor-not-allowed bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                     : selected[key]
                       ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600'
                       : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                }`}
-              >
-                <input type="checkbox" checked={selected[key]} disabled={unavailable}
-                  onChange={() => toggle(key)} className="sr-only" />
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                  selected[key] && !unavailable ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
                 }`}>
-                  {selected[key] && !unavailable && (
-                    <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="2,6 5,9 10,3" />
-                    </svg>
-                  )}
+                  <input type="checkbox" checked={!!selected[key]} disabled={unavailable}
+                    onChange={() => toggle(key)} className="sr-only" />
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                    selected[key] && !unavailable ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                  }`}>
+                    {selected[key] && !unavailable && (
+                      <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="2,6 5,9 10,3" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">{label}</span>
+                  {unavailable && <span className="text-xs text-gray-400">Not uploaded</span>}
+                </label>
+              );
+            })}
+
+            {error && <p className="text-xs text-red-500 text-center pt-1">{error}</p>}
+
+            {status === 'ready' ? (
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
+                  <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <span className="text-sm text-green-700 dark:text-green-300 font-medium">Ready to download</span>
                 </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">{label}</span>
-                {key === 'proforma'
-                  ? <span className="text-xs text-gray-400">Page print</span>
-                  : unavailable
-                    ? <span className="text-xs text-gray-400">Not uploaded</span>
-                    : null}
-              </label>
-            );
-          })}
-        </div>
-
-        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
-
-        {/* Action area */}
-        {status === 'ready' ? (
-          /* ── Ready state: show download + print + proforma ── */
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
-              <Check className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-              <span className="text-sm text-green-700 dark:text-green-300 font-medium">PDF ready!</span>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={handleDownload}
-                className="flex-1 flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
-                <Download className="w-4 h-4" /> Download
-              </button>
-              <button onClick={handlePrintPdf}
-                className="flex-1 flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
-                <Printer className="w-4 h-4" /> Print PDF
-              </button>
-            </div>
-            {selected.proforma && (
-              <button onClick={() => { handleClose(); setTimeout(() => window.print(), 150); }}
-                className="w-full flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                <Printer className="w-4 h-4" /> Also Print Proforma
+                <button onClick={handleDownload}
+                  className="w-full flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
+                  <Download className="w-4 h-4" /> Download Merged PDF
+                </button>
+              </div>
+            ) : (
+              <button onClick={handleGenerate} disabled={!anyDocSelected || status === 'generating'}
+                className="w-full flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed mt-1">
+                {status === 'generating'
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Merging…</>
+                  : <><FileText className="w-4 h-4" /> Merge &amp; Download</>}
               </button>
             )}
-            <button onClick={handleClose} className="w-full btn-secondary text-sm">Close</button>
           </div>
-        ) : (
-          /* ── Idle / generating state ── */
-          <div className="flex gap-3 pt-1">
-            <button onClick={handleClose} className="flex-1 btn-secondary text-sm">Cancel</button>
-            <button onClick={handleGenerate} disabled={!anySelected || status === 'generating'}
-              className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-              {status === 'generating'
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
-                : <><FileText className="w-4 h-4" /> Generate PDF</>}
-            </button>
-          </div>
-        )}
+        </div>
+
+        <button onClick={handleClose} className="w-full btn-secondary text-sm">Close</button>
       </div>
     </div>
   );
