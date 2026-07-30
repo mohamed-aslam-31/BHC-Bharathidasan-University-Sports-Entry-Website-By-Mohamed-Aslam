@@ -263,6 +263,15 @@ const validateDuration = (v) =>
   (v.match(/-/g) || []).length > 1 ? 'Only one "-" allowed' :
   /[^a-zA-Z0-9-]/.test(v) ? 'Only "-" is allowed as a special character' : '';
 
+const validateNoOfYears = (v) =>
+  !v ? 'This field is required' :
+  v.length < 3 ? 'Minimum 3 characters required' :
+  v.length > 7 ? 'Maximum 7 characters allowed' :
+  / /.test(v) ? 'No spaces allowed' :
+  (v.match(/\d/g) || []).length > 1 ? 'Only one digit allowed' :
+  (v.match(/-/g) || []).length > 1 ? 'Only one "-" allowed' :
+  /[^a-zA-Z0-9-]/.test(v) ? 'Only "-" is allowed as a special character' : '';
+
 const validatePresentCourse = (v) =>
   !v ? 'Name of Present Course is required' :
   v.trim().length < 2 ? 'Must be at least 2 characters' :
@@ -669,8 +678,8 @@ export default function StudentFormPage() {
       case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 20, true);                                break;
       case 'nameOfThePresentClass':msg = validateMonthYear(value);                                                               break;
       case 'durationOfCourse':     msg = validateDuration(value);                                     break;
-      case 'graduateCourse':       msg = validateDuration(value);                                             break;
-      case 'pgCourse':             msg = validateDuration(value);                                             break;
+      case 'graduateCourse':       msg = validateNoOfYears(value);                                            break;
+      case 'pgCourse':             msg = validateNoOfYears(value);                                            break;
       case 'presentCourse':        msg = validatePresentCourse(value);                                break;
       case 'nameOfExam':           msg = validateExamName(value);                                     break;
       case 'dateAndYear':          msg = validateMonthYear(value);                                    break;
@@ -697,8 +706,8 @@ export default function StudentFormPage() {
       presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 20, true),
       nameOfThePresentClass: validateMonthYear(form.nameOfThePresentClass),
       durationOfCourse:    validateDuration(form.durationOfCourse),
-      graduateCourse:      validateDuration(form.graduateCourse),
-      pgCourse:            validateDuration(form.pgCourse),
+      graduateCourse:      validateNoOfYears(form.graduateCourse),
+      pgCourse:            validateNoOfYears(form.pgCourse),
       presentCourse:       validatePresentCourse(form.presentCourse),
       nameOfExam:          validateExamName(form.nameOfExam),
       dateAndYear:         validateMonthYear(form.dateAndYear),
