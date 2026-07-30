@@ -188,12 +188,12 @@ const validateAddress = (v) =>
   !v || !v.trim() ? 'Address is required' : '';
 
 const sanitizePrevCourse = (v) =>
-  v.replace(/\s/g, '').slice(0, 80);
+  v.replace(/\s/g, '').slice(0, 100);
 
 const validatePrevCourse = (v) =>
   !v || !v.trim()   ? 'This field is required' :
   v.trim().length < 3 ? 'Minimum 3 characters required' :
-  v.length > 80       ? 'Maximum 80 characters allowed' : '';
+  v.length > 100      ? 'Maximum 100 characters allowed' : '';
 
 const validateAadhar = (v) =>
   !v ? 'Aadhar number is required' :
@@ -1300,7 +1300,7 @@ export default function StudentFormPage() {
                 className={`input-field resize-none ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
                 rows={2}
                 placeholder="e.g. BCOM/CA→MBA/Finance (no spaces allowed)"
-                maxLength={80}
+                maxLength={100}
                 value={form.previousCourse}
                 onChange={(e) => {
                   const v = sanitizePrevCourse(e.target.value);
@@ -1309,7 +1309,7 @@ export default function StudentFormPage() {
                 }}
                 onBlur={() => touch('previousCourse', form.previousCourse)}
               />
-              <FieldMeta value={form.previousCourse} max={80} always error={errors.previousCourse} />
+              <FieldMeta value={form.previousCourse} max={100} always error={errors.previousCourse} />
             </Field>
           </div>
         </div>
