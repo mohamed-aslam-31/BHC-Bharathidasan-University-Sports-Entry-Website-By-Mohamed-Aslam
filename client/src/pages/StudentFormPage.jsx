@@ -956,7 +956,7 @@ export default function StudentFormPage() {
           <Field label="Roll Number" required>
             <input
               className={`input-field ${errors.rollNo ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="9–12 digit roll number"
+              placeholder="Enter 9-12 digit roll number"
               value={form.rollNo}
               inputMode="numeric"
               onChange={(e) => {
