@@ -1238,44 +1238,48 @@ export default function StudentFormPage() {
             <FieldMeta value={form.durationOfCourse} max={15} always error={errors.durationOfCourse} />
           </Field>
 
-          {/* Divider */}
-          <div className="col-span-full">
-            <hr className="border-gray-200 dark:border-gray-700" />
+        </Section>
+
+        {/* ── Month & Year of First Admission to ──────────────────────────── */}
+        <div className="card p-6 space-y-4">
+          <h3 className="section-title">Month &amp; Year of First Admission to</h3>
+
+          {/* University box */}
+          <div className="card p-4">
+            <Field label="University ( month &amp; Year )" required>
+              <ComboBox
+                value={form.university}
+                onChange={(v) => { set('university')(v); touch('university', v); }}
+                options={monthYearOptions}
+                placeholder="e.g. April-2022"
+                required
+                error={errors.university}
+                sanitizer={sanitizeMonthYear}
+                maxLength={15}
+                minCreate={3}
+              />
+              <FieldMeta value={form.university} max={15} always error={errors.university} />
+            </Field>
           </div>
 
-          {/* Month & Year of First Admission to University */}
-          <Field label="Month & Year of First Admission to University" required>
-            <ComboBox
-              value={form.university}
-              onChange={(v) => { set('university')(v); touch('university', v); }}
-              options={monthYearOptions}
-              placeholder="e.g. April-2022"
-              required
-              error={errors.university}
-              sanitizer={sanitizeMonthYear}
-              maxLength={15}
-              minCreate={3}
-            />
-            <FieldMeta value={form.university} max={15} always error={errors.university} />
-          </Field>
-
-          {/* Month & Year of First Admission to Present Course */}
-          <Field label="Month & Year of First Admission to Present Course" required>
-            <ComboBox
-              value={form.nameOfThePresentClass}
-              onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
-              options={monthYearOptions}
-              placeholder="e.g. April-2022"
-              required
-              error={errors.nameOfThePresentClass}
-              sanitizer={sanitizeMonthYear}
-              maxLength={15}
-              minCreate={3}
-            />
-            <FieldMeta value={form.nameOfThePresentClass} max={15} always error={errors.nameOfThePresentClass} />
-          </Field>
-
-        </Section>
+          {/* Present Course box */}
+          <div className="card p-4">
+            <Field label="Present Course ( month &amp; Year )" required>
+              <ComboBox
+                value={form.nameOfThePresentClass}
+                onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
+                options={monthYearOptions}
+                placeholder="e.g. April-2022"
+                required
+                error={errors.nameOfThePresentClass}
+                sanitizer={sanitizeMonthYear}
+                maxLength={15}
+                minCreate={3}
+              />
+              <FieldMeta value={form.nameOfThePresentClass} max={15} always error={errors.nameOfThePresentClass} />
+            </Field>
+          </div>
+        </div>
 
         {/* ── IUT Participation ───────────────────────────────────────────── */}
         <Section title="Previous IUT Participation (While Pursuing)">
