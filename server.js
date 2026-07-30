@@ -49,6 +49,9 @@ const StudentSchema = new mongoose.Schema({
   tournament:            String,
   tshirt:                String,
   track:                 String,
+  studentType:           String,
+  dayType:               String,
+  hostelName:            String,
   status:                { type: String, default: 'approved', enum: ['pending', 'approved'] }
 }, { timestamps: true });
 

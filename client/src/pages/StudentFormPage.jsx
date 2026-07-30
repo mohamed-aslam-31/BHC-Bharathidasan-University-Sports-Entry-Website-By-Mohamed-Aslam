@@ -64,6 +64,11 @@ const DEFAULT_CLASSES = [
 
 const DEFAULT_DURATIONS = ['1 Year','2 Years','3 Years','4 Years','5 Years'];
 
+const DEFAULT_HOSTELS = [
+  'Mens Hostel', 'Womens Hostel', 'Boys Hostel No.1', 'Boys Hostel No.2',
+  'Girls Hostel No.1', 'Girls Hostel No.2', 'Research Scholars Hostel',
+];
+
 const DEFAULT_EXAMS = [
   /* School board — 10th */
   'SSLC','Matriculation (10th)','CBSE (10th)','ICSE (10th)','State Board (10th)','NIOS (10th)',
@@ -271,6 +276,15 @@ const validateNoOfYears = (v) =>
   (v.match(/\d/g) || []).length > 1 ? 'Only one digit allowed' :
   (v.match(/-/g) || []).length > 1 ? 'Only one "-" allowed' :
   /[^a-zA-Z0-9-]/.test(v) ? 'Only "-" is allowed as a special character' : '';
+
+const validateStudentType = (v) =>
+  !v ? 'Student type is required' : '';
+
+const validateDayType = (v) =>
+  !v ? 'Day / Hostel type is required' : '';
+
+const validateHostelName = (v, dayType) =>
+  dayType === 'HOSTELLER' && !v ? 'Hostel name is required' : '';
 
 const validatePresentCourse = (v) =>
   !v ? 'Name of Present Course is required' :
@@ -578,6 +592,7 @@ const empty = {
   graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'NIL',
   address: '', phoneNumber: '', aadharNumber: '',
   tournament: '', tshirt: '', track: '',
+  studentType: '', dayType: '', hostelName: '',
 };
 
 /* ─── Main component ───────────────────────────────────────────────────────── */
@@ -647,6 +662,9 @@ export default function StudentFormPage() {
           tournament:            s.tournament              || '',
           tshirt:                s.tshirt                  || '',
           track:                 s.track                   || '',
+          studentType:           s.studentType             || '',
+          dayType:               s.dayType                 || '',
+          hostelName:            s.hostelName              || '',
         });
         if (s.image) setCurrentImage(s.image);
       })
@@ -665,6 +683,9 @@ export default function StudentFormPage() {
       case 'year':           msg = validateYear(value);                         break;
       case 'rollNo':         msg = validateRollNo(value);                       break;
       case 'gender':         msg = validateGender(value);                       break;
+      case 'studentType':    msg = validateStudentType(value);                  break;
+      case 'dayType':        msg = validateDayType(value);                      break;
+      case 'hostelName':     msg = validateHostelName(value, form.dayType);     break;
       case 'nameOfTheGame':  msg = validateGame(value);                         break;
       case 'studentName':    msg = validatePersonName(value, 'Sportsperson name'); break;
       case 'fatherName':     msg = validatePersonName(value, "Father's name");  break;
@@ -694,6 +715,9 @@ export default function StudentFormPage() {
       year:           validateYear(form.year),
       rollNo:         validateRollNo(form.rollNo),
       gender:         validateGender(form.gender),
+      studentType:    validateStudentType(form.studentType),
+      dayType:        validateDayType(form.dayType),
+      hostelName:     validateHostelName(form.hostelName, form.dayType),
       nameOfTheGame:  validateGame(form.nameOfTheGame),
       studentName:    validatePersonName(form.studentName, 'Sportsperson name'),
       fatherName:     validatePersonName(form.fatherName, "Father's name"),
@@ -850,6 +874,7 @@ export default function StudentFormPage() {
   const courseOptions     = [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
   const examOptions       = DEFAULT_EXAMS;
   const monthYearOptions  = DEFAULT_MONTH_YEARS;
+  const hostelOptions     = [...new Set([...DEFAULT_HOSTELS, ...(meta.hostels || [])])];
 
   /* ── early return ── */
 
@@ -1177,6 +1202,112 @@ export default function StudentFormPage() {
               </div>
             </div>
           </Field>
+
+          {/* Student Type */}
+          <Field label="Student Type" required>
+            <div className="space-y-2">
+              <div className="flex gap-2 mt-1">
+                {['AIDED', 'SELF-FINANCE'].map((t) => (
+                  <label
+                    key={t}
+                    className={`flex-1 flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
+                      form.studentType === t
+                        ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
+                        : errors.studentType
+                          ? 'bg-white/40 dark:bg-gray-800/40 border-red-300/70 dark:border-red-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                          : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
+                    }`}
+                  >
+                    <input type="radio" name="studentType" value={t} checked={form.studentType === t}
+                      onChange={() => { set('studentType')(t); touch('studentType', t); }} className="sr-only" />
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      form.studentType === t ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                    }`}>
+                      {form.studentType === t && (
+                        <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="2,6 5,9 10,3" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm font-medium ${form.studentType === t ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>{t}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex items-center justify-between min-h-[1rem]">
+                {errors.studentType ? <span className="text-xs text-red-500">{errors.studentType}</span> : <span />}
+                {form.studentType && (
+                  <button type="button" onClick={() => { set('studentType')(''); touch('studentType', ''); }}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                    <X className="w-3 h-3" /> Unselect
+                  </button>
+                )}
+              </div>
+            </div>
+          </Field>
+
+          {/* Day Scholar / Hosteller */}
+          <Field label="Day Scholar / Hosteller" required>
+            <div className="space-y-2">
+              <div className="flex gap-2 mt-1">
+                {['DAYSCHOLAR', 'HOSTELLER'].map((t) => (
+                  <label
+                    key={t}
+                    className={`flex-1 flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
+                      form.dayType === t
+                        ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
+                        : errors.dayType
+                          ? 'bg-white/40 dark:bg-gray-800/40 border-red-300/70 dark:border-red-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                          : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
+                    }`}
+                  >
+                    <input type="radio" name="dayType" value={t} checked={form.dayType === t}
+                      onChange={() => {
+                        set('dayType')(t);
+                        touch('dayType', t);
+                        if (t === 'DAYSCHOLAR') { set('hostelName')(''); setErrors((e) => ({ ...e, hostelName: '' })); }
+                      }} className="sr-only" />
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      form.dayType === t ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                    }`}>
+                      {form.dayType === t && (
+                        <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="2,6 5,9 10,3" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm font-medium ${form.dayType === t ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>{t}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex items-center justify-between min-h-[1rem]">
+                {errors.dayType ? <span className="text-xs text-red-500">{errors.dayType}</span> : <span />}
+                {form.dayType && (
+                  <button type="button" onClick={() => { set('dayType')(''); set('hostelName')(''); setErrors((e) => ({ ...e, dayType: '', hostelName: '' })); }}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                    <X className="w-3 h-3" /> Unselect
+                  </button>
+                )}
+              </div>
+            </div>
+          </Field>
+
+          {/* Hostel Name — only when HOSTELLER */}
+          {form.dayType === 'HOSTELLER' && (
+            <Field label="Hostel Name" required>
+              <ComboBox
+                value={form.hostelName}
+                onChange={(v) => { set('hostelName')(v); touch('hostelName', v); }}
+                options={hostelOptions}
+                placeholder="Select or Add Hostel Name"
+                required
+                error={errors.hostelName}
+                sanitizer={sanitizeAcademic}
+                maxLength={50}
+                minCreate={3}
+              />
+              <FieldMeta value={form.hostelName} max={50} always error={errors.hostelName} />
+            </Field>
+          )}
 
         </Section>
 
