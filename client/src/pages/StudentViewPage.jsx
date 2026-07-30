@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { PDFDocument } from 'pdf-lib';
 import { getStudent, deleteStudent } from '../api';
 import { useToast } from '../components/Toast';
 import {
   ArrowLeft, Pencil, Printer, Trash2, AlertTriangle, Loader2,
   ChevronLeft, ChevronRight, FileText, User, BookOpen,
+  Download, Check,
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -87,56 +89,123 @@ function DocPanel({ title, path, icon: Icon }) {
   );
 }
 
+/* ── Merge selected PDFs into one using pdf-lib ───────────────────────────── */
+async function buildMergedPdf(paths) {
+  const merged = await PDFDocument.create();
+  for (const path of paths) {
+    const res = await fetch(`/uploads/${path}`);
+    if (!res.ok) continue;
+    const bytes = await res.arrayBuffer();
+    try {
+      const src = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const copied = await merged.copyPages(src, src.getPageIndices());
+      copied.forEach((p) => merged.addPage(p));
+    } catch {
+      // skip unreadable PDF silently
+    }
+  }
+  return await merged.save();
+}
+
 /* ── Print-select modal ────────────────────────────────────────────────────── */
 function PrintModal({ student, onClose }) {
-  const hasPdf = (p) => !!p;
+  const pdfMap = {
+    aadhaar:     student.aadhaarPdf,
+    idcard:      student.idCardPdf,
+    marksheet:   student.marksheetPdf,
+    feesreceipt: student.feesReceiptPdf,
+  };
+
   const [selected, setSelected] = useState(() => ({
     proforma:    true,
-    aadhaar:     hasPdf(student.aadhaarPdf),
-    idcard:      hasPdf(student.idCardPdf),
-    marksheet:   hasPdf(student.marksheetPdf),
-    feesreceipt: hasPdf(student.feesReceiptPdf),
+    aadhaar:     !!student.aadhaarPdf,
+    idcard:      !!student.idCardPdf,
+    marksheet:   !!student.marksheetPdf,
+    feesreceipt: !!student.feesReceiptPdf,
   }));
 
-  const toggle = (k) => setSelected((p) => ({ ...p, [k]: !p[k] }));
-  const anySelected = Object.values(selected).some(Boolean);
+  // 'idle' | 'generating' | 'ready'
+  const [status, setStatus]     = useState('idle');
+  const [pdfUrl, setPdfUrl]     = useState(null);
+  const [pdfBlob, setPdfBlob]   = useState(null);
+  const [error, setError]       = useState('');
 
-  const handlePrint = () => {
-    // Open PDFs synchronously while still inside the click-event gesture
-    // (setTimeout would break out of the gesture and browsers block the popup)
-    const pdfMap = {
-      aadhaar:     student.aadhaarPdf,
-      idcard:      student.idCardPdf,
-      marksheet:   student.marksheetPdf,
-      feesreceipt: student.feesReceiptPdf,
-    };
-    Object.entries(pdfMap).forEach(([k, path]) => {
-      if (selected[k] && path) {
-        window.open(`/uploads/${path}`, '_blank');
+  const toggle = (k) => {
+    setSelected((p) => ({ ...p, [k]: !p[k] }));
+    // reset if selection changes after generating
+    setStatus('idle');
+    if (pdfUrl) { URL.revokeObjectURL(pdfUrl); setPdfUrl(null); setPdfBlob(null); }
+  };
+
+  const anyDocSelected = ['aadhaar','idcard','marksheet','feesreceipt'].some(
+    (k) => selected[k] && pdfMap[k]
+  );
+  const anySelected = anyDocSelected || selected.proforma;
+
+  const handleGenerate = async () => {
+    setError('');
+    setStatus('generating');
+    try {
+      const paths = ['aadhaar','idcard','marksheet','feesreceipt']
+        .filter((k) => selected[k] && pdfMap[k])
+        .map((k) => pdfMap[k]);
+
+      if (paths.length === 0) {
+        // Only proforma selected — just print
+        setStatus('idle');
+        onClose();
+        setTimeout(() => window.print(), 150);
+        return;
       }
-    });
-    onClose();
-    // Proforma print needs the modal gone first; small delay is fine because
-    // window.print() is not popup-blocked — it only opens a print dialog
-    if (selected.proforma) {
-      setTimeout(() => window.print(), 150);
+
+      const bytes = await buildMergedPdf(paths);
+      const blob  = new Blob([bytes], { type: 'application/pdf' });
+      const url   = URL.createObjectURL(blob);
+      setPdfBlob(blob);
+      setPdfUrl(url);
+      setStatus('ready');
+    } catch (e) {
+      setError('Failed to generate PDF. Please try again.');
+      setStatus('idle');
     }
+  };
+
+  const handleDownload = () => {
+    if (!pdfUrl) return;
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = `${student.nameOfTheSportsperson || 'student'}_documents.pdf`;
+    a.click();
+  };
+
+  const handlePrintPdf = () => {
+    if (!pdfUrl) return;
+    const win = window.open(pdfUrl, '_blank');
+    if (win) win.focus();
+  };
+
+  const handleClose = () => {
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5">
+
+        {/* Title */}
         <div>
           <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Printer className="w-4 h-4" /> What do you want to print?
+            <Printer className="w-4 h-4" /> Select documents to combine
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select the items to print. PDFs will open in new tabs.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Selected PDFs will be merged into one file you can download or print.
+          </p>
         </div>
 
+        {/* Checkboxes */}
         <div className="space-y-2">
           {PRINT_ITEMS.map(({ key, label }) => {
-            // Disable PDF items if not uploaded
-            const pdfMap = { aadhaar: student.aadhaarPdf, idcard: student.idCardPdf, marksheet: student.marksheetPdf, feesreceipt: student.feesReceiptPdf };
             const unavailable = key !== 'proforma' && !pdfMap[key];
             return (
               <label
@@ -146,20 +215,13 @@ function PrintModal({ student, onClose }) {
                     ? 'opacity-40 cursor-not-allowed bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
                     : selected[key]
                       ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600'
-                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={selected[key]}
-                  disabled={unavailable}
-                  onChange={() => toggle(key)}
-                  className="sr-only"
-                />
+                <input type="checkbox" checked={selected[key]} disabled={unavailable}
+                  onChange={() => toggle(key)} className="sr-only" />
                 <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                  selected[key] && !unavailable
-                    ? 'border-blue-500 bg-blue-500'
-                    : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                  selected[key] && !unavailable ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
                 }`}>
                   {selected[key] && !unavailable && (
                     <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -167,23 +229,57 @@ function PrintModal({ student, onClose }) {
                     </svg>
                   )}
                 </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
-                {unavailable && <span className="ml-auto text-xs text-gray-400">Not uploaded</span>}
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">{label}</span>
+                {key === 'proforma'
+                  ? <span className="text-xs text-gray-400">Page print</span>
+                  : unavailable
+                    ? <span className="text-xs text-gray-400">Not uploaded</span>
+                    : null}
               </label>
             );
           })}
         </div>
 
-        <div className="flex gap-3 pt-1">
-          <button onClick={onClose} className="flex-1 btn-secondary text-sm">Cancel</button>
-          <button
-            onClick={handlePrint}
-            disabled={!anySelected}
-            className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Printer className="w-4 h-4" /> Print
-          </button>
-        </div>
+        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+
+        {/* Action area */}
+        {status === 'ready' ? (
+          /* ── Ready state: show download + print + proforma ── */
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
+              <Check className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+              <span className="text-sm text-green-700 dark:text-green-300 font-medium">PDF ready!</span>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleDownload}
+                className="flex-1 flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
+                <Download className="w-4 h-4" /> Download
+              </button>
+              <button onClick={handlePrintPdf}
+                className="flex-1 flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">
+                <Printer className="w-4 h-4" /> Print PDF
+              </button>
+            </div>
+            {selected.proforma && (
+              <button onClick={() => { handleClose(); setTimeout(() => window.print(), 150); }}
+                className="w-full flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <Printer className="w-4 h-4" /> Also Print Proforma
+              </button>
+            )}
+            <button onClick={handleClose} className="w-full btn-secondary text-sm">Close</button>
+          </div>
+        ) : (
+          /* ── Idle / generating state ── */
+          <div className="flex gap-3 pt-1">
+            <button onClick={handleClose} className="flex-1 btn-secondary text-sm">Cancel</button>
+            <button onClick={handleGenerate} disabled={!anySelected || status === 'generating'}
+              className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+              {status === 'generating'
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
+                : <><FileText className="w-4 h-4" /> Generate PDF</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
