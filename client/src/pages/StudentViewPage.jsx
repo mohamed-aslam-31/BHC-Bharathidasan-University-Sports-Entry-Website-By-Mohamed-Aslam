@@ -102,11 +102,8 @@ function PrintModal({ student, onClose }) {
   const anySelected = Object.values(selected).some(Boolean);
 
   const handlePrint = () => {
-    onClose();
-    setTimeout(() => {
-      if (selected.proforma) window.print();
-    }, 100);
-    // Open PDFs in new tabs for the user to print
+    // Open PDFs synchronously while still inside the click-event gesture
+    // (setTimeout would break out of the gesture and browsers block the popup)
     const pdfMap = {
       aadhaar:     student.aadhaarPdf,
       idcard:      student.idCardPdf,
@@ -115,9 +112,15 @@ function PrintModal({ student, onClose }) {
     };
     Object.entries(pdfMap).forEach(([k, path]) => {
       if (selected[k] && path) {
-        setTimeout(() => window.open(`/uploads/${path}`, '_blank'), 200);
+        window.open(`/uploads/${path}`, '_blank');
       }
     });
+    onClose();
+    // Proforma print needs the modal gone first; small delay is fine because
+    // window.print() is not popup-blocked — it only opens a print dialog
+    if (selected.proforma) {
+      setTimeout(() => window.print(), 150);
+    }
   };
 
   return (
