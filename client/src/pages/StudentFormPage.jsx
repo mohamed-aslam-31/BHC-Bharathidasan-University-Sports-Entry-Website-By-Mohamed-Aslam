@@ -1513,6 +1513,7 @@ export default function StudentFormPage() {
                 }
               }}
             />
+            <FieldMeta value={String(form.tshirt)} max={2} always />
           </Field>
           <Field label="Track Size (Optional)">
             <input
@@ -1530,6 +1531,7 @@ export default function StudentFormPage() {
                 }
               }}
             />
+            <FieldMeta value={String(form.track)} max={2} always />
           </Field>
         </Section>
 
