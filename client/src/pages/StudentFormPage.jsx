@@ -149,8 +149,8 @@ const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, '
 /** Game: letters/digits/spaces + allowed specials: " \u201C \u201D ' \u2018 \u2019 ( ) & [ ] . , */
 const sanitizeGame    = (v) => v.replace(/[^a-zA-Z0-9 "'\u201C\u201D\u2018\u2019()&[\].,]/g, '').replace(/ {2,}/g, ' ');
 const sanitizeDigits  = (v, max) => v.replace(/\D/g, '').slice(0, max);
-/** Address: letters/digits/spaces + allowed specials: " \u201C \u201D ' \u2018 \u2019 - _ | / \ & # @ ( ) ; : , [ ] */
-const sanitizeAddress = (v) => v.replace(/[^a-zA-Z0-9 "'\u201C\u201D\u2018\u2019\-_|/\\&#@();:,[\]]/g, '').replace(/ {2,}/g, ' ');
+/** Address: letters/digits/spaces/newlines + allowed specials: . " \u201C \u201D ' \u2018 \u2019 - _ | / \ & # @ ( ) ; : , [ ] */
+const sanitizeAddress = (v) => v.replace(/[^a-zA-Z0-9 \n"'\u201C\u201D\u2018\u2019\-_|/\\&#@();:,.[\]]/g, '').replace(/[ \t]{2,}/g, ' ');
 /** Academic fields (class/dept/duration/course/university): letters/digits/spaces +
  *  allowed specials: [ ] ( ) : ; ' \u2018 \u2019 " \u201C \u201D / \ & # @ , . | */
 const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u201C\u201D/\\&#@,.|]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
@@ -354,7 +354,7 @@ const validateAddress = (v) =>
   !v || !v.trim() ? 'Address is required' : '';
 
 const sanitizePrevCourse = (v) =>
-  v.replace(/\s/g, '').slice(0, 100);
+  v.replace(/[^\w\s.,\-'"/()&:;]/g, '').slice(0, 100);
 
 const validatePrevCourse = (v) =>
   !v || !v.trim()   ? 'This field is required' :
@@ -603,9 +603,9 @@ function Section({ title, children }) {
 }
 
 /** Pure layout wrapper — no error rendering; each child handles its own. */
-function Field({ label, required, children, span }) {
+function Field({ label, required, children, span, id }) {
   return (
-    <div className={span === 2 ? 'sm:col-span-2' : span === 3 ? 'col-span-full' : ''}>
+    <div id={id} className={span === 2 ? 'sm:col-span-2' : span === 3 ? 'col-span-full' : ''}>
       <label className="label">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -900,7 +900,57 @@ export default function StudentFormPage() {
   // Step 1 — validate and show preview
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!validateAll()) { addToast('Please fix the errors before submitting', 'error'); return; }
+    const next = {
+      year:           validateYear(form.year),
+      rollNo:         validateRollNo(form.rollNo),
+      gender:         validateGender(form.gender),
+      studentType:    validateStudentType(form.studentType),
+      dayType:        validateDayType(form.dayType),
+      hostelName:     validateHostelName(form.hostelName, form.dayType),
+      nameOfTheGame:  validateGame(form.nameOfTheGame),
+      bloodGroup:     validateBloodGroup(form.bloodGroup),
+      studentName:    validatePersonName(form.studentName, 'Sportsperson name'),
+      fatherName:     validatePersonName(form.fatherName, "Father's name"),
+      motherName:     validatePersonName(form.motherName, "Mother's name"),
+      dob:            validateDob(form.dob),
+      address:        validateAddress(form.address),
+      aadharNumber:        validateAadhar(form.aadharNumber),
+      phoneNumber:         validatePhone(form.phoneNumber),
+      university:          validateMonthYear(form.university),
+      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 20, true),
+      nameOfThePresentClass: validateMonthYear(form.nameOfThePresentClass),
+      durationOfCourse:    validateDuration(form.durationOfCourse),
+      graduateCourse:      validateNoOfYears(form.graduateCourse),
+      pgCourse:            validateNoOfYears(form.pgCourse),
+      presentCourse:       validatePresentCourse(form.presentCourse),
+      nameOfExam:          validateExamName(form.nameOfExam),
+      dateAndYear:         validateMonthYear(form.dateAndYear),
+      previousCourse:      validatePrevCourse(form.previousCourse),
+    };
+    setErrors(next);
+    const hasErrors = Object.values(next).some(Boolean);
+    if (hasErrors) {
+      addToast('Please fix the errors before submitting', 'error');
+      // Scroll to the first field with an error (in visual top-to-bottom order)
+      const fieldOrder = [
+        'year','rollNo','nameOfTheGame','bloodGroup','gender',
+        'studentType','dayType','hostelName',
+        'studentName','dob','fatherName','motherName','aadharNumber','phoneNumber','address',
+        'nameOfExam','dateAndYear',
+        'presentClass','nameOfThePresentClass','durationOfCourse',
+        'university','presentCourse',
+        'graduateCourse','pgCourse',
+        'previousCourse',
+      ];
+      const firstErrorKey = fieldOrder.find((k) => next[k]);
+      if (firstErrorKey) {
+        setTimeout(() => {
+          const el = document.getElementById(`field-${firstErrorKey}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
+      }
+      return;
+    }
     setShowPreview(true);
     window.scrollTo({ top: 0 });
   };
@@ -1184,7 +1234,7 @@ export default function StudentFormPage() {
         <Section title="Basic Information">
 
           {/* Academic Year */}
-          <Field label="Academic Year" required>
+          <Field label="Academic Year" required id="field-year">
             <ComboBox
               value={form.year}
               onChange={(v) => { set('year')(v); touch('year', v); }}
@@ -1202,7 +1252,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Roll Number */}
-          <Field label="Roll Number" required>
+          <Field label="Roll Number" required id="field-rollNo">
             <input
               className={`input-field ${errors.rollNo ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter 9-12 digit roll number"
@@ -1219,7 +1269,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Name of the Game */}
-          <Field label="Name of the Game" required>
+          <Field label="Name of the Game" required id="field-nameOfTheGame">
             <ComboBox
               value={form.nameOfTheGame}
               onChange={(v) => { set('nameOfTheGame')(v); touch('nameOfTheGame', v); }}
@@ -1237,7 +1287,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Blood Group */}
-          <Field label="Blood Group" required>
+          <Field label="Blood Group" required id="field-bloodGroup">
             <ComboBox
               value={form.bloodGroup}
               onChange={(v) => { set('bloodGroup')(v); touch('bloodGroup', v); }}
@@ -1255,7 +1305,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Gender */}
-          <Field label="Gender" required span={3}>
+          <Field label="Gender" required span={3} id="field-gender">
             <div className="space-y-2">
               <div className="flex gap-2 mt-1">
                 {['MALE', 'FEMALE', 'OTHER'].map((g) => (
@@ -1307,7 +1357,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Student Type */}
-          <Field label="Student Type" required span={3}>
+          <Field label="Student Type" required span={3} id="field-studentType">
             <div className="space-y-2">
               <div className="flex gap-2 mt-1">
                 {['AIDED', 'SELF-FINANCE'].map((t) => (
@@ -1349,7 +1399,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Day Scholar / Hosteller */}
-          <Field label="Day Scholar / Hosteller" required span={3}>
+          <Field label="Day Scholar / Hosteller" required span={3} id="field-dayType">
             <div className="space-y-2">
               <div className="flex gap-2 mt-1">
                 {['DAYSCHOLAR', 'HOSTELLER'].map((t) => (
@@ -1396,7 +1446,7 @@ export default function StudentFormPage() {
 
           {/* Hostel Name — only when HOSTELLER */}
           {form.dayType === 'HOSTELLER' && (
-            <Field label="Hostel Name" required span={3}>
+            <Field label="Hostel Name" required span={3} id="field-hostelName">
               <ComboBox
                 value={form.hostelName}
                 onChange={(v) => { set('hostelName')(v); touch('hostelName', v); }}
@@ -1420,7 +1470,7 @@ export default function StudentFormPage() {
         <Section title="Personal Details">
 
           {/* Name of Sportsperson */}
-          <Field label="Name of Sportsperson" required span={2}>
+          <Field label="Name of Sportsperson" required span={2} id="field-studentName">
             <input
               className={`input-field ${errors.studentName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter your name as per aadhar card"
@@ -1437,7 +1487,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Date of Birth */}
-          <Field label="Date of Birth" required>
+          <Field label="Date of Birth" required id="field-dob">
             <div className="relative">
               <input
                 type="date"
@@ -1460,7 +1510,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Father Name */}
-          <Field label="Father Name" required>
+          <Field label="Father Name" required id="field-fatherName">
             <input
               className={`input-field ${errors.fatherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter your father name as per aadhar card"
@@ -1477,7 +1527,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Mother Name */}
-          <Field label="Mother Name" required>
+          <Field label="Mother Name" required id="field-motherName">
             <input
               className={`input-field ${errors.motherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter your mother name"
@@ -1494,7 +1544,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Aadhar Card Number */}
-          <Field label="Aadhar Card Number" required>
+          <Field label="Aadhar Card Number" required id="field-aadharNumber">
             <input
               className={`input-field ${errors.aadharNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter your 12-digit aadhar card number"
@@ -1512,7 +1562,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Phone Number */}
-          <Field label="Phone Number" required>
+          <Field label="Phone Number" required id="field-phoneNumber">
             <input
               className={`input-field ${errors.phoneNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter your 10-digit mobile number"
@@ -1530,13 +1580,13 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Address */}
-          <Field label="Address" required span={2}>
+          <Field label="Address" required span={2} id="field-address">
             <textarea
-              className={`input-field resize-none ${errors.address ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              rows={2}
+              className={`input-field ${errors.address ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+              rows={3}
               placeholder="Enter your full address"
               value={form.address}
-              maxLength={100}
+              maxLength={200}
               onChange={(e) => {
                 const v = sanitizeAddress(e.target.value);
                 set('address')(v);
@@ -1544,7 +1594,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('address', form.address)}
             />
-            <FieldMeta value={form.address} max={100} always error={errors.address} />
+            <FieldMeta value={form.address} max={200} always error={errors.address} />
           </Field>
 
           {/* Aadhaar Card Upload — optional; unlocks once required fields are filled */}
@@ -1675,7 +1725,7 @@ export default function StudentFormPage() {
 
         {/* ── Qualifying Examination ──────────────────────────────────────── */}
         <Section title="Examination for First Admission to a College or University">
-          <Field label="Name of Exam" required>
+          <Field label="Name of Exam" required id="field-nameOfExam">
             <ComboBox
               value={form.nameOfExam}
               onChange={(v) => { set('nameOfExam')(v); touch('nameOfExam', v); }}
@@ -1691,7 +1741,7 @@ export default function StudentFormPage() {
             />
             <FieldMeta value={form.nameOfExam} max={40} always error={errors.nameOfExam} />
           </Field>
-          <Field label="Month & Year of Passing" required>
+          <Field label="Month & Year of Passing" required id="field-dateAndYear">
             <ComboBox
               value={form.dateAndYear}
               onChange={(v) => { set('dateAndYear')(v); touch('dateAndYear', v); }}
@@ -1768,7 +1818,7 @@ export default function StudentFormPage() {
         <Section title="Academic Details ( Currently )">
 
           {/* Present Class */}
-          <Field label="Present Class" required>
+          <Field label="Present Class" required id="field-presentClass">
             <ComboBox
               value={form.presentClass}
               onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
@@ -1786,7 +1836,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Name of Present Course */}
-          <Field label="Name of Present Course" required>
+          <Field label="Name of Present Course" required id="field-nameOfThePresentClass">
             <ComboBox
               value={form.presentCourse}
               onChange={(v) => { set('presentCourse')(v); touch('presentCourse', v); }}
@@ -1804,7 +1854,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Duration of Course */}
-          <Field label="Duration of Course" required>
+          <Field label="Duration of Course" required id="field-durationOfCourse">
             <ComboBox
               value={form.durationOfCourse}
               onChange={(v) => { set('durationOfCourse')(v); touch('durationOfCourse', v); }}
@@ -1882,7 +1932,7 @@ export default function StudentFormPage() {
           <div className="grid grid-cols-2 gap-4">
             {/* University box */}
             <div className="p-4">
-              <Field label="University ( month &amp; Year )" required>
+              <Field label="University ( month &amp; Year )" required id="field-university">
                 <ComboBox
                   value={form.university}
                   onChange={(v) => { set('university')(v); touch('university', v); }}
@@ -1902,7 +1952,7 @@ export default function StudentFormPage() {
 
             {/* Present Course box */}
             <div className="p-4">
-              <Field label="Present Course ( month &amp; Year )" required>
+              <Field label="Present Course ( month &amp; Year )" required id="field-presentCourse">
                 <ComboBox
                   value={form.nameOfThePresentClass}
                   onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
@@ -1924,7 +1974,7 @@ export default function StudentFormPage() {
 
         {/* ── IUT Participation ───────────────────────────────────────────── */}
         <Section title="Previous IUT Participation (While Pursuing)">
-          <Field label="Graduate Course (No. of years)" required>
+          <Field label="Graduate Course (No. of years)" required id="field-graduateCourse">
             <ComboBox
               value={form.graduateCourse}
               onChange={(v) => { set('graduateCourse')(v); touch('graduateCourse', v); }}
@@ -1940,7 +1990,7 @@ export default function StudentFormPage() {
             />
             <FieldMeta value={form.graduateCourse} max={7} always error={errors.graduateCourse} />
           </Field>
-          <Field label="PG Course (No. of years)" required>
+          <Field label="PG Course (No. of years)" required id="field-pgCourse">
             <ComboBox
               value={form.pgCourse}
               onChange={(v) => { set('pgCourse')(v); touch('pgCourse', v); }}
@@ -1959,13 +2009,13 @@ export default function StudentFormPage() {
         </Section>
 
         {/* ── Change of Course / Faculty ──────────────────────────────────── */}
-        <div className="card p-6">
+        <div id="field-previousCourse" className="card p-6">
           <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span><span className="text-red-500 ml-1">*</span></h3>
           <div className="grid grid-cols-1">
             <div className="col-span-full">
               <textarea
-                className={`input-field resize-none ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-                rows={2}
+                className={`input-field ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+                rows={3}
                 placeholder=""
                 maxLength={100}
                 value={form.previousCourse}
