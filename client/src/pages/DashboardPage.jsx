@@ -250,7 +250,7 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
       </div>
 
       {/* ── Proforma (matches StudentViewPage exactly) ── */}
-      <div style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
+      <div style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', boxSizing: 'border-box' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
