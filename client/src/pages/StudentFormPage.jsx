@@ -889,7 +889,7 @@ export default function StudentFormPage() {
   /* ─────────────────────────── Render ──────────────────────────────────── */
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
