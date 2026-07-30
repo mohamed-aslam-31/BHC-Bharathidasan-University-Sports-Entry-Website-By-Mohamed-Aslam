@@ -144,32 +144,34 @@ const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u20
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Like sanitizeText but allows special characters — for department, course names etc. */
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
-/** Present Class: letters, digits, single interior spaces, and . - ( ) only.
- *  Rules: no leading space/dash, only one "-", only one "(", only one ")". Max 20. */
+/** Present Class: letters, digits, single interior spaces, . ( ) and one "-".
+ *  Rules:
+ *   - Must start with a letter or digit (no leading space/dash)
+ *   - Only one "-" allowed; trailing dash is kept so typing "BCA-" → "BCA-II" works
+ *   - Dash position: must have at least one letter/digit before it
+ *   - Only one "(" and one ")" allowed
+ *   - No consecutive spaces. Max 20 chars.
+ */
 const sanitizePresentClass = (v) => {
-  // Strip disallowed characters
+  // 1. Strip disallowed characters — only letters, digits, space, dash, dot, parens
   v = v.replace(/[^a-zA-Z0-9 \-().]/g, '');
-  // No leading space or dash
-  v = v.replace(/^[ \-]+/, '');
-  // Collapse consecutive spaces
+  // 2. Collapse consecutive spaces
   v = v.replace(/ {2,}/g, ' ');
-  // Only one "-": keep the first, remove the rest
-  const dashIdx = v.indexOf('-');
-  if (dashIdx !== -1) {
-    v = v.slice(0, dashIdx + 1) + v.slice(dashIdx + 1).replace(/-/g, '');
-    // Dash must not be the very first character (re-check after replacements)
-    if (v[0] === '-') v = v.slice(1);
+  // 3. No leading space or dash — must open with a letter/digit
+  v = v.replace(/^[ \-]+/, '');
+  // 4. Only one "-": keep the FIRST, strip extras after it
+  const d = v.indexOf('-');
+  if (d !== -1) {
+    v = v.slice(0, d + 1) + v.slice(d + 1).replace(/-/g, '');
   }
-  // Only one "(": keep the first, remove the rest
-  const openIdx = v.indexOf('(');
-  if (openIdx !== -1) {
-    v = v.slice(0, openIdx + 1) + v.slice(openIdx + 1).replace(/\(/g, '');
-  }
-  // Only one ")": keep the first, remove the rest
-  const closeIdx = v.indexOf(')');
-  if (closeIdx !== -1) {
-    v = v.slice(0, closeIdx + 1) + v.slice(closeIdx + 1).replace(/\)/g, '');
-  }
+  // 5. Dash must not be at position 0 after all processing (safety guard)
+  if (v[0] === '-') v = v.slice(1);
+  // 6. Only one "(": keep the first, strip extras
+  const op = v.indexOf('(');
+  if (op !== -1) v = v.slice(0, op + 1) + v.slice(op + 1).replace(/\(/g, '');
+  // 7. Only one ")": keep the first, strip extras
+  const cl = v.indexOf(')');
+  if (cl !== -1) v = v.slice(0, cl + 1) + v.slice(cl + 1).replace(/\)/g, '');
   return v.slice(0, 20);
 };
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
