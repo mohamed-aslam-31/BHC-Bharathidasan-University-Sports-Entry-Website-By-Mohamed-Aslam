@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage } from '../api';
-import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, CropIcon, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Cropper from 'react-easy-crop';
 
@@ -390,100 +390,79 @@ function FieldMeta({ value, max, error, always }) {
 }
 
 /**
- * Single-value searchable combo box.
- * - Trigger button shows selected value / placeholder.
- * - Dropdown has a search input inside it.
- * - "Add …" option appears when typed text doesn't match any option.
- * - `sanitizer` is applied to the search input on every keystroke.
+ * Single-value searchable combo box with inline edit / delete per option.
+ * Props:
+ *   onEditOption(oldVal, newVal)  – called when user renames an option
+ *   onDeleteOption(opt)           – called when user deletes an option
+ * Both are optional; omitting them hides the edit/delete icons.
  */
-/**
- * maxLength  – caps the search input (and therefore any new value) at this many chars
- * minCreate  – minimum typed length before the "Add …" option appears (default 1)
- */
-function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1, validateAdd }) {
-  const [open, setOpen]     = useState(false);
-  const [search, setSearch] = useState('');
+function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1, validateAdd, onEditOption, onDeleteOption }) {
+  const [open,             setOpen]             = useState(false);
+  const [search,           setSearch]           = useState('');
+  const [editingOpt,       setEditingOpt]       = useState(null);
+  const [editDraft,        setEditDraft]        = useState('');
+  const [confirmDeleteOpt, setConfirmDeleteOpt] = useState(null);
   const ref      = useRef(null);
   const searchRef = useRef(null);
+  const editRef   = useRef(null);
+
+  const canManage = !!(onEditOption || onDeleteOption);
 
   /* close on outside click */
   useEffect(() => {
     const h = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-        setSearch('');
+        setOpen(false); setSearch(''); setEditingOpt(null); setConfirmDeleteOpt(null);
       }
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  /* focus search box when dropdown opens */
-  useEffect(() => {
-    if (open) setTimeout(() => searchRef.current?.focus(), 0);
-  }, [open]);
+  useEffect(() => { if (open) setTimeout(() => searchRef.current?.focus(), 0); }, [open]);
+  useEffect(() => { if (editingOpt) setTimeout(() => editRef.current?.focus(), 0); }, [editingOpt]);
 
-  const filtered   = search
-    ? options.filter((o) => o.toLowerCase().includes(search.toLowerCase()))
-    : options;
+  const filtered   = search ? options.filter((o) => o.toLowerCase().includes(search.toLowerCase())) : options;
   const exactMatch = options.some((o) => o.toLowerCase() === search.toLowerCase());
   const trimmed    = search.trim();
-  const showAdd    = trimmed.length >= minCreate &&
-                     (!maxLength || trimmed.length <= maxLength) &&
-                     !exactMatch;
+  const showAdd    = trimmed.length >= minCreate && (!maxLength || trimmed.length <= maxLength) && !exactMatch;
   const addError   = showAdd && validateAdd ? validateAdd(trimmed) : '';
 
-  const select = (opt) => {
-    onChange(opt);
-    setSearch('');
-    setOpen(false);
-  };
-
-  const handleSearchChange = (e) => {
-    let v = e.target.value;
-    if (sanitizer) v = sanitizer(v);
-    setSearch(v);
-    /* also push typed value to parent so validation sees it in real time */
-    onChange(v);
-  };
-
+  const select = (opt) => { onChange(opt); setSearch(''); setOpen(false); setEditingOpt(null); setConfirmDeleteOpt(null); };
+  const handleSearchChange = (e) => { let v = e.target.value; if (sanitizer) v = sanitizer(v); setSearch(v); onChange(v); };
   const handleSearchKeyDown = (e) => {
     if (e.key === 'Escape') { setOpen(false); setSearch(''); }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filtered.length === 1) select(filtered[0]);
-      else if (showAdd && !addError) select(search.trim());
-    }
+    if (e.key === 'Enter') { e.preventDefault(); if (filtered.length === 1) select(filtered[0]); else if (showAdd && !addError) select(search.trim()); }
+  };
+  const clear = (e) => { e.stopPropagation(); onChange(''); setSearch(''); };
+
+  /* edit helpers */
+  const startEdit   = (opt) => { setEditingOpt(opt); setEditDraft(opt); setConfirmDeleteOpt(null); };
+  const cancelEdit  = () => { setEditingOpt(null); setEditDraft(''); };
+  const confirmEdit = () => {
+    const nv = editDraft.trim();
+    if (nv && nv !== editingOpt && onEditOption) onEditOption(editingOpt, nv);
+    setEditingOpt(null); setEditDraft('');
   };
 
-  const clear = (e) => {
-    e.stopPropagation();
-    onChange('');
-    setSearch('');
-  };
+  /* delete helpers */
+  const startDelete   = (opt) => { setConfirmDeleteOpt(opt); setEditingOpt(null); };
+  const cancelDelete  = () => setConfirmDeleteOpt(null);
+  const confirmDelete = () => { if (onDeleteOption) onDeleteOption(confirmDeleteOpt); setConfirmDeleteOpt(null); };
 
   return (
     <div ref={ref} className="relative">
       {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        required={required}
-        className={`input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] ${
-          error ? 'border-red-400 dark:border-red-500' : ''
-        }`}
-      >
+      <button type="button" onClick={() => setOpen((o) => !o)} required={required}
+        className={`input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] ${error ? 'border-red-400 dark:border-red-500' : ''}`}>
         <span className="flex-1 min-w-0 truncate text-sm">
-          {value
-            ? <span className="text-gray-900 dark:text-gray-100">{value}</span>
-            : <span className="text-gray-400 dark:text-gray-500">{placeholder}</span>}
+          {value ? <span className="text-gray-900 dark:text-gray-100">{value}</span>
+                 : <span className="text-gray-400 dark:text-gray-500">{placeholder}</span>}
         </span>
         <span className="flex items-center gap-0.5 flex-shrink-0">
           {value && (
-            <span
-              onMouseDown={(e) => { e.stopPropagation(); clear(e); }}
-              className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
+            <span onMouseDown={(e) => { e.stopPropagation(); clear(e); }}
+              className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <X className="w-3.5 h-3.5" />
             </span>
           )}
@@ -494,40 +473,82 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
       {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
-          {/* Search inside dropdown */}
+          {/* Search */}
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
-            <input
-              ref={searchRef}
-              type="text"
-              value={search}
-              onChange={handleSearchChange}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="Search…"
-              maxLength={maxLength}
-              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-            />
+            <input ref={searchRef} type="text" value={search} onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown} placeholder="Search…" maxLength={maxLength}
+              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
           </div>
-          {/* Options list */}
+          {/* Options */}
           <div className="max-h-52 overflow-y-auto multiselect-scroll">
             {filtered.length === 0 && !showAdd && (
               <p className="text-xs text-gray-400 text-center py-4">No options found</p>
             )}
             {filtered.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); select(opt); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                  value === opt
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                {value === opt
-                  ? <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3] flex-shrink-0" />
-                  : <span className="w-3.5 flex-shrink-0" />}
-                {opt}
-              </button>
+              <div key={opt} className="group relative">
+                {editingOpt === opt ? (
+                  /* ── Inline edit panel ── */
+                  <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
+                    <input ref={editRef} type="text" value={editDraft} maxLength={maxLength}
+                      onChange={(e) => { let v = e.target.value; if (sanitizer) v = sanitizer(v); setEditDraft(v); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); confirmEdit(); } if (e.key === 'Escape') cancelEdit(); }}
+                      className="w-full text-sm px-2 py-1 mb-2 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
+                    <div className="flex gap-2">
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); confirmEdit(); }}
+                        className="flex-1 text-xs px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Change</button>
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); cancelEdit(); }}
+                        className="flex-1 text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); select(opt); }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${canManage ? 'pr-16' : ''} ${
+                        value === opt
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                      }`}>
+                      {value === opt
+                        ? <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3] flex-shrink-0" />
+                        : <span className="w-3.5 flex-shrink-0" />}
+                      {opt}
+                    </button>
+                    {/* Edit / Delete icons — visible on hover */}
+                    {canManage && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {onEditOption && (
+                          <button type="button" title="Edit"
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startEdit(opt); }}
+                            className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/40 transition-colors">
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        )}
+                        {onDeleteOption && (
+                          <button type="button" title="Delete"
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); startDelete(opt); }}
+                            className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 transition-colors">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {/* Delete confirmation panel */}
+                    {confirmDeleteOpt === opt && (
+                      <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
+                        <p className="text-xs text-red-600 dark:text-red-400 mb-2">
+                          Delete <span className="font-semibold">"{opt}"</span>?
+                        </p>
+                        <div className="flex gap-2">
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); confirmDelete(); }}
+                            className="flex-1 text-xs px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Delete</button>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); cancelDelete(); }}
+                            className="flex-1 text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             ))}
             {showAdd && (
               addError ? (
@@ -539,11 +560,8 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
                   </span>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onMouseDown={(e) => { e.preventDefault(); select(search.trim()); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-t border-gray-100 dark:border-gray-800"
-                >
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); select(search.trim()); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-t border-gray-100 dark:border-gray-800">
                   <Plus className="w-3.5 h-3.5 flex-shrink-0" />
                   Add &ldquo;{search.trim()}&rdquo;
                 </button>
@@ -612,6 +630,7 @@ export default function StudentFormPage() {
   const [loading, setLoading]   = useState(false);
   const [fetching, setFetching] = useState(isEdit);
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
+  const [managedOpts, setManagedOpts] = useState({});
 
   /* ── crop state ── */
   const [cropSrc, setCropSrc]               = useState(null);
@@ -864,17 +883,27 @@ export default function StudentFormPage() {
 
   /* ── option lists ── */
 
-  const yearOptions       = [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
-  const gameOptions       = [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
-  const deptOptions       = [...new Set([...(meta.departments || [])])];
-  const universityOptions = [...new Set([...DEFAULT_UNIVERSITIES, ...(meta.universities || [])])];
-  const classOptions      = DEFAULT_CLASSES;
-  const durationOptions   = DEFAULT_DURATIONS;
-  const iutOptions        = ['NIL', ...DEFAULT_DURATIONS];
-  const courseOptions     = [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
-  const examOptions       = DEFAULT_EXAMS;
-  const monthYearOptions  = DEFAULT_MONTH_YEARS;
-  const hostelOptions     = [...new Set([...DEFAULT_HOSTELS, ...(meta.hostels || [])])];
+  const yearOptions       = managedOpts.year      ?? [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
+  const gameOptions       = managedOpts.game      ?? [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
+  const deptOptions       = managedOpts.dept      ?? [...new Set([...(meta.departments || [])])];
+  const universityOptions = managedOpts.university?? [...new Set([...DEFAULT_UNIVERSITIES, ...(meta.universities || [])])];
+  const classOptions      = managedOpts.class     ?? DEFAULT_CLASSES;
+  const durationOptions   = managedOpts.duration  ?? DEFAULT_DURATIONS;
+  const iutOptions        = managedOpts.iut       ?? ['NIL', ...DEFAULT_DURATIONS];
+  const courseOptions     = managedOpts.course    ?? [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
+  const examOptions       = managedOpts.exam      ?? DEFAULT_EXAMS;
+  const monthYearOptions  = managedOpts.monthYear ?? DEFAULT_MONTH_YEARS;
+  const hostelOptions     = managedOpts.hostel    ?? [...new Set([...DEFAULT_HOSTELS, ...(meta.hostels || [])])];
+
+  /* ── Managed-options helpers ── */
+  const mkEdit = (key, curOpts, ...fks) => (old, nv) => {
+    setManagedOpts((p) => ({ ...p, [key]: curOpts.map((o) => (o === old ? nv : o)) }));
+    fks.forEach((fk) => { if (form[fk] === old) set(fk)(nv); });
+  };
+  const mkDel = (key, curOpts, ...fks) => (opt) => {
+    setManagedOpts((p) => ({ ...p, [key]: curOpts.filter((o) => o !== opt) }));
+    fks.forEach((fk) => { if (form[fk] === opt) set(fk)(''); });
+  };
 
   /* ── early return ── */
 
@@ -1114,6 +1143,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeYear}
               maxLength={9}
               minCreate={9}
+              onEditOption={mkEdit('year', yearOptions, 'year')}
+              onDeleteOption={mkDel('year', yearOptions, 'year')}
             />
             <FieldMeta value={form.year} max={9} always error={errors.year} />
           </Field>
@@ -1147,6 +1178,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeGame}
               maxLength={30}
               minCreate={3}
+              onEditOption={mkEdit('game', gameOptions, 'nameOfTheGame')}
+              onDeleteOption={mkDel('game', gameOptions, 'nameOfTheGame')}
             />
             <FieldMeta value={form.nameOfTheGame} max={30} always error={errors.nameOfTheGame} />
           </Field>
@@ -1304,6 +1337,8 @@ export default function StudentFormPage() {
                 sanitizer={sanitizeAcademic}
                 maxLength={50}
                 minCreate={3}
+                onEditOption={mkEdit('hostel', hostelOptions, 'hostelName')}
+                onDeleteOption={mkDel('hostel', hostelOptions, 'hostelName')}
               />
               <FieldMeta value={form.hostelName} max={50} always error={errors.hostelName} />
             </Field>
@@ -1457,6 +1492,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeExamName}
               maxLength={40}
               minCreate={3}
+              onEditOption={mkEdit('exam', examOptions, 'nameOfExam')}
+              onDeleteOption={mkDel('exam', examOptions, 'nameOfExam')}
             />
             <FieldMeta value={form.nameOfExam} max={40} always error={errors.nameOfExam} />
           </Field>
@@ -1471,6 +1508,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeMonthYear}
               maxLength={14}
               minCreate={3}
+              onEditOption={mkEdit('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
+              onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
             />
             <FieldMeta value={form.dateAndYear} max={14} always error={errors.dateAndYear} />
           </Field>
@@ -1491,6 +1530,8 @@ export default function StudentFormPage() {
               maxLength={20}
               minCreate={1}
               validateAdd={(v) => v.endsWith('-') || v.endsWith('.') ? 'Format incomplete — add text after the dash' : ''}
+              onEditOption={mkEdit('class', classOptions, 'presentClass')}
+              onDeleteOption={mkDel('class', classOptions, 'presentClass')}
             />
             <FieldMeta value={form.presentClass} max={20} always error={errors.presentClass} />
           </Field>
@@ -1507,6 +1548,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizePresentCourse}
               maxLength={30}
               minCreate={2}
+              onEditOption={mkEdit('course', courseOptions, 'presentCourse')}
+              onDeleteOption={mkDel('course', courseOptions, 'presentCourse')}
             />
             <FieldMeta value={form.presentCourse} max={30} always error={errors.presentCourse} />
           </Field>
@@ -1522,6 +1565,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeDuration}
               maxLength={7}
               minCreate={1}
+              onEditOption={mkEdit('duration', durationOptions, 'durationOfCourse')}
+              onDeleteOption={mkDel('duration', durationOptions, 'durationOfCourse')}
             />
             <FieldMeta value={form.durationOfCourse} max={7} always error={errors.durationOfCourse} />
           </Field>
@@ -1546,6 +1591,8 @@ export default function StudentFormPage() {
                   sanitizer={sanitizeMonthYear}
                   maxLength={14}
                   minCreate={3}
+                  onEditOption={mkEdit('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
+                  onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
                 />
                 <FieldMeta value={form.university} max={14} always error={errors.university} />
               </Field>
@@ -1564,6 +1611,8 @@ export default function StudentFormPage() {
                   sanitizer={sanitizeMonthYear}
                   maxLength={14}
                   minCreate={3}
+                  onEditOption={mkEdit('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
+                  onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
                 />
                 <FieldMeta value={form.nameOfThePresentClass} max={14} always error={errors.nameOfThePresentClass} />
               </Field>
@@ -1584,6 +1633,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeDuration}
               maxLength={7}
               minCreate={1}
+              onEditOption={mkEdit('iut', iutOptions, 'graduateCourse', 'pgCourse')}
+              onDeleteOption={mkDel('iut', iutOptions, 'graduateCourse', 'pgCourse')}
             />
             <FieldMeta value={form.graduateCourse} max={7} always error={errors.graduateCourse} />
           </Field>
@@ -1598,6 +1649,8 @@ export default function StudentFormPage() {
               sanitizer={sanitizeDuration}
               maxLength={7}
               minCreate={1}
+              onEditOption={mkEdit('iut', iutOptions, 'graduateCourse', 'pgCourse')}
+              onDeleteOption={mkDel('iut', iutOptions, 'graduateCourse', 'pgCourse')}
             />
             <FieldMeta value={form.pgCourse} max={7} always error={errors.pgCourse} />
           </Field>
