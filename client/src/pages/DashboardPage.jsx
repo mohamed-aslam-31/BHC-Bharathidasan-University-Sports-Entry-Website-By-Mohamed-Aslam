@@ -188,27 +188,37 @@ function BulkDeleteModal({ students, onConfirm, onCancel, loading, zIndex = 50 }
 }
 
 /* ─── Group view modal ────────────────────────────────────────────────────── */
-const pBorder = '1px solid #000';
-const pNumCell    = { border: pBorder, padding: '5px 6px', verticalAlign: 'middle', textAlign: 'center', fontFamily: 'Arial, sans-serif' };
-const pLabelCell  = { border: pBorder, padding: '5px 8px', verticalAlign: 'middle', fontFamily: 'Arial, sans-serif' };
-const pSubCell    = { border: pBorder, padding: '5px 8px', verticalAlign: 'middle', fontFamily: 'Arial, sans-serif' };
-const pValueCell  = { border: pBorder, padding: '5px 8px', verticalAlign: 'middle', fontWeight: 'bold', fontFamily: 'Arial, sans-serif' };
+const pBorder   = '1px solid #000';
+const pNumCell  = { border: pBorder, padding: '7px 5px',  verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap',  fontFamily: 'Arial, sans-serif' };
+const pLabelCell= { border: pBorder, padding: '7px 8px',  verticalAlign: 'middle', lineHeight: 1.5,     fontFamily: 'Arial, sans-serif' };
+const pSubCell  = { border: pBorder, padding: '7px 8px',  verticalAlign: 'middle', whiteSpace: 'nowrap',fontFamily: 'Arial, sans-serif' };
+const pValueCell= { border: pBorder, padding: '7px 8px',  verticalAlign: 'middle', fontWeight: 'bold',  wordBreak: 'break-word', fontFamily: 'Arial, sans-serif' };
+const pAgeCell  = { border: pBorder, padding: '7px 8px',  verticalAlign: 'middle', fontWeight: 'bold',  textAlign: 'center', whiteSpace: 'nowrap', fontFamily: 'Arial, sans-serif' };
+
+const pFormatDOB = (val) => {
+  if (!val) return 'NIL';
+  const d = new Date(val);
+  if (isNaN(d)) return val;
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+};
+const pCalcAge = (val) => {
+  if (!val) return '';
+  const dob = new Date(val);
+  if (isNaN(dob)) return '';
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+};
+const ptd = (val) => val || 'NIL';
 
 function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
-  const formatDOB = (val) => {
-    if (!val) return 'NIL';
-    const d = new Date(val);
-    if (isNaN(d)) return val;
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
-  };
-  const td = (val) => val || 'NIL';
-
   return (
     <div className={`mb-8 print-student ${checked ? '' : 'opacity-40 print-exclude'}`}>
 
       {/* ── Screen-only action bar ── */}
       <div className="no-print flex items-center gap-2 mb-2 px-1">
-        {/* Select toggle */}
         <button
           onClick={onToggle}
           title={checked ? 'Uncheck (exclude from print)' : 'Check (include in print)'}
@@ -222,7 +232,6 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
             ? <><Check className="w-3 h-3 stroke-[3]" />Selected</>
             : <><div className="w-3 h-3 rounded-full border-2 border-gray-400" />Select</>}
         </button>
-        {/* Edit */}
         <button
           onClick={onEdit}
           title="Edit student"
@@ -230,7 +239,6 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
         >
           <Pencil className="w-3 h-3" />Edit
         </button>
-        {/* Delete */}
         <button
           onClick={onDelete}
           title="Delete student"
@@ -241,140 +249,158 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
         <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">Roll #{s.rollNo}</span>
       </div>
 
-      {/* ── Proforma ── */}
-      <div style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '20px', border: '1px solid #ddd' }}>
+      {/* ── Proforma (matches StudentViewPage exactly) ── */}
+      <div style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', border: '1px solid #ddd', boxSizing: 'border-box' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '6px' }}>
-          <div style={{ width: '110px', flexShrink: 0 }}>
-            <img src="/university-logo.gif" alt="BU Logo" style={{ width: '105px', height: '105px', objectFit: 'contain' }} />
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+          <div style={{ width: '120px', flexShrink: 0 }}>
+            <img src="/university-logo.gif" alt="BU Logo" style={{ width: '115px', height: '115px', objectFit: 'contain', display: 'block' }} />
           </div>
-          <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4 }}>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', textTransform: 'uppercase' }}>Bharathidasan University</div>
-            <div style={{ fontSize: '12px' }}>TIRUCHIRAPPALLI - 620 024</div>
-            <div style={{ fontSize: '15px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
-            <div style={{ fontSize: '12px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+          <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '6px', paddingBottom: '6px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
+            <div style={{ fontSize: '14px' }}>TIRUCHIRAPPALLI - 620 024</div>
+            <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '3px' }}>Eligibility Proforma of Players</div>
+            <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+            <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}><em>{s.year || ''}</em></div>
           </div>
-          <div style={{ width: '110px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-            <div style={{ border: '1px solid #000', width: '90px', height: '105px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <div style={{ width: '125px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ border: '1px solid #000', width: '115px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {s.image
                 ? <img src={`/uploads/${s.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ fontSize: '10px', color: '#666', fontFamily: 'Arial, sans-serif' }}>Photo</span>
+                : <span style={{ fontSize: '12px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
               }
             </div>
           </div>
         </div>
 
         {/* College / Game line */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '10px', marginBottom: '6px', fontFamily: 'Arial, sans-serif' }}>
-          <div>Name of the College: <strong>Bishop Heber College, Trichy</strong></div>
-          <div>Name of the Game: <strong>{s.nameOfTheGame}{s.gender ? ' - ' + s.gender : ''}</strong></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', marginTop: '4px', fontFamily: 'Arial, sans-serif', flexWrap: 'wrap', gap: '4px' }}>
+          <div>College: <strong>Bishop Heber College, Trichy</strong></div>
+          <div>Game: <strong>{s.nameOfTheGame}{s.gender ? ' – ' + s.gender : ''}</strong></div>
         </div>
 
-        {/* Main table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+        {/* Main table — 5 columns; col5 is the age box used only in row 3 */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'Arial, sans-serif', tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '4%' }} /><col style={{ width: '38%' }} />
-            <col style={{ width: '16%' }} /><col style={{ width: '42%' }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '38%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '26%' }} />
+            <col style={{ width: '15%' }} />
           </colgroup>
           <tbody>
-          <tr>
-            <td style={pNumCell}>1.</td>
-            <td colSpan={2} style={pLabelCell}>Name of the sportsperson</td>
-            <td style={pValueCell}>{td(s.nameOfTheSportsperson)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>2.</td>
-            <td colSpan={2} style={pLabelCell}>Father's Name</td>
-            <td style={pValueCell}>{td(s.fathersName)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>3.</td>
-            <td colSpan={2} style={pLabelCell}>
-              Date of the Birth<br />
-              <strong>(copy of +2 Mark sheet should be enclosed)</strong>
-            </td>
-            <td style={pValueCell}>{formatDOB(s.dateOfBirth)}</td>
-          </tr>
-          <tr>
-            <td rowSpan={2} style={pNumCell}>4.</td>
-            <td rowSpan={2} style={pLabelCell}>Date &amp; year of passing Qualifying Examination for First admission to a college / university</td>
-            <td style={pSubCell}>Name of Exam</td>
-            <td style={pValueCell}>{td(s.nameOfExam)}</td>
-          </tr>
-          <tr>
-            <td style={pSubCell}>Date &amp; Year</td>
-            <td style={pValueCell}>{td(s.dateAndYear)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>5.</td>
-            <td colSpan={2} style={pLabelCell}>Present Class</td>
-            <td style={pValueCell}>{td(s.presentClass)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>6.</td>
-            <td colSpan={2} style={pLabelCell}>Name of the present course</td>
-            <td style={pValueCell}>{td(s.nameOfThePresentClass)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>7.</td>
-            <td colSpan={2} style={pLabelCell}>Duration of course</td>
-            <td style={pValueCell}>{td(s.durationOfCourse)}</td>
-          </tr>
-          <tr>
-            <td rowSpan={2} style={pNumCell}>8.</td>
-            <td rowSpan={2} style={pLabelCell}>Date &amp; year of First admission to</td>
-            <td style={pSubCell}>University</td>
-            <td style={pValueCell}>{td(s.university)}</td>
-          </tr>
-          <tr>
-            <td style={pSubCell}>Present course</td>
-            <td style={pValueCell}>{td(s.presentCourse)}</td>
-          </tr>
-          <tr>
-            <td rowSpan={2} style={pNumCell}>9.</td>
-            <td rowSpan={2} style={pLabelCell}>Number of years of previous IUT participation while pursuing</td>
-            <td style={pSubCell}>Graduate course</td>
-            <td style={pValueCell}>{td(s.graduateCourse)}</td>
-          </tr>
-          <tr>
-            <td style={pSubCell}>P.G. course</td>
-            <td style={pValueCell}>{td(s.pgCourse)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>10.</td>
-            <td colSpan={2} style={pLabelCell}>
-              Details about change of course / faculty, if any<br />
-              (Details about the previous / new &nbsp;- course / faculty)
-            </td>
-            <td style={pValueCell}>{td(s.previousCourse)}</td>
-          </tr>
-          <tr>
-            <td style={pNumCell}>11.</td>
-            <td colSpan={2} style={pLabelCell}>Residential address (With phone / Mobile no)</td>
-            <td style={{ ...pValueCell, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
-              {s.address || '—'}
-              {s.phoneNumber ? <><br /><strong>{s.phoneNumber}</strong></> : null}
-            </td>
-          </tr>
+            <tr>
+              <td style={pNumCell}>1.</td>
+              <td colSpan={2} style={pLabelCell}>Name of the sportsperson</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.nameOfTheSportsperson)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>2.</td>
+              <td colSpan={2} style={pLabelCell}>Father's Name</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.fathersName)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>3.</td>
+              <td colSpan={2} style={pLabelCell}>
+                Date of Birth
+                <div style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '1px' }}>(copy of +2 Mark sheet should be enclosed)</div>
+              </td>
+              <td style={pValueCell}>{pFormatDOB(s.dateOfBirth)}</td>
+              <td style={pAgeCell}>
+                {s.dateOfBirth && pCalcAge(s.dateOfBirth) !== '' ? <>Age : {pCalcAge(s.dateOfBirth)}</> : ''}
+              </td>
+            </tr>
+            <tr>
+              <td rowSpan={2} style={{ ...pNumCell, verticalAlign: 'middle' }}>4.</td>
+              <td rowSpan={2} style={{ ...pLabelCell, verticalAlign: 'middle' }}>Date &amp; year of passing Qualifying Examination for First admission to a college / university</td>
+              <td style={pSubCell}>Name of Exam</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.nameOfExam)}</td>
+            </tr>
+            <tr>
+              <td style={pSubCell}>Date &amp; Year</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.dateAndYear)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>5.</td>
+              <td colSpan={2} style={pLabelCell}>Present Class</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.presentClass)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>6.</td>
+              <td colSpan={2} style={pLabelCell}>Name of the present course</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.nameOfThePresentClass)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>7.</td>
+              <td colSpan={2} style={pLabelCell}>Duration of course</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.durationOfCourse)}</td>
+            </tr>
+            <tr>
+              <td rowSpan={2} style={{ ...pNumCell, verticalAlign: 'middle' }}>8.</td>
+              <td rowSpan={2} style={{ ...pLabelCell, verticalAlign: 'middle' }}>Date &amp; year of First admission to</td>
+              <td style={pSubCell}>University</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.university)}</td>
+            </tr>
+            <tr>
+              <td style={pSubCell}>Present course</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.presentCourse)}</td>
+            </tr>
+            <tr>
+              <td rowSpan={2} style={{ ...pNumCell, verticalAlign: 'middle' }}>9.</td>
+              <td rowSpan={2} style={{ ...pLabelCell, verticalAlign: 'middle' }}>No. of years of previous IUT participation while pursuing</td>
+              <td style={pSubCell}>Graduate course</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.graduateCourse)}</td>
+            </tr>
+            <tr>
+              <td style={pSubCell}>P.G. course</td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.pgCourse)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>10.</td>
+              <td colSpan={2} style={pLabelCell}>
+                Details about change of course / faculty, if any
+                <div style={{ fontSize: '10px', marginTop: '1px' }}>(Details about the previous / new – course / faculty)</div>
+              </td>
+              <td colSpan={2} style={pValueCell}>{ptd(s.previousCourse)}</td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>11.</td>
+              <td colSpan={2} style={pLabelCell}>Residential address (With phone / Mobile no)</td>
+              <td colSpan={2} style={{ ...pValueCell, whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                {s.address || '—'}
+                {s.phoneNumber ? <><br /><strong>{s.phoneNumber}</strong></> : null}
+              </td>
+            </tr>
+            <tr>
+              <td style={pNumCell}>12.</td>
+              <td colSpan={4} style={{ ...pValueCell, fontWeight: 'normal' }}>
+                <span>T-Shirt Size : <strong>{s.tshirt || ''}</strong></span>
+                <span style={{ marginLeft: '48px' }}>Track Size : <strong>{s.track || ''}</strong></span>
+              </td>
+            </tr>
           </tbody>
         </table>
 
         {/* Footer notes */}
-        <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ marginTop: '14px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
           <div>*Strike out whichever is not applicable</div>
           <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
         </div>
-        <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
-          Signature of the student
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
-          <div>Signature of the<br />Director of Physical Education</div>
-          <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
-          <div style={{ border: '1px solid #000', padding: '10px 28px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
-            Eligibility verified<br />Local organiser Signature &amp; Seal
+
+        {/* Signatures */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginTop: '16px', fontSize: '13px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ textAlign: 'right', paddingBottom: '48px' }}>
+            Signature of the student
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '48px' }}>
+            <div>Signature of the<br />Director of Physical Education</div>
+            <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ border: '1.5px solid #000', padding: '14px 48px', textAlign: 'center', fontSize: '13px' }}>
+              Eligibility verified<br />Local organiser Signature &amp; Seal
+            </div>
           </div>
         </div>
       </div>
