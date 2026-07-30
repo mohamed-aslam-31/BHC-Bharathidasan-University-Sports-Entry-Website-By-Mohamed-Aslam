@@ -304,7 +304,6 @@ export default function StudentPreviewOverlay({
             <Detail label="Aadhar Number"    value={form.aadharNumber} />
             <Detail label="Student Type"     value={form.studentType} />
             <Detail label="Day / Hostel"     value={form.dayType ? `${form.dayType}${form.hostelName ? ' — ' + form.hostelName : ''}` : ''} />
-            <Detail label="Tournament"       value={form.tournament} />
             <Detail label="T-Shirt Size"     value={form.tshirt} />
             <Detail label="Track Size"       value={form.track} />
           </div>

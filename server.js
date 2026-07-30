@@ -55,7 +55,6 @@ const StudentSchema = new mongoose.Schema({
   idCardPdf:             String,
   marksheetPdf:          String,
   feesReceiptPdf:        String,
-  tournament:            String,
   tshirt:                String,
   track:                 String,
   studentType:           String,
@@ -78,7 +77,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.Sc Computer Science',
     graduateCourse: '2', pgCourse: 'NIL', previousCourse: 'Participated in 2022 District level',
     address: '12, Anna Nagar, Tiruchirappalli - 620001', phoneNumber: '9876543210',
-    aadharNumber: '234567890123', tournament: '5', tshirt: '40', track: '42', status: 'approved'
+    aadharNumber: '234567890123', tshirt: '40', track: '42', status: 'approved'
   },
   {
     rollNo: '22PH002', nameOfTheGame: 'BADMINTON', gender: 'FEMALE', year: '2023-2024',
@@ -88,7 +87,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.Sc Physics',
     graduateCourse: '1', pgCourse: 'NIL', previousCourse: 'NIL',
     address: '45, Gandhi Road, Thanjavur - 613001', phoneNumber: '9865432101',
-    aadharNumber: '345678901234', tournament: '3', tshirt: '36', track: '38', status: 'approved'
+    aadharNumber: '345678901234', tshirt: '36', track: '38', status: 'approved'
   },
   {
     rollNo: '21MA003', nameOfTheGame: 'FOOTBALL', gender: 'MALE', year: '2023-2024',
@@ -98,7 +97,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.Sc Mathematics',
     graduateCourse: '3', pgCourse: 'NIL', previousCourse: 'State level participant 2022',
     address: '78, Nehru Street, Madurai - 625001', phoneNumber: '9754321098',
-    aadharNumber: '456789012345', tournament: '7', tshirt: '42', track: '44', status: 'approved'
+    aadharNumber: '456789012345', tshirt: '42', track: '44', status: 'approved'
   },
   {
     rollNo: '23CH004', nameOfTheGame: 'VOLLEYBALL', gender: 'FEMALE', year: '2023-2024',
@@ -108,7 +107,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.Sc Chemistry',
     graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'NIL',
     address: '23, Raja Street, Tiruchirappalli - 620002', phoneNumber: '9643210987',
-    aadharNumber: '567890123456', tournament: '4', tshirt: '34', track: '36', status: 'approved'
+    aadharNumber: '567890123456', tshirt: '34', track: '36', status: 'approved'
   },
   {
     rollNo: '22CO005', nameOfTheGame: 'BASKETBALL', gender: 'MALE', year: '2023-2024',
@@ -118,7 +117,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.Com',
     graduateCourse: '2', pgCourse: 'NIL', previousCourse: 'College level champion 2022',
     address: '56, Market Road, Kumbakonam - 612001', phoneNumber: '9532109876',
-    aadharNumber: '678901234567', tournament: '8', tshirt: '44', track: '46', status: 'approved'
+    aadharNumber: '678901234567', tshirt: '44', track: '46', status: 'approved'
   },
   {
     rollNo: '22HI006', nameOfTheGame: 'TABLE TENNIS', gender: 'FEMALE', year: '2023-2024',
@@ -128,7 +127,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.A History',
     graduateCourse: '2', pgCourse: 'NIL', previousCourse: 'NIL',
     address: '89, Lake View, Trichy - 620020', phoneNumber: '9421098765',
-    aadharNumber: '789012345678', tournament: '2', tshirt: '36', track: '38', status: 'approved'
+    aadharNumber: '789012345678', tshirt: '36', track: '38', status: 'approved'
   },
   {
     rollNo: '21BI007', nameOfTheGame: 'ATHLETICS', gender: 'MALE', year: '2023-2024',
@@ -138,7 +137,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.Sc Biology',
     graduateCourse: '3', pgCourse: 'NIL', previousCourse: 'National level 100m 2022',
     address: '34, Temple Street, Thanjavur - 613002', phoneNumber: '9310987654',
-    aadharNumber: '890123456789', tournament: '1', tshirt: '40', track: '42', status: 'approved'
+    aadharNumber: '890123456789', tshirt: '40', track: '42', status: 'approved'
   },
   {
     rollNo: '23TA008', nameOfTheGame: 'CHESS', gender: 'FEMALE', year: '2023-2024',
@@ -148,7 +147,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.A Tamil',
     graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'District champion 2021',
     address: '67, Palani Road, Dindigul - 624001', phoneNumber: '9209876543',
-    aadharNumber: '901234567890', tournament: '6', tshirt: '34', track: '36', status: 'approved'
+    aadharNumber: '901234567890', tshirt: '34', track: '36', status: 'approved'
   },
   {
     rollNo: '22EN009', nameOfTheGame: 'HOCKEY', gender: 'MALE', year: '2023-2024',
@@ -158,7 +157,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'B.A English',
     graduateCourse: '2', pgCourse: 'NIL', previousCourse: 'Inter-university 2022',
     address: '11, Church Road, Salem - 636001', phoneNumber: '9098765432',
-    aadharNumber: '012345678901', tournament: '9', tshirt: '42', track: '44', status: 'approved'
+    aadharNumber: '012345678901', tshirt: '42', track: '44', status: 'approved'
   },
   {
     rollNo: '23MB010', nameOfTheGame: 'SWIMMING', gender: 'FEMALE', year: '2023-2024',
@@ -168,7 +167,7 @@ const SAMPLE_STUDENTS = [
     university: 'Bharathidasan University', presentCourse: 'BBA',
     graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'State swimmer of the year 2021',
     address: '99, Beach Road, Chennai - 600001', phoneNumber: '8987654321',
-    aadharNumber: '123456789012', tournament: '10', tshirt: '34', track: '36', status: 'approved'
+    aadharNumber: '123456789012', tshirt: '34', track: '36', status: 'approved'
   }
 ];
 
@@ -224,7 +223,6 @@ async function connectDB() {
         gender:                s.gender,
         year:                  s.year,
         aadharNumber:          s.aadharNumber,
-        tournament:            s.tournament,
         tshirt:                s.tshirt,
         track:                 s.track,
         status:                'approved',
@@ -420,7 +418,7 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       marksheetPdf:    marksheetFile    ? `marksheet/${marksheetFile.filename}`        : null,
       feesReceiptPdf:  feesReceiptFile  ? `feesreceipt/${feesReceiptFile.filename}`    : null,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
-      tournament: d.tournament, tshirt: d.tshirt, track: d.track,
+      tshirt: d.tshirt, track: d.track,
       status: req.user.role === 'admin' ? 'approved' : 'pending',
     });
     const msg = student.status === 'approved' ? 'Student created successfully' : 'Student submitted for approval';
@@ -486,7 +484,7 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       marksheetPdf:   marksheetFile   ? `marksheet/${marksheetFile.filename}`          : student.marksheetPdf,
       feesReceiptPdf: feesReceiptFile ? `feesreceipt/${feesReceiptFile.filename}`      : student.feesReceiptPdf,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
-      tournament: d.tournament, tshirt: d.tshirt, track: d.track,
+      tshirt: d.tshirt, track: d.track,
     });
     await student.save();
     res.json({ message: 'Student updated successfully' });

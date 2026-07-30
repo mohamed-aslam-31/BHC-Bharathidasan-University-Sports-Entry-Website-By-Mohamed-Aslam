@@ -624,7 +624,7 @@ const empty = {
   university: '', presentCourse: '',
   graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'NIL',
   address: '', phoneNumber: '', aadharNumber: '',
-  tournament: '', tshirt: '', track: '',
+  tshirt: '', track: '',
   studentType: '', dayType: '', hostelName: '',
 };
 
@@ -711,7 +711,7 @@ export default function StudentFormPage() {
           address:               s.address                 || '',
           phoneNumber:           s.phoneNumber             || '',
           aadharNumber:          s.aadharNumber            || '',
-          tournament:            s.tournament              || '',
+
           tshirt:                s.tshirt                  || '',
           track:                 s.track                   || '',
           studentType:           s.studentType             || '',
