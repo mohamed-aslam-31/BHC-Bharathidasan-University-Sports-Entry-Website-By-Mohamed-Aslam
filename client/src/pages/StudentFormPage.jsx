@@ -145,9 +145,9 @@ const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g
 /** Like sanitizeText but allows special characters — for department, course names etc. */
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
-const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 30);
-/** Month & Year of Passing: letters/digits and "-" only — no spaces, no other special characters */
-const sanitizeMonthYear = (v) => v.replace(/[^a-zA-Z0-9\-]/g, '').slice(0, 15);
+const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 40);
+/** Month & Year of Passing: letters/digits and "-" only — spaces are auto-converted to "-" */
+const sanitizeMonthYear = (v) => v.replace(/ /g, '-').replace(/[^a-zA-Z0-9\-]/g, '').slice(0, 14);
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
 
@@ -184,12 +184,12 @@ const validateUniversity = (v) => validateMinMax(v, 'Month & year of first admis
 const validateExamName = (v) =>
   !v ? 'Name of exam is required' :
   v.trim().length < 3 ? 'Minimum 3 characters required' :
-  v.length > 30 ? 'Maximum 30 characters allowed' : '';
+  v.length > 40 ? 'Maximum 40 characters allowed' : '';
 
 const validateMonthYear = (v) =>
   !v ? 'Month & year of passing is required' :
   v.trim().length < 8 ? 'Minimum 8 characters required' :
-  v.length > 15 ? 'Maximum 15 characters allowed' : '';
+  v.length > 14 ? 'Maximum 14 characters allowed' : '';
 
 const validateDob = (v) =>
   !v ? 'Date of birth is required' : '';
@@ -1179,28 +1179,28 @@ export default function StudentFormPage() {
               value={form.nameOfExam}
               onChange={(v) => { set('nameOfExam')(v); touch('nameOfExam', v); }}
               options={examOptions}
-              placeholder="e.g. HSC, SSLC"
+              placeholder="HSC, AISSCE, ISC"
               required
               error={errors.nameOfExam}
               sanitizer={sanitizeExamName}
-              maxLength={30}
+              maxLength={40}
               minCreate={3}
             />
-            <FieldMeta value={form.nameOfExam} max={30} always error={errors.nameOfExam} />
+            <FieldMeta value={form.nameOfExam} max={40} always error={errors.nameOfExam} />
           </Field>
           <Field label="Month & Year of Passing" required>
             <ComboBox
               value={form.dateAndYear}
               onChange={(v) => { set('dateAndYear')(v); touch('dateAndYear', v); }}
               options={monthYearOptions}
-              placeholder="e.g. April-2022"
+              placeholder="Select or add new month & year"
               required
               error={errors.dateAndYear}
               sanitizer={sanitizeMonthYear}
-              maxLength={15}
+              maxLength={14}
               minCreate={3}
             />
-            <FieldMeta value={form.dateAndYear} max={15} always error={errors.dateAndYear} />
+            <FieldMeta value={form.dateAndYear} max={14} always error={errors.dateAndYear} />
           </Field>
         </Section>
 
