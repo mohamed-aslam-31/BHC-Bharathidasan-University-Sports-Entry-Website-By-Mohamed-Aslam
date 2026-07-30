@@ -114,9 +114,22 @@ export default function AadhaarUpload({ onValidationChange, onFileChange, locked
             <FileText className="w-4 h-4" /> Aadhaar Upload Guidelines
           </p>
           <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1.5">
-            <li className="flex items-start gap-1.5"><span>📄</span><span>Upload a PDF scan of your Aadhaar card (front and back)</span></li>
+            <li className="flex items-start gap-1.5">
+              <span>⭐</span>
+              <span>
+                <strong>Preferred:</strong> Download e-Aadhaar PDF from{' '}
+                <a
+                  href="https://myaadhaar.uidai.gov.in/"
+                  target="_blank" rel="noreferrer"
+                  className="underline hover:text-blue-900 dark:hover:text-blue-200"
+                >
+                  myaadhaar.uidai.gov.in
+                </a>
+              </span>
+            </li>
+            <li className="flex items-start gap-1.5"><span>📄</span><span>Physical Aadhaar: scan both sides into a single PDF (1–2 pages)</span></li>
             <li className="flex items-start gap-1.5"><span>📏</span><span>File size: <strong>200 KB – 2 MB</strong></span></li>
-            <li className="flex items-start gap-1.5"><span>📑</span><span>Pages: <strong>1 or 2 pages</strong> only (minimum 1, maximum 2)</span></li>
+            <li className="flex items-start gap-1.5"><span>📑</span><span>Pages: <strong>1 or 2 pages</strong> only</span></li>
             <li className="flex items-start gap-1.5"><span>✅</span><span>Format: <strong>PDF only</strong></span></li>
           </ul>
         </div>
