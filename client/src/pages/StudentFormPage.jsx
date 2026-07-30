@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
 import IdCardUpload from '../components/IdCardUpload';
+import MarksheetUpload from '../components/MarksheetUpload';
 import Cropper from 'react-easy-crop';
 
 /* ─── Crop helpers ─────────────────────────────────────────────────────────── */
@@ -647,10 +648,14 @@ export default function StudentFormPage() {
   const [aadhaarFile, setAadhaarFile]           = useState(null);
   const [currentAadhaarPdf, setCurrentAadhaarPdf] = useState(null);   // existing PDF on edit
   const [deletingAadhaar, setDeletingAadhaar]   = useState(false);
-  const [idCardValidated, setIdCardValidated]   = useState(false);
-  const [idCardFile, setIdCardFile]             = useState(null);
-  const [currentIdCardPdf, setCurrentIdCardPdf] = useState(null);     // existing PDF on edit
-  const [deletingIdCard, setDeletingIdCard]     = useState(false);
+  const [idCardValidated, setIdCardValidated]       = useState(false);
+  const [idCardFile, setIdCardFile]                 = useState(null);
+  const [currentIdCardPdf, setCurrentIdCardPdf]     = useState(null);
+  const [deletingIdCard, setDeletingIdCard]         = useState(false);
+  const [marksheetValidated, setMarksheetValidated] = useState(false);
+  const [marksheetFile, setMarksheetFile]           = useState(null);
+  const [currentMarksheetPdf, setCurrentMarksheetPdf] = useState(null);
+  const [deletingMarksheet, setDeletingMarksheet]   = useState(false);
 
   /* ── crop state ── */
   const [cropSrc, setCropSrc]               = useState(null);
@@ -708,7 +713,8 @@ export default function StudentFormPage() {
         });
         if (s.image)       setCurrentImage(s.image);
         if (s.aadhaarPdf)  setCurrentAadhaarPdf(s.aadhaarPdf);
-        if (s.idCardPdf)   setCurrentIdCardPdf(s.idCardPdf);
+        if (s.idCardPdf)     setCurrentIdCardPdf(s.idCardPdf);
+        if (s.marksheetPdf)  setCurrentMarksheetPdf(s.marksheetPdf);
       })
       .catch(() => { addToast('Failed to load student', 'error'); navigate('/'); })
       .finally(() => setFetching(false));
@@ -892,7 +898,8 @@ export default function StudentFormPage() {
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       if (imageFile)   fd.append('image', imageFile);
       if (aadhaarFile) fd.append('aadhaarPdf', aadhaarFile);
-      if (idCardFile)  fd.append('idCardPdf',  idCardFile);
+      if (idCardFile)     fd.append('idCardPdf',    idCardFile);
+      if (marksheetFile)  fd.append('marksheetPdf', marksheetFile);
       if (isEdit) {
         await updateStudent(id, fd);
         addToast('Student updated successfully');
@@ -1683,6 +1690,61 @@ export default function StudentFormPage() {
             />
             <FieldMeta value={form.dateAndYear} max={14} always error={errors.dateAndYear} />
           </Field>
+
+          {/* +2 Marksheet PDF Upload */}
+          <div className="col-span-full">
+            <label className="label">
+              +2 Marksheet PDF
+              <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+            </label>
+
+            {/* Edit mode: show existing PDF with delete button */}
+            {isEdit && currentMarksheetPdf && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    Stored +2 Marksheet PDF
+                  </p>
+                  <a
+                    href={`/uploads/${currentMarksheetPdf}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800"
+                  >
+                    View current PDF
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  disabled={deletingMarksheet}
+                  onClick={async () => {
+                    if (!window.confirm('Delete the stored +2 Marksheet PDF? This cannot be undone.')) return;
+                    setDeletingMarksheet(true);
+                    try {
+                      await deleteStudentMarksheet(id);
+                      setCurrentMarksheetPdf(null);
+                      addToast('+2 Marksheet PDF deleted');
+                    } catch {
+                      addToast('Failed to delete +2 Marksheet PDF', 'error');
+                    } finally {
+                      setDeletingMarksheet(false);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                >
+                  {deletingMarksheet ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  {deletingMarksheet ? 'Deleting…' : 'Delete PDF'}
+                </button>
+              </div>
+            )}
+
+            <MarksheetUpload
+              onValidationChange={setMarksheetValidated}
+              onFileChange={setMarksheetFile}
+            />
+          </div>
+
         </Section>
 
         {/* ── Academic Details ( Currently ) ──────────────────────────────── */}

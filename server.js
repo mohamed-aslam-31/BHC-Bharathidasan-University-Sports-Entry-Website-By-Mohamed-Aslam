@@ -12,9 +12,10 @@ const PORT = 3001;
 const JWT_SECRET = process.env.SESSION_SECRET || 'bhc-sports-secret-key-2024';
 
 // Ensure upload directories exist
-if (!fs.existsSync('./uploads'))          fs.mkdirSync('./uploads');
-if (!fs.existsSync('./uploads/aadhaar'))  fs.mkdirSync('./uploads/aadhaar');
-if (!fs.existsSync('./uploads/idcard'))   fs.mkdirSync('./uploads/idcard');
+if (!fs.existsSync('./uploads'))             fs.mkdirSync('./uploads');
+if (!fs.existsSync('./uploads/aadhaar'))     fs.mkdirSync('./uploads/aadhaar');
+if (!fs.existsSync('./uploads/idcard'))      fs.mkdirSync('./uploads/idcard');
+if (!fs.existsSync('./uploads/marksheet'))   fs.mkdirSync('./uploads/marksheet');
 
 // ─── MONGOOSE MODELS ──────────────────────────────────────────────────────────
 
@@ -51,6 +52,7 @@ const StudentSchema = new mongoose.Schema({
   aadharNumber:          String,
   aadhaarPdf:            String,
   idCardPdf:             String,
+  marksheetPdf:          String,
   tournament:            String,
   tshirt:                String,
   track:                 String,
@@ -259,8 +261,9 @@ function adminOnly(req, res, next) {
 const uploadFields = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      if (file.fieldname === 'aadhaarPdf') cb(null, './uploads/aadhaar/');
-      else if (file.fieldname === 'idCardPdf') cb(null, './uploads/idcard/');
+      if (file.fieldname === 'aadhaarPdf')    cb(null, './uploads/aadhaar/');
+      else if (file.fieldname === 'idCardPdf')    cb(null, './uploads/idcard/');
+      else if (file.fieldname === 'marksheetPdf') cb(null, './uploads/marksheet/');
       else cb(null, './uploads/');
     },
     filename: (req, file, cb) =>
@@ -268,7 +271,7 @@ const uploadFields = multer({
   }),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'aadhaarPdf' || file.fieldname === 'idCardPdf') {
+    if (file.fieldname === 'aadhaarPdf' || file.fieldname === 'idCardPdf' || file.fieldname === 'marksheetPdf') {
       const ext = path.extname(file.originalname).toLowerCase();
       ext === '.pdf' ? cb(null, true) : cb(new Error('Only PDF files are allowed'));
     } else {
@@ -278,8 +281,9 @@ const uploadFields = multer({
   }
 }).fields([
   { name: 'image',      maxCount: 1 },
-  { name: 'aadhaarPdf', maxCount: 1 },
-  { name: 'idCardPdf',  maxCount: 1 },
+  { name: 'aadhaarPdf',    maxCount: 1 },
+  { name: 'idCardPdf',     maxCount: 1 },
+  { name: 'marksheetPdf',  maxCount: 1 },
 ]);
 
 // ─── IMAGE PROXY ──────────────────────────────────────────────────────────────
@@ -377,10 +381,16 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
     const imageFile   = req.files?.image?.[0];
     const aadhaarFile = req.files?.aadhaarPdf?.[0];
     const idCardFile  = req.files?.idCardPdf?.[0];
+    const marksheetFile = req.files?.marksheetPdf?.[0];
     // Validate idcard size (100 KB – 1 MB)
     if (idCardFile) {
       if (idCardFile.size < 100 * 1024) return res.status(400).json({ error: 'ID card PDF too small (min 100 KB)' });
       if (idCardFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'ID card PDF too large (max 1 MB)' });
+    }
+    // Validate marksheet size (100 KB – 1 MB)
+    if (marksheetFile) {
+      if (marksheetFile.size < 100 * 1024) return res.status(400).json({ error: 'Marksheet PDF too small (min 100 KB)' });
+      if (marksheetFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'Marksheet PDF too large (max 1 MB)' });
     }
     const savedTime = new Date().toISOString().replace(/[:.]/g, '-');
     const existing = await Student.findOne({
@@ -398,8 +408,9 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
       image: imageFile?.filename || null,
-      aadhaarPdf: aadhaarFile ? `aadhaar/${aadhaarFile.filename}` : null,
-      idCardPdf:  idCardFile  ? `idcard/${idCardFile.filename}`  : null,
+      aadhaarPdf:    aadhaarFile    ? `aadhaar/${aadhaarFile.filename}`      : null,
+      idCardPdf:     idCardFile     ? `idcard/${idCardFile.filename}`        : null,
+      marksheetPdf:  marksheetFile  ? `marksheet/${marksheetFile.filename}`  : null,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       tournament: d.tournament, tshirt: d.tshirt, track: d.track,
       status: req.user.role === 'admin' ? 'approved' : 'pending',
@@ -414,11 +425,15 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
     const d = req.body;
     const imageFile   = req.files?.image?.[0];
     const aadhaarFile = req.files?.aadhaarPdf?.[0];
-    const idCardFile  = req.files?.idCardPdf?.[0];
-    // Validate idcard size (100 KB – 1 MB)
+    const idCardFile    = req.files?.idCardPdf?.[0];
+    const marksheetFile = req.files?.marksheetPdf?.[0];
     if (idCardFile) {
       if (idCardFile.size < 100 * 1024) return res.status(400).json({ error: 'ID card PDF too small (min 100 KB)' });
       if (idCardFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'ID card PDF too large (max 1 MB)' });
+    }
+    if (marksheetFile) {
+      if (marksheetFile.size < 100 * 1024) return res.status(400).json({ error: 'Marksheet PDF too small (min 100 KB)' });
+      if (marksheetFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'Marksheet PDF too large (max 1 MB)' });
     }
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
@@ -437,6 +452,11 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       const old = path.join(__dirname, 'uploads', student.idCardPdf);
       if (fs.existsSync(old)) fs.unlinkSync(old);
     }
+    // Remove old marksheet PDF if replaced
+    if (marksheetFile && student.marksheetPdf) {
+      const old = path.join(__dirname, 'uploads', student.marksheetPdf);
+      if (fs.existsSync(old)) fs.unlinkSync(old);
+    }
     Object.assign(student, {
       rollNo: d.rollNo, nameOfTheGame: d.nameOfTheGame,
       nameOfTheSportsperson: d.studentName, fathersName: d.fatherName,
@@ -446,9 +466,10 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       university: d.university, presentCourse: d.presentCourse,
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
-      image: imageFile ? imageFile.filename : student.image,
-      aadhaarPdf: aadhaarFile ? `aadhaar/${aadhaarFile.filename}` : student.aadhaarPdf,
-      idCardPdf:  idCardFile  ? `idcard/${idCardFile.filename}`  : student.idCardPdf,
+      image:         imageFile     ? imageFile.filename                      : student.image,
+      aadhaarPdf:    aadhaarFile   ? `aadhaar/${aadhaarFile.filename}`       : student.aadhaarPdf,
+      idCardPdf:     idCardFile    ? `idcard/${idCardFile.filename}`          : student.idCardPdf,
+      marksheetPdf:  marksheetFile ? `marksheet/${marksheetFile.filename}`   : student.marksheetPdf,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       tournament: d.tournament, tshirt: d.tshirt, track: d.track,
     });
@@ -482,6 +503,20 @@ app.delete('/api/students/:id/idcard', authMiddleware, async (req, res) => {
       await student.save();
     }
     res.json({ message: 'ID card PDF deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/students/:id/marksheet', authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    if (student.marksheetPdf) {
+      const filePath = path.join(__dirname, 'uploads', student.marksheetPdf);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      student.marksheetPdf = null;
+      await student.save();
+    }
+    res.json({ message: 'Marksheet PDF deleted' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
