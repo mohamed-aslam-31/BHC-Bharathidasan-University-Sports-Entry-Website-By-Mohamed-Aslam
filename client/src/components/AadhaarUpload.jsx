@@ -25,17 +25,27 @@ async function extractPdfText(file) {
 
 /* ── Aadhaar data parser ─────────────────────────────────────────────────── */
 
+// Boilerplate lines to skip (header/footer text that is not personal data)
+const BOILERPLATE = /government|of india|uidai|aadhaar|unique identification|authority|enrollment|eid|vid|help|download|verify|issue|www\.|\.gov|resident|male|female|transgender|\d{4}\s\d{4}\s\d{4}|\d{4}\s\d{4}\s\d{4}/i;
+
+// Relationship indicators that appear AFTER the father/guardian name on the same line
+// e.g.  "RAMESH KUMAR S/O"  →  fatherName = "RAMESH KUMAR"
+// Also handle the traditional order  "S/O RAMESH KUMAR"
+const REL_INDICATOR = /\b(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\b/i;
+
 function parseAadhaar(rawText) {
-  // Collapse runs of whitespace within lines but keep newlines
-  const lines = rawText
+  // Split into lines, trim, drop blanks
+  const allLines = rawText
     .split('\n')
     .map((l) => l.replace(/[ \t]+/g, ' ').trim())
     .filter(Boolean);
-  const flat = lines.join(' ');
 
-  /* 1. Aadhaar number — 12 unmasked digits (groups of 4 separated by spaces) */
-  const aadhaarMatch = flat.match(/\b(\d{4})\s(\d{4})\s(\d{4})\b/)
-    || flat.match(/\b(\d{4})(\d{4})(\d{4})\b/);
+  const flat = allLines.join(' ');
+
+  /* ── 1. Aadhaar number — 12 unmasked digits ── */
+  const aadhaarMatch =
+    flat.match(/\b(\d{4})\s(\d{4})\s(\d{4})\b/) ||
+    flat.match(/\b(\d{4})(\d{4})(\d{4})\b/);
   const aadhaarNo = aadhaarMatch ? aadhaarMatch[0].replace(/\s/g, '') : null;
 
   /* Masked Aadhaar detection (XXXX XXXX 1234) */
@@ -43,41 +53,74 @@ function parseAadhaar(rawText) {
     /[Xx]{4}\s?[Xx]{4}\s?\d{4}/.test(flat) ||
     /\b[Xx]+\s?[Xx]+\s?\d{4}\b/.test(flat);
 
-  /* 2. DOB — DD/MM/YYYY */
-  const dobMatch = flat.match(
-    /(?:DOB|Date\s+of\s+Birth|D\.O\.B\.?)\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/i,
-  ) || flat.match(/\b(\d{2}[\/\-]\d{2}[\/\-]\d{4})\b/);
+  /* ── 2. DOB — DD/MM/YYYY ── */
+  const dobMatch =
+    flat.match(/(?:DOB|Date\s+of\s+Birth|D\.O\.B\.?)\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/i) ||
+    flat.match(/\b(\d{2}[\/\-]\d{2}[\/\-]\d{4})\b/);
   let dob = null;
   if (dobMatch) {
-    const [d, m, y] = dobMatch[1].split(/[\/\-]/);
-    dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    const parts = dobMatch[1].split(/[\/\-]/);
+    if (parts.length === 3) {
+      const [d, m, y] = parts;
+      dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
   }
 
-  /* 3. Father / Guardian name */
-  const fatherMatch = flat.match(
-    /(?:S\/O|D\/O|W\/O|C\/O|Father'?s?\s+Name|Father)\s*:?\s*([A-Za-z][A-Za-z .]{1,}?)(?=\s{2,}|\d|$|,)/i,
-  );
-  const fatherName = fatherMatch ? fatherMatch[1].trim() : null;
+  /* ── 3 & 4: Name (line 1) and Father name (line 2) from meaningful lines ── */
+  // Strip boilerplate, gender words, and lines that are purely numeric / too short
+  const meaningful = allLines.filter((l) => {
+    if (l.length < 3) return false;
+    if (/^\d[\d\s]*$/.test(l)) return false;          // purely numeric
+    if (BOILERPLATE.test(l)) return false;
+    if (/^(?:DOB|Date of Birth|Gender|Address|VID)/i.test(l)) return false;
+    if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(l)) return false; // standalone date
+    return true;
+  });
 
-  /* 4. Cardholder name — line before the DOB line that looks like a name */
-  let name = null;
-  const dobLineIdx = lines.findIndex((l) => /(?:DOB|Date\s+of\s+Birth)/i.test(l));
-  if (dobLineIdx > 0) {
-    for (let i = dobLineIdx - 1; i >= 0; i--) {
-      const l = lines[i];
-      if (
-        /^[A-Za-z][A-Za-z .]{2,}$/.test(l) &&
-        !/government|india|uidai|aadhaar|unique|authority|issue|resident|male|female/i.test(l)
-      ) {
-        name = l;
-        break;
+  /* Line 0 of meaningful content = cardholder full name */
+  const name = meaningful[0] || null;
+
+  /* Line 1 of meaningful content = father/guardian name line.
+   *
+   * e-Aadhaar formats seen:
+   *   A)  "RAMESH KUMAR S/O"      → name before indicator
+   *   B)  "S/O RAMESH KUMAR"      → indicator before name
+   *   C)  "S/O: RAMESH KUMAR"     → indicator with colon before name
+   *   D)  "RAMESH KUMAR"          → bare name (no indicator on this line)
+   */
+  let fatherName = null;
+  if (meaningful.length > 1) {
+    const line = meaningful[1];
+
+    if (REL_INDICATOR.test(line)) {
+      // Format A: name comes BEFORE the indicator  →  "RAMESH KUMAR S/O"
+      const beforeRel = line.replace(REL_INDICATOR, '').trim();
+      // Format B/C: indicator comes FIRST  →  "S/O RAMESH KUMAR"
+      const afterRel = line.replace(/^(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\s*:?\s*/i, '').trim();
+
+      // Whichever side has the longer plausible name wins
+      const nameRegex = /^[A-Za-z][A-Za-z .]{1,}$/;
+      if (nameRegex.test(beforeRel) && beforeRel.length > afterRel.length) {
+        fatherName = beforeRel;
+      } else if (nameRegex.test(afterRel) && afterRel.length > 1) {
+        fatherName = afterRel;
+      } else {
+        fatherName = beforeRel || afterRel || null;
+      }
+    } else {
+      // No indicator on this line — take it as the father name if it looks like a name
+      if (/^[A-Za-z][A-Za-z .]{1,}$/.test(line)) {
+        fatherName = line;
       }
     }
   }
-  // Fallback: "Name:" label anywhere
-  if (!name) {
-    const nm = flat.match(/(?:^|\s)Name\s*:?\s*([A-Z][A-Za-z .]{2,})(?=\s{2,}|$)/);
-    if (nm) name = nm[1].trim();
+
+  /* Fallback: scan the whole text for the classic "S/O: FATHER" pattern */
+  if (!fatherName) {
+    const m = flat.match(
+      /(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\s*:?\s*([A-Za-z][A-Za-z .]{2,?)(?=\s{2,}|\d|$|,)/i,
+    );
+    if (m) fatherName = m[1].trim();
   }
 
   return { aadhaarNo, dob, fatherName, name, isMasked };
