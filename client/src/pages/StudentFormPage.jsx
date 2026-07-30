@@ -1343,22 +1343,41 @@ export default function StudentFormPage() {
           </div>
         </div>
 
-        {/* ── Sports / Event Details ──────────────────────────────────────── */}
-        <Section title="Sports / Event Details">
-          <Field label="Tournament Number">
-            <input className="input-field" type="number" placeholder="Tournament no."
-              value={form.tournament} onChange={setRaw('tournament')} />
-            <FieldMeta value={form.tournament} />
-          </Field>
+        {/* ── Sportsman Dress ─────────────────────────────────────────────── */}
+        <Section title="Sportsman Dress">
           <Field label="T-Shirt Size">
-            <input className="input-field" type="number" placeholder="T-shirt size"
-              value={form.tshirt} onChange={setRaw('tshirt')} />
-            <FieldMeta value={form.tshirt} />
+            <input
+              className="input-field"
+              type="number"
+              placeholder="e.g. 38"
+              min="1"
+              max="99"
+              step="0.1"
+              value={form.tshirt}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '' || /^\d{1,2}(\.\d?)?$/.test(raw)) {
+                  setRaw('tshirt')({ target: { value: raw } });
+                }
+              }}
+            />
           </Field>
           <Field label="Track Size">
-            <input className="input-field" type="number" placeholder="Track size"
-              value={form.track} onChange={setRaw('track')} />
-            <FieldMeta value={form.track} />
+            <input
+              className="input-field"
+              type="number"
+              placeholder="e.g. 38"
+              min="1"
+              max="99"
+              step="0.1"
+              value={form.track}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '' || /^\d{1,2}(\.\d?)?$/.test(raw)) {
+                  setRaw('track')({ target: { value: raw } });
+                }
+              }}
+            />
           </Field>
         </Section>
 
