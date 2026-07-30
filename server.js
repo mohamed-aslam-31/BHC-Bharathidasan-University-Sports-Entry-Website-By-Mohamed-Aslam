@@ -43,6 +43,7 @@ const StudentSchema = new mongoose.Schema({
   address:               String,
   phoneNumber:           String,
   image:                 String,
+  bloodGroup:            String,
   gender:                { type: String, required: true },
   year:                  { type: String, required: true },
   aadharNumber:          String,

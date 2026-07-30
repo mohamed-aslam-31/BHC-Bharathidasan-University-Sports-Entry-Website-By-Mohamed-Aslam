@@ -109,6 +109,10 @@ const DEFAULT_UNIVERSITIES = [
   'Tamil Nadu Open University',
 ];
 
+const DEFAULT_BLOOD_GROUPS = [
+  'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-',
+];
+
 const DEFAULT_COURSES = [
   'B.A English','B.A Tamil','B.A History','B.A Economics','B.A Sociology',
   'B.Sc Mathematics','B.Sc Physics','B.Sc Chemistry','B.Sc Biology',
@@ -235,6 +239,9 @@ const sanitizePresentCourse = (v) => {
   return v.slice(0, 30);
 };
 
+/** Blood group: letters + +/- only, uppercase */
+const sanitizeBloodGroup = (v) => v.replace(/[^a-zA-Z+\-]/g, '').toUpperCase().slice(0, 3);
+
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
 const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 40);
 /** Month & Year of Passing: format = Letters-YYYY (one dash, letters before, up to 4 digits after).
@@ -356,6 +363,9 @@ const validateAadhar = (v) =>
 const validatePhone = (v) =>
   !v ? 'Phone number is required' :
   v.length !== 10 ? 'Phone must be exactly 10 digits' : '';
+
+const validateBloodGroup = (v) =>
+  !v ? 'Blood group is required' : '';
 
 /* ─── Sub-components ───────────────────────────────────────────────────────── */
 
@@ -602,7 +612,7 @@ function Field({ label, required, children, span }) {
 /* ─── Empty form state ─────────────────────────────────────────────────────── */
 
 const empty = {
-  year: '', rollNo: '', nameOfTheGame: '', gender: '',
+  year: '', rollNo: '', nameOfTheGame: '', gender: '', bloodGroup: '',
   studentName: '', fatherName: '', motherName: '', dob: '',
   nameOfExam: '', dateAndYear: '',
   presentClass: '', nameOfThePresentClass: '', durationOfCourse: '',
@@ -660,6 +670,7 @@ export default function StudentFormPage() {
           year:                  s.year                    || '',
           rollNo:                s.rollNo                  || '',
           nameOfTheGame:         s.nameOfTheGame           || '',
+          bloodGroup:            s.bloodGroup              || '',
           gender:                s.gender                  || 'MALE',
           studentName:           s.nameOfTheSportsperson   || '',
           fatherName:            s.fathersName             || '',
@@ -706,6 +717,7 @@ export default function StudentFormPage() {
       case 'dayType':        msg = validateDayType(value);                      break;
       case 'hostelName':     msg = validateHostelName(value, form.dayType);     break;
       case 'nameOfTheGame':  msg = validateGame(value);                         break;
+      case 'bloodGroup':     msg = validateBloodGroup(value);                   break;
       case 'studentName':    msg = validatePersonName(value, 'Sportsperson name'); break;
       case 'fatherName':     msg = validatePersonName(value, "Father's name");  break;
       case 'motherName':     msg = validatePersonName(value, "Mother's name");  break;
@@ -738,6 +750,7 @@ export default function StudentFormPage() {
       dayType:        validateDayType(form.dayType),
       hostelName:     validateHostelName(form.hostelName, form.dayType),
       nameOfTheGame:  validateGame(form.nameOfTheGame),
+      bloodGroup:     validateBloodGroup(form.bloodGroup),
       studentName:    validatePersonName(form.studentName, 'Sportsperson name'),
       fatherName:     validatePersonName(form.fatherName, "Father's name"),
       motherName:     validatePersonName(form.motherName, "Mother's name"),
@@ -894,6 +907,7 @@ export default function StudentFormPage() {
   const examOptions       = managedOpts.exam      ?? DEFAULT_EXAMS;
   const monthYearOptions  = managedOpts.monthYear ?? DEFAULT_MONTH_YEARS;
   const hostelOptions     = managedOpts.hostel    ?? [...new Set([...DEFAULT_HOSTELS, ...(meta.hostels || [])])];
+  const bloodGroupOptions = managedOpts.bloodGroup ?? DEFAULT_BLOOD_GROUPS;
 
   /* ── Managed-options helpers ── */
   const mkEdit = (key, curOpts, ...fks) => (old, nv) => {
@@ -1182,6 +1196,24 @@ export default function StudentFormPage() {
               onDeleteOption={mkDel('game', gameOptions, 'nameOfTheGame')}
             />
             <FieldMeta value={form.nameOfTheGame} max={30} always error={errors.nameOfTheGame} />
+          </Field>
+
+          {/* Blood Group */}
+          <Field label="Blood Group" required>
+            <ComboBox
+              value={form.bloodGroup}
+              onChange={(v) => { set('bloodGroup')(v); touch('bloodGroup', v); }}
+              options={bloodGroupOptions}
+              placeholder="Select or add blood group"
+              required
+              error={errors.bloodGroup}
+              sanitizer={sanitizeBloodGroup}
+              maxLength={3}
+              minCreate={2}
+              onEditOption={mkEdit('bloodGroup', bloodGroupOptions, 'bloodGroup')}
+              onDeleteOption={mkDel('bloodGroup', bloodGroupOptions, 'bloodGroup')}
+            />
+            <FieldMeta value={form.bloodGroup} max={3} always error={errors.bloodGroup} />
           </Field>
 
           {/* Gender */}
