@@ -1244,40 +1244,42 @@ export default function StudentFormPage() {
         <div className="card p-6 space-y-4">
           <h3 className="section-title">Month &amp; Year of First Admission to</h3>
 
-          {/* University box */}
-          <div className="card p-4">
-            <Field label="University ( month &amp; Year )" required>
-              <ComboBox
-                value={form.university}
-                onChange={(v) => { set('university')(v); touch('university', v); }}
-                options={monthYearOptions}
-                placeholder="e.g. April-2022"
-                required
-                error={errors.university}
-                sanitizer={sanitizeMonthYear}
-                maxLength={15}
-                minCreate={3}
-              />
-              <FieldMeta value={form.university} max={15} always error={errors.university} />
-            </Field>
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* University box */}
+            <div className="card p-4">
+              <Field label="University ( month &amp; Year )" required>
+                <ComboBox
+                  value={form.university}
+                  onChange={(v) => { set('university')(v); touch('university', v); }}
+                  options={monthYearOptions}
+                  placeholder="e.g. April-2022"
+                  required
+                  error={errors.university}
+                  sanitizer={sanitizeMonthYear}
+                  maxLength={15}
+                  minCreate={3}
+                />
+                <FieldMeta value={form.university} max={15} always error={errors.university} />
+              </Field>
+            </div>
 
-          {/* Present Course box */}
-          <div className="card p-4">
-            <Field label="Present Course ( month &amp; Year )" required>
-              <ComboBox
-                value={form.nameOfThePresentClass}
-                onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
-                options={monthYearOptions}
-                placeholder="e.g. April-2022"
-                required
-                error={errors.nameOfThePresentClass}
-                sanitizer={sanitizeMonthYear}
-                maxLength={15}
-                minCreate={3}
-              />
-              <FieldMeta value={form.nameOfThePresentClass} max={15} always error={errors.nameOfThePresentClass} />
-            </Field>
+            {/* Present Course box */}
+            <div className="card p-4">
+              <Field label="Present Course ( month &amp; Year )" required>
+                <ComboBox
+                  value={form.nameOfThePresentClass}
+                  onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
+                  options={monthYearOptions}
+                  placeholder="e.g. April-2022"
+                  required
+                  error={errors.nameOfThePresentClass}
+                  sanitizer={sanitizeMonthYear}
+                  maxLength={15}
+                  minCreate={3}
+                />
+                <FieldMeta value={form.nameOfThePresentClass} max={15} always error={errors.nameOfThePresentClass} />
+              </Field>
+            </div>
           </div>
         </div>
 
