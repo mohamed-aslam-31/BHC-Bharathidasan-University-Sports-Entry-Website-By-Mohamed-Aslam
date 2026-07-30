@@ -1345,7 +1345,7 @@ export default function StudentFormPage() {
 
         {/* ── Sportsman Dress ─────────────────────────────────────────────── */}
         <Section title="Sportsman Dress">
-          <Field label="T-Shirt Size">
+          <Field label="T-Shirt Size (Optional)">
             <input
               className="input-field"
               type="number"
@@ -1362,7 +1362,7 @@ export default function StudentFormPage() {
               }}
             />
           </Field>
-          <Field label="Track Size">
+          <Field label="Track Size (Optional)">
             <input
               className="input-field"
               type="number"
