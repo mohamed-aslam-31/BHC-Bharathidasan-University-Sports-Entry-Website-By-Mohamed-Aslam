@@ -25,16 +25,31 @@ async function extractPdfText(file) {
 
 /* ── Aadhaar data parser ─────────────────────────────────────────────────── */
 
-// Boilerplate lines to skip (header/footer text that is not personal data)
-const BOILERPLATE = /government|of india|uidai|aadhaar|unique identification|authority|enrollment|eid|vid|help|download|verify|issue|www\.|\.gov|resident|male|female|transgender|\d{4}\s\d{4}\s\d{4}|\d{4}\s\d{4}\s\d{4}/i;
+// Returns true when a string is primarily Latin/ASCII (English text).
+// Bilingual e-Aadhaar PDFs contain Tamil / Hindi lines — we must skip those.
+function isLatinLine(s) {
+  // Count characters that are clearly Latin/ASCII letters, digits, spaces or punctuation
+  const latinChars = (s.match(/[a-zA-Z0-9 .,'"/\\()\-:]/g) || []).length;
+  return latinChars / s.length >= 0.80;   // at least 80 % Latin
+}
 
-// Relationship indicators that appear AFTER the father/guardian name on the same line
-// e.g.  "RAMESH KUMAR S/O"  →  fatherName = "RAMESH KUMAR"
-// Also handle the traditional order  "S/O RAMESH KUMAR"
+// Boilerplate / non-personal lines to always skip
+const BOILERPLATE =
+  /government|of india|uidai|unique identification|authority|enrolment|enrollment|eid\b|vid\b|help|download|verify|\.gov|www\.|digital|electronically|generated|issued|this is|e-aadhaar|eaadhaar|resident|आधार|ஆதார்/i;
+
+// Lines that start with a standalone date or are purely numeric → skip
+const DATE_LINE   = /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/;
+const NUMERIC     = /^[\d\s\/\-]+$/;
+
+// Field-label lines that are not personal names
+const FIELD_LABEL = /^(?:DOB|Date\s+of\s+Birth|Gender|Address|VID|EID|Mobile|Phone|Email|Year\s+of\s+Birth)/i;
+
+// Relationship indicators that mark a father/guardian line
+// Supported: S/O  C/O  D/O  G/O  W/O  H/O
 const REL_INDICATOR = /\b(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\b/i;
 
 function parseAadhaar(rawText) {
-  // Split into lines, trim, drop blanks
+  // Split, trim, drop blanks
   const allLines = rawText
     .split('\n')
     .map((l) => l.replace(/[ \t]+/g, ' ').trim())
@@ -51,74 +66,78 @@ function parseAadhaar(rawText) {
   /* Masked Aadhaar detection (XXXX XXXX 1234) */
   const isMasked =
     /[Xx]{4}\s?[Xx]{4}\s?\d{4}/.test(flat) ||
-    /\b[Xx]+\s?[Xx]+\s?\d{4}\b/.test(flat);
+    /\b[Xx]{4}\s?[Xx]{4}\b/.test(flat);
 
-  /* ── 2. DOB — DD/MM/YYYY ── */
-  const dobMatch =
-    flat.match(/(?:DOB|Date\s+of\s+Birth|D\.O\.B\.?)\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/i) ||
-    flat.match(/\b(\d{2}[\/\-]\d{2}[\/\-]\d{4})\b/);
+  /* ── 2. DOB — prefer explicit "DOB:" label; only fall back to bare date as last resort ── */
+  // Explicit label first (avoids picking up Tamil-script date lines)
+  const dobLabelled = flat.match(
+    /(?:DOB|Date\s+of\s+Birth|D\.O\.B\.?)\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/i,
+  );
+  // Bare date only from explicitly Latin lines (avoid Tamil numerals that look similar)
+  const latinFlat = allLines.filter(isLatinLine).join(' ');
+  const dobBare = latinFlat.match(/\b(\d{2}[\/\-]\d{2}[\/\-]\d{4})\b/);
+
+  const dobRaw = dobLabelled ? dobLabelled[1] : dobBare ? dobBare[1] : null;
   let dob = null;
-  if (dobMatch) {
-    const parts = dobMatch[1].split(/[\/\-]/);
+  if (dobRaw) {
+    const parts = dobRaw.split(/[\/\-]/);
     if (parts.length === 3) {
       const [d, m, y] = parts;
       dob = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
     }
   }
 
-  /* ── 3 & 4: Name (line 1) and Father name (line 2) from meaningful lines ── */
-  // Strip boilerplate, gender words, and lines that are purely numeric / too short
+  /* ── 3 & 4: Name (line 1) and Father name (line 2) ──
+   *
+   * Strategy:
+   *  a) Keep only Latin lines (drops Tamil/Hindi script lines).
+   *  b) Drop boilerplate, numeric, date, and field-label lines.
+   *  c) First remaining line  = cardholder's full name.
+   *  d) Second remaining line = father/guardian name line.
+   *
+   * Father name formats on e-Aadhaar:
+   *   A) "RAMESH KUMAR S/O"   → name BEFORE indicator
+   *   B) "S/O RAMESH KUMAR"   → indicator BEFORE name
+   *   C) "S/O: RAMESH KUMAR"  → indicator with colon before name
+   *   D) "RAMESH KUMAR"       → bare name (no indicator; rare)
+   */
   const meaningful = allLines.filter((l) => {
-    if (l.length < 3) return false;
-    if (/^\d[\d\s]*$/.test(l)) return false;          // purely numeric
+    if (!isLatinLine(l))   return false;   // drop non-English (Tamil/Hindi) lines
+    if (l.length < 3)      return false;
+    if (NUMERIC.test(l))   return false;
+    if (DATE_LINE.test(l)) return false;
     if (BOILERPLATE.test(l)) return false;
-    if (/^(?:DOB|Date of Birth|Gender|Address|VID)/i.test(l)) return false;
-    if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(l)) return false; // standalone date
+    if (FIELD_LABEL.test(l)) return false;
     return true;
   });
 
-  /* Line 0 of meaningful content = cardholder full name */
+  /* Cardholder full name = first meaningful line */
   const name = meaningful[0] || null;
 
-  /* Line 1 of meaningful content = father/guardian name line.
-   *
-   * e-Aadhaar formats seen:
-   *   A)  "RAMESH KUMAR S/O"      → name before indicator
-   *   B)  "S/O RAMESH KUMAR"      → indicator before name
-   *   C)  "S/O: RAMESH KUMAR"     → indicator with colon before name
-   *   D)  "RAMESH KUMAR"          → bare name (no indicator on this line)
-   */
+  /* Father / guardian name = second meaningful line */
   let fatherName = null;
-  if (meaningful.length > 1) {
-    const line = meaningful[1];
+  const fatherLine = meaningful[1] || '';
 
-    if (REL_INDICATOR.test(line)) {
-      // Format A: name comes BEFORE the indicator  →  "RAMESH KUMAR S/O"
-      const beforeRel = line.replace(REL_INDICATOR, '').trim();
-      // Format B/C: indicator comes FIRST  →  "S/O RAMESH KUMAR"
-      const afterRel = line.replace(/^(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\s*:?\s*/i, '').trim();
-
-      // Whichever side has the longer plausible name wins
-      const nameRegex = /^[A-Za-z][A-Za-z .]{1,}$/;
-      if (nameRegex.test(beforeRel) && beforeRel.length > afterRel.length) {
-        fatherName = beforeRel;
-      } else if (nameRegex.test(afterRel) && afterRel.length > 1) {
-        fatherName = afterRel;
-      } else {
-        fatherName = beforeRel || afterRel || null;
+  if (fatherLine) {
+    if (REL_INDICATOR.test(fatherLine)) {
+      // Strip the indicator and trim both sides
+      const withoutRel = fatherLine.replace(REL_INDICATOR, '').replace(/:/g, '').trim();
+      // Format A: text before the indicator  → "RAMESH KUMAR S/O" → withoutRel = "RAMESH KUMAR"
+      // Format B/C: text after the indicator → "S/O RAMESH KUMAR" → withoutRel = "RAMESH KUMAR"
+      // Both cases reduce to the same withoutRel after stripping the indicator, so just use it
+      if (withoutRel.length > 1 && /^[A-Za-z]/.test(withoutRel)) {
+        fatherName = withoutRel;
       }
-    } else {
-      // No indicator on this line — take it as the father name if it looks like a name
-      if (/^[A-Za-z][A-Za-z .]{1,}$/.test(line)) {
-        fatherName = line;
-      }
+    } else if (/^[A-Za-z][A-Za-z .]{1,}$/.test(fatherLine)) {
+      // Format D: bare name line
+      fatherName = fatherLine;
     }
   }
 
-  /* Fallback: scan the whole text for the classic "S/O: FATHER" pattern */
+  /* Fallback: scan all Latin text for any "S/O / C/O …" pattern */
   if (!fatherName) {
-    const m = flat.match(
-      /(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\s*:?\s*([A-Za-z][A-Za-z .]{2,?)(?=\s{2,}|\d|$|,)/i,
+    const m = latinFlat.match(
+      /(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\s*:?\s*([A-Za-z][A-Za-z .]{2,})(?=\s{2,}|\d|$|,)/i,
     );
     if (m) fatherName = m[1].trim();
   }
