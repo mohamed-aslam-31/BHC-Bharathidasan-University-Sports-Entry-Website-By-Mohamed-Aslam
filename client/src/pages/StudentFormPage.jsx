@@ -326,6 +326,9 @@ const validatePersonName = (v, label = 'Name') =>
 const validateGender = (v) =>
   !v ? 'Gender is required' : '';
 
+const validateShift = (v) =>
+  !v ? 'Shift is required' : '';
+
 const validateGame = (v) =>
   !v ? 'Name of the game is required' : '';
 
@@ -618,6 +621,7 @@ function Field({ label, required, children, span, id }) {
 
 const empty = {
   year: '', rollNo: '', nameOfTheGame: '', gender: '', bloodGroup: '',
+  shift: '',
   studentName: '', fatherName: '', motherName: '', dob: '',
   nameOfExam: '', dateAndYear: '',
   presentClass: '', nameOfThePresentClass: '', durationOfCourse: '',
@@ -716,6 +720,7 @@ export default function StudentFormPage() {
 
           tshirt:                s.tshirt                  || '',
           track:                 s.track                   || '',
+          shift:                 s.shift                   || '',
           studentType:           s.studentType             || '',
           dayType:               s.dayType                 || '',
           hostelName:            s.hostelName              || '',
@@ -741,6 +746,7 @@ export default function StudentFormPage() {
       case 'year':           msg = validateYear(value);                         break;
       case 'rollNo':         msg = validateRollNo(value);                       break;
       case 'gender':         msg = validateGender(value);                       break;
+      case 'shift':          msg = validateShift(value);                        break;
       case 'studentType':    msg = validateStudentType(value);                  break;
       case 'dayType':        msg = validateDayType(value);                      break;
       case 'hostelName':     msg = validateHostelName(value, form.dayType);     break;
@@ -774,6 +780,7 @@ export default function StudentFormPage() {
       year:           validateYear(form.year),
       rollNo:         validateRollNo(form.rollNo),
       gender:         validateGender(form.gender),
+      shift:          validateShift(form.shift),
       studentType:    validateStudentType(form.studentType),
       dayType:        validateDayType(form.dayType),
       hostelName:     validateHostelName(form.hostelName, form.dayType),
@@ -906,6 +913,7 @@ export default function StudentFormPage() {
       year:           validateYear(form.year),
       rollNo:         validateRollNo(form.rollNo),
       gender:         validateGender(form.gender),
+      shift:          validateShift(form.shift),
       studentType:    validateStudentType(form.studentType),
       dayType:        validateDayType(form.dayType),
       hostelName:     validateHostelName(form.hostelName, form.dayType),
@@ -935,7 +943,7 @@ export default function StudentFormPage() {
       addToast('Please fix the errors before submitting', 'error');
       // Scroll to the first field with an error (in visual top-to-bottom order)
       const fieldOrder = [
-        'year','rollNo','nameOfTheGame','bloodGroup','gender',
+        'year','rollNo','nameOfTheGame','bloodGroup','gender','shift',
         'studentType','dayType','hostelName',
         'studentName','dob','fatherName','motherName','aadharNumber','phoneNumber','address',
         'nameOfExam','dateAndYear',
@@ -1501,6 +1509,48 @@ export default function StudentFormPage() {
                 {errors.dayType ? <span className="text-xs text-red-500">{errors.dayType}</span> : <span />}
                 {form.dayType && (
                   <button type="button" onClick={() => { set('dayType')(''); set('hostelName')(''); setErrors((e) => ({ ...e, dayType: '', hostelName: '' })); }}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                    <X className="w-3 h-3" /> Unselect
+                  </button>
+                )}
+              </div>
+            </div>
+          </Field>
+
+          {/* Shift */}
+          <Field label="Shift" required span={3} id="field-shift">
+            <div className="space-y-2">
+              <div className="flex gap-2 mt-1">
+                {['MORNING', 'EVENING'].map((s) => (
+                  <label
+                    key={s}
+                    className={`flex-1 flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all duration-150 backdrop-blur-sm border select-none ${
+                      form.shift === s
+                        ? 'bg-blue-500/20 dark:bg-blue-500/25 border-blue-400/60 dark:border-blue-400/50 shadow-sm shadow-blue-500/20'
+                        : errors.shift
+                          ? 'bg-white/40 dark:bg-gray-800/40 border-red-300/70 dark:border-red-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                          : 'bg-white/40 dark:bg-gray-800/40 border-gray-300/50 dark:border-gray-600/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 hover:border-blue-300/60'
+                    }`}
+                  >
+                    <input type="radio" name="shift" value={s} checked={form.shift === s}
+                      onChange={() => { set('shift')(s); touch('shift', s); }} className="sr-only" />
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      form.shift === s ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-500 bg-transparent'
+                    }`}>
+                      {form.shift === s && (
+                        <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="2,6 5,9 10,3" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className={`text-sm font-medium ${form.shift === s ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>{s}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex items-center justify-between min-h-[1rem]">
+                {errors.shift ? <span className="text-xs text-red-500">{errors.shift}</span> : <span />}
+                {form.shift && (
+                  <button type="button" onClick={() => { set('shift')(''); touch('shift', ''); }}
                     className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                     <X className="w-3 h-3" /> Unselect
                   </button>

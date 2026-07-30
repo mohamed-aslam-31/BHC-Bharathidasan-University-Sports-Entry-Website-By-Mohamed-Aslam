@@ -57,6 +57,7 @@ const StudentSchema = new mongoose.Schema({
   feesReceiptPdf:        String,
   tshirt:                String,
   track:                 String,
+  shift:                 String,
   studentType:           String,
   dayType:               String,
   hostelName:            String,
@@ -418,6 +419,7 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       marksheetPdf:    marksheetFile    ? `marksheet/${marksheetFile.filename}`        : null,
       feesReceiptPdf:  feesReceiptFile  ? `feesreceipt/${feesReceiptFile.filename}`    : null,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
+      shift: d.shift,
       studentType: d.studentType, dayType: d.dayType, hostelName: d.hostelName,
       tshirt: d.tshirt, track: d.track,
       status: req.user.role === 'admin' ? 'approved' : 'pending',
@@ -485,6 +487,7 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       marksheetPdf:   marksheetFile   ? `marksheet/${marksheetFile.filename}`          : student.marksheetPdf,
       feesReceiptPdf: feesReceiptFile ? `feesreceipt/${feesReceiptFile.filename}`      : student.feesReceiptPdf,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
+      shift: d.shift,
       studentType: d.studentType, dayType: d.dayType, hostelName: d.hostelName,
       tshirt: d.tshirt, track: d.track,
     });
