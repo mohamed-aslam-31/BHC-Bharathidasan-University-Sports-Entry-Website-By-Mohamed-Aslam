@@ -412,10 +412,10 @@ export default function StudentViewPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowPrintModal(true)}
+            onClick={() => page === 0 ? window.print() : setShowPrintModal(true)}
             className="btn-secondary flex items-center gap-2 text-sm"
           >
-            <Printer className="w-4 h-4" /> Print
+            <Printer className="w-4 h-4" /> {page === 0 ? 'Print Proforma' : 'Print / Export'}
           </button>
           <Link to={`/students/${id}/edit`} className="btn-primary flex items-center gap-2 text-sm">
             <Pencil className="w-4 h-4" /> Edit
