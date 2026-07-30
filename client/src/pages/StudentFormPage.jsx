@@ -144,12 +144,34 @@ const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u20
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Like sanitizeText but allows special characters — for department, course names etc. */
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
-/** Present Class: letters, digits, single interior spaces, and . - ( ) only. Max 20. */
-const sanitizePresentClass = (v) =>
-  v.replace(/[^a-zA-Z0-9 \-().]/g, '')
-   .replace(/^ /, '')
-   .replace(/ {2,}/g, ' ')
-   .slice(0, 20);
+/** Present Class: letters, digits, single interior spaces, and . - ( ) only.
+ *  Rules: no leading space/dash, only one "-", only one "(", only one ")". Max 20. */
+const sanitizePresentClass = (v) => {
+  // Strip disallowed characters
+  v = v.replace(/[^a-zA-Z0-9 \-().]/g, '');
+  // No leading space or dash
+  v = v.replace(/^[ \-]+/, '');
+  // Collapse consecutive spaces
+  v = v.replace(/ {2,}/g, ' ');
+  // Only one "-": keep the first, remove the rest
+  const dashIdx = v.indexOf('-');
+  if (dashIdx !== -1) {
+    v = v.slice(0, dashIdx + 1) + v.slice(dashIdx + 1).replace(/-/g, '');
+    // Dash must not be the very first character (re-check after replacements)
+    if (v[0] === '-') v = v.slice(1);
+  }
+  // Only one "(": keep the first, remove the rest
+  const openIdx = v.indexOf('(');
+  if (openIdx !== -1) {
+    v = v.slice(0, openIdx + 1) + v.slice(openIdx + 1).replace(/\(/g, '');
+  }
+  // Only one ")": keep the first, remove the rest
+  const closeIdx = v.indexOf(')');
+  if (closeIdx !== -1) {
+    v = v.slice(0, closeIdx + 1) + v.slice(closeIdx + 1).replace(/\)/g, '');
+  }
+  return v.slice(0, 20);
+};
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
 const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 40);
 /** Month & Year of Passing: format = Letters-YYYY (one dash, letters before, up to 4 digits after).
@@ -1236,7 +1258,7 @@ export default function StudentFormPage() {
               value={form.presentClass}
               onChange={(v) => { set('presentClass')(v); touch('presentClass', v); }}
               options={classOptions}
-              placeholder="e.g. I B.C.A, II B.COM(CA)"
+              placeholder="Select or Add new Class"
               error={errors.presentClass}
               sanitizer={sanitizePresentClass}
               maxLength={20}
