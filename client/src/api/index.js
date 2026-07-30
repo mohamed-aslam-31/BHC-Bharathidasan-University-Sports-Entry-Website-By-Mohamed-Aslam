@@ -11,6 +11,7 @@ export const updateStudent = (id, formData) => axios.put(`/api/students/${id}`, 
   headers: { 'Content-Type': 'multipart/form-data' }
 });
 export const deleteStudent = (id) => axios.delete(`/api/students/${id}`);
+export const deleteStudentAadhaar = (id) => axios.delete(`/api/students/${id}/aadhaar`);
 export const bulkDeleteStudents = (ids) => axios.post('/api/students/bulk-delete', { ids });
 
 // Admin

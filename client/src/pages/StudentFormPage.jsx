@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage } from '../api';
-import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut } from 'lucide-react';
+import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar } from '../api';
+import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
 import Cropper from 'react-easy-crop';
@@ -644,6 +644,8 @@ export default function StudentFormPage() {
   const [managedOpts, setManagedOpts] = useState({});
   const [aadhaarValidated, setAadhaarValidated] = useState(false);
   const [aadhaarFile, setAadhaarFile]           = useState(null);
+  const [currentAadhaarPdf, setCurrentAadhaarPdf] = useState(null);   // existing PDF on edit
+  const [deletingAadhaar, setDeletingAadhaar]   = useState(false);
 
   /* ── crop state ── */
   const [cropSrc, setCropSrc]               = useState(null);
@@ -699,7 +701,8 @@ export default function StudentFormPage() {
           dayType:               s.dayType                 || '',
           hostelName:            s.hostelName              || '',
         });
-        if (s.image) setCurrentImage(s.image);
+        if (s.image)       setCurrentImage(s.image);
+        if (s.aadhaarPdf)  setCurrentAadhaarPdf(s.aadhaarPdf);
       })
       .catch(() => { addToast('Failed to load student', 'error'); navigate('/'); })
       .finally(() => setFetching(false));
@@ -1519,6 +1522,48 @@ export default function StudentFormPage() {
               Aadhaar Card PDF
               <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
+
+            {/* Edit mode: show existing PDF with delete button */}
+            {isEdit && currentAadhaarPdf && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    Stored Aadhaar PDF
+                  </p>
+                  <a
+                    href={`/uploads/${currentAadhaarPdf}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800"
+                  >
+                    View current PDF
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  disabled={deletingAadhaar}
+                  onClick={async () => {
+                    if (!window.confirm('Delete the stored Aadhaar PDF? This cannot be undone.')) return;
+                    setDeletingAadhaar(true);
+                    try {
+                      await deleteStudentAadhaar(id);
+                      setCurrentAadhaarPdf(null);
+                      addToast('Aadhaar PDF deleted');
+                    } catch {
+                      addToast('Failed to delete Aadhaar PDF', 'error');
+                    } finally {
+                      setDeletingAadhaar(false);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                >
+                  {deletingAadhaar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  {deletingAadhaar ? 'Deleting…' : 'Delete PDF'}
+                </button>
+              </div>
+            )}
+
             <AadhaarUpload
               form={form}
               onValidationChange={setAadhaarValidated}

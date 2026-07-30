@@ -431,6 +431,20 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.delete('/api/students/:id/aadhaar', authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    if (student.aadhaarPdf) {
+      const filePath = path.join(__dirname, 'uploads', student.aadhaarPdf);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      student.aadhaarPdf = null;
+      await student.save();
+    }
+    res.json({ message: 'Aadhaar PDF deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.delete('/api/students/:id', authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
