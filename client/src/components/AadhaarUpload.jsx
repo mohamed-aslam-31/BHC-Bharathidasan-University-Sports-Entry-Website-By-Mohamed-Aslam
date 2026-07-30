@@ -9,19 +9,50 @@ const MIN_SIZE = 200 * 1024;       // 200 KB
 const MAX_SIZE = 2 * 1024 * 1024;  // 2 MB
 
 /* ── PDF text extractor ─────────────────────────────────────────────────────
-   Returns { text, numPages }.
+   Returns { text, numPages, isImageOnly }.
+   isImageOnly = true when no embedded text was found (scanned PDF).
    Throws if the PDF is password-protected.
 ────────────────────────────────────────────────────────────────────────────── */
 async function extractPdfText(file) {
   const ab  = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
 
-  // Only extract the first (and only) page — page count is checked by the caller
   const page = await pdf.getPage(1);
   const tc   = await page.getTextContent();
   const text = tc.items.map((it) => it.str).join('\n');
 
-  return { text, numPages: pdf.numPages };
+  // If fewer than 20 meaningful characters came back, treat as image-only
+  const isImageOnly = text.replace(/\s/g, '').length < 20;
+
+  return { text, numPages: pdf.numPages, isImageOnly, _pdf: pdf, _page: page };
+}
+
+/* ── Render PDF page → high-res canvas image data URL ───────────────────── */
+async function renderPageToDataUrl(page) {
+  const scale    = 3;   // 3× for better OCR accuracy on small Aadhaar card text
+  const viewport = page.getViewport({ scale });
+  const canvas   = document.createElement('canvas');
+  canvas.width   = viewport.width;
+  canvas.height  = viewport.height;
+  const ctx      = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return canvas.toDataURL('image/png');
+}
+
+/* ── OCR a data-URL image with Tesseract.js ─────────────────────────────── */
+async function ocrImage(dataUrl, onProgress) {
+  // Dynamic import so Tesseract is only loaded when needed (saves ~2 MB normally)
+  const { createWorker } = await import('tesseract.js');
+  const worker = await createWorker('eng', 1, {
+    logger: (m) => {
+      if (m.status === 'recognizing text' && onProgress) {
+        onProgress(Math.round((m.progress || 0) * 100));
+      }
+    },
+  });
+  const { data: { text } } = await worker.recognize(dataUrl);
+  await worker.terminate();
+  return text;
 }
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
@@ -172,13 +203,14 @@ function PhysicalAadhaarDiagram() {
 
 /* ── Main component ──────────────────────────────────────────────────────── */
 export default function AadhaarUpload({ form, onValidationChange }) {
-  const [file, setFile]             = useState(null);
-  const [blobUrl, setBlobUrl]       = useState(null);
-  const [parsing, setParsing]       = useState(false);
-  const [parsed, setParsed]         = useState(null);
-  const [mismatches, setMismatches] = useState([]);
-  const [parseError, setParseError] = useState('');
-  const [showViewer, setShowViewer] = useState(false);
+  const [file, setFile]               = useState(null);
+  const [blobUrl, setBlobUrl]         = useState(null);
+  const [parsing, setParsing]         = useState(false);
+  const [parsingStatus, setParsingStatus] = useState('');   // human-readable progress
+  const [parsed, setParsed]           = useState(null);
+  const [mismatches, setMismatches]   = useState([]);
+  const [parseError, setParseError]   = useState('');
+  const [showViewer, setShowViewer]   = useState(false);
   const [showDiagram, setShowDiagram] = useState(false);
   const fileRef = useRef(null);
 
@@ -209,9 +241,10 @@ export default function AadhaarUpload({ form, onValidationChange }) {
     setParseError(''); setParsed(null); setMismatches([]);
     onValidationChange(false);
     setParsing(true);
+    setParsingStatus('Reading PDF…');
 
     try {
-      const { text, numPages } = await extractPdfText(f);
+      const { text, numPages, isImageOnly, _page } = await extractPdfText(f);
 
       // ── 1-page enforcement ──
       if (numPages > 1) {
@@ -223,7 +256,19 @@ export default function AadhaarUpload({ form, onValidationChange }) {
         return;
       }
 
-      const result = parseAadhaar(text);
+      let finalText = text;
+
+      // ── Scanned / image-only PDF → fall back to OCR ──
+      if (isImageOnly) {
+        setParsingStatus('Scanned PDF detected — running OCR (may take 10–20 s)…');
+        const dataUrl = await renderPageToDataUrl(_page);
+        setParsingStatus('OCR in progress…');
+        finalText = await ocrImage(dataUrl, (pct) => {
+          setParsingStatus(`OCR ${pct}%…`);
+        });
+      }
+
+      const result = parseAadhaar(finalText);
 
       if (result.isMasked) {
         setParseError('This looks like a masked Aadhaar (XXXX XXXX 1234). Please upload a full unmasked Aadhaar PDF.');
@@ -250,6 +295,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
       onValidationChange(false);
     } finally {
       setParsing(false);
+      setParsingStatus('');
     }
   };
 
@@ -370,8 +416,8 @@ export default function AadhaarUpload({ form, onValidationChange }) {
           {/* Parsing spinner */}
           {parsing && (
             <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Reading Aadhaar details…
+              <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+              <span>{parsingStatus || 'Reading Aadhaar details…'}</span>
             </div>
           )}
 
