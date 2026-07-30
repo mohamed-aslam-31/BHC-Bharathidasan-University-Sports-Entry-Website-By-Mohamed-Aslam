@@ -95,31 +95,39 @@ async function captureProformaAsPdf() {
   const el = document.getElementById('element-to-print');
   if (!el) return null;
 
-  // A4 at 96 dpi = 794 × 1123 px; use this as the render width
-  const A4_W = 794;
+  const A4_W = 794; // A4 at 96 dpi
 
-  // Save original styles and resize for capture
-  const origStyle = el.getAttribute('style') || '';
-  el.style.cssText = [
+  // Clone so we never touch the live element
+  const clone = el.cloneNode(true);
+  clone.style.cssText = [
     'font-family: Times New Roman, serif',
-    'color: #000',
-    'background: #fff',
+    'color: #000 !important',
+    'background: #fff !important',
     `width: ${A4_W}px`,
     'max-width: none',
     'padding: 28px 32px',
     'box-sizing: border-box',
     'position: fixed',
-    'top: 0',
-    'left: 0',
-    'z-index: -9999',
-    'visibility: hidden',
+    'top: -9999px',
+    'left: -9999px',
+    'z-index: -1',
+    'pointer-events: none',
   ].join(';');
 
-  // Wait two frames so the browser re-paints at the new size
+  // Force all text in the clone to be black on white (override dark-mode classes)
+  clone.querySelectorAll('*').forEach((node) => {
+    node.style.color = '#000';
+    node.style.backgroundColor = '';
+    node.style.borderColor = '';
+  });
+
+  document.body.appendChild(clone);
+
+  // Wait two frames for layout
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   try {
-    const canvas = await html2canvas(el, {
+    const canvas = await html2canvas(clone, {
       scale: 3,
       useCORS: true,
       backgroundColor: '#ffffff',
@@ -128,14 +136,14 @@ async function captureProformaAsPdf() {
       windowWidth: A4_W,
     });
 
-    el.setAttribute('style', origStyle);
+    document.body.removeChild(clone);
 
     const imgData = canvas.toDataURL('image/png');
     const doc = await PDFDocument.create();
 
     // A4 in PDF points: 595 × 842
     const PW = 595, PH = 842;
-    const margin = 20; // pts
+    const margin = 20;
     const usableW = PW - margin * 2;
     const usableH = PH - margin * 2;
     const imgRatio = canvas.width / canvas.height;
@@ -153,7 +161,7 @@ async function captureProformaAsPdf() {
     });
     return doc;
   } catch (err) {
-    el.setAttribute('style', origStyle);
+    if (document.body.contains(clone)) document.body.removeChild(clone);
     console.error('Proforma capture failed:', err);
     return null;
   }
