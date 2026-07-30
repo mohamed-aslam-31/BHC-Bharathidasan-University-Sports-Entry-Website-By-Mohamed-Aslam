@@ -303,6 +303,7 @@ export default function StudentPreviewOverlay({
             <Detail label="Blood Group"      value={form.bloodGroup} />
             <Detail label="Mother's Name"    value={form.motherName} />
             <Detail label="Aadhar Number"    value={form.aadharNumber} />
+            <Detail label="Shift"            value={form.shift} />
             <Detail label="Student Type"     value={form.studentType} />
             <Detail label="Day / Hostel"     value={form.dayType ? `${form.dayType}${form.hostelName ? ' — ' + form.hostelName : ''}` : ''} />
             <Detail label="T-Shirt Size"     value={form.tshirt} />
