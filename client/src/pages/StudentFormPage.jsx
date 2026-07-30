@@ -1565,7 +1565,6 @@ export default function StudentFormPage() {
             )}
 
             <AadhaarUpload
-              form={form}
               onValidationChange={setAadhaarValidated}
               onFileChange={setAadhaarFile}
               locked={!(
@@ -1573,7 +1572,6 @@ export default function StudentFormPage() {
                 form.fatherName.trim() &&
                 form.motherName.trim() &&
                 form.dob.trim() &&
-                form.aadharNumber.trim().length === 12 &&
                 form.phoneNumber.trim().length === 10 &&
                 form.address.trim()
               )}

@@ -263,7 +263,7 @@ const uploadFields = multer({
     filename: (req, file, cb) =>
       cb(null, `${Date.now()}${path.extname(file.originalname).toLowerCase()}`)
   }),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'aadhaarPdf') {
       const ext = path.extname(file.originalname).toLowerCase();
