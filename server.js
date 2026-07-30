@@ -431,10 +431,11 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
 app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
   try {
     const d = req.body;
-    const imageFile   = req.files?.image?.[0];
-    const aadhaarFile = req.files?.aadhaarPdf?.[0];
-    const idCardFile    = req.files?.idCardPdf?.[0];
-    const marksheetFile = req.files?.marksheetPdf?.[0];
+    const imageFile        = req.files?.image?.[0];
+    const aadhaarFile      = req.files?.aadhaarPdf?.[0];
+    const idCardFile       = req.files?.idCardPdf?.[0];
+    const marksheetFile    = req.files?.marksheetPdf?.[0];
+    const feesReceiptFile  = req.files?.feesReceiptPdf?.[0];
     if (idCardFile) {
       if (idCardFile.size < 100 * 1024) return res.status(400).json({ error: 'ID card PDF too small (min 100 KB)' });
       if (idCardFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'ID card PDF too large (max 1 MB)' });
