@@ -213,7 +213,25 @@ const pCalcAge = (val) => {
 };
 const ptd = (val) => val || 'NIL';
 
+/* A4 at 96 dpi with 10 mm top+bottom margins ≈ 1040 px usable */
+const A4_USABLE_H = 1040;
+function fitToPage(el) {
+  if (!el) return;
+  el.style.zoom = '1';
+  const h = el.scrollHeight;
+  if (h > A4_USABLE_H) el.style.zoom = String((A4_USABLE_H / h).toFixed(4));
+}
+
 function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
+  const proformaRef = useRef(null);
+  useEffect(() => {
+    const el = proformaRef.current;
+    if (!el) return;
+    fitToPage(el);
+    window.addEventListener('beforeprint', () => fitToPage(el));
+    return () => window.removeEventListener('beforeprint', () => fitToPage(el));
+  }, [s]);
+
   return (
     <div className={`mb-8 print-student ${checked ? '' : 'opacity-40 print-exclude'}`}>
 
@@ -250,7 +268,7 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
       </div>
 
       {/* ── Proforma (matches StudentViewPage exactly) ── */}
-      <div style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', boxSizing: 'border-box' }}>
+      <div ref={proformaRef} style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', boxSizing: 'border-box' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>

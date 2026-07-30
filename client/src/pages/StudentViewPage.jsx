@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PDFDocument } from 'pdf-lib';
 import html2canvas from 'html2canvas';
@@ -375,6 +375,21 @@ export default function StudentViewPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const proformaRef = useRef(null);
+
+  /* Auto-scale proforma to fit one A4 page when content is long */
+  useEffect(() => {
+    const el = proformaRef.current;
+    if (!el) return;
+    const A4_H = 1040;
+    const fit = () => {
+      el.style.zoom = '1';
+      if (el.scrollHeight > A4_H) el.style.zoom = String((A4_H / el.scrollHeight).toFixed(4));
+    };
+    fit();
+    window.addEventListener('beforeprint', fit);
+    return () => window.removeEventListener('beforeprint', fit);
+  }, [student, page]);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -492,7 +507,7 @@ export default function StudentViewPage() {
 
       {/* ══ PAGE 0: PROFORMA ═════════════════════════════════════════════════ */}
       {page === 0 && (
-        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', maxWidth: '740px', width: '100%', margin: '0 auto', boxSizing: 'border-box', overflow: 'hidden' }}>
+        <div ref={proformaRef} id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', maxWidth: '740px', width: '100%', margin: '0 auto', boxSizing: 'border-box', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
