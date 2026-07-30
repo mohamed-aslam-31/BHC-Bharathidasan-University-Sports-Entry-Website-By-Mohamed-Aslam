@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PDFDocument } from 'pdf-lib';
+import html2canvas from 'html2canvas';
 import { getStudent, deleteStudent } from '../api';
 import { useToast } from '../components/Toast';
 import {
@@ -89,9 +90,46 @@ function DocPanel({ title, path, icon: Icon }) {
   );
 }
 
+/* ── Capture the HTML proforma as a PDF page ─────────────────────────────── */
+async function captureProformaPage() {
+  const el = document.getElementById('element-to-print');
+  if (!el) return null;
+  // Temporarily make it visible if it was off-screen
+  const prev = el.style.cssText;
+  el.style.cssText = 'font-family:Times New Roman,serif;color:#000;background:#fff;padding:24px;width:800px;position:fixed;top:0;left:0;z-index:-1;';
+  await new Promise((r) => requestAnimationFrame(r)); // let browser paint
+  try {
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
+    el.style.cssText = prev;
+    const imgData = canvas.toDataURL('image/png');
+    // Build a single-page PDF (A4: 595×842 pt)
+    const doc  = await PDFDocument.create();
+    const img  = await doc.embedPng(imgData);
+    const W = 595, H = 842;
+    const ratio = Math.min(W / img.width, H / img.height);
+    const dw = img.width * ratio, dh = img.height * ratio;
+    const page = doc.addPage([W, H]);
+    page.drawImage(img, { x: (W - dw) / 2, y: H - dh - 10, width: dw, height: dh });
+    return doc;
+  } catch {
+    el.style.cssText = prev;
+    return null;
+  }
+}
+
 /* ── Merge selected PDFs into one using pdf-lib ───────────────────────────── */
-async function buildMergedPdf(paths) {
+async function buildMergedPdf(paths, includeProforma = false) {
   const merged = await PDFDocument.create();
+
+  // Proforma goes first
+  if (includeProforma) {
+    const proformaPdf = await captureProformaPage();
+    if (proformaPdf) {
+      const [pg] = await merged.copyPages(proformaPdf, [0]);
+      merged.addPage(pg);
+    }
+  }
+
   for (const path of paths) {
     const res = await fetch(`/uploads/${path}`);
     if (!res.ok) continue;
@@ -150,15 +188,7 @@ function PrintModal({ student, onClose }) {
         .filter((k) => selected[k] && pdfMap[k])
         .map((k) => pdfMap[k]);
 
-      if (paths.length === 0) {
-        // Only proforma selected — just print
-        setStatus('idle');
-        onClose();
-        setTimeout(() => window.print(), 150);
-        return;
-      }
-
-      const bytes = await buildMergedPdf(paths);
+      const bytes = await buildMergedPdf(paths, selected.proforma);
       const blob  = new Blob([bytes], { type: 'application/pdf' });
       const url   = URL.createObjectURL(blob);
       setPdfBlob(blob);
