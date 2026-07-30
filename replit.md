@@ -1,40 +1,35 @@
 # BHC Sports Entry
 
-A modern student sports data management system for Bharathidasan University, rebuilt in React + Tailwind CSS.
+A student sports data management system for Bharathidasan University — Sports Division.
 
 ## Stack
+- **Frontend**: React 18 + Vite (port 5000), React Router, Tailwind CSS
+- **Backend**: Express.js (port 3001), Mongoose/MongoDB
+- **Database**: In-memory MongoDB by default (resets on restart); connect a persistent Atlas instance via `MONGODB_URI` secret
 
-- **Frontend**: React 18 + Vite + Tailwind CSS (white/blue theme, dark mode)
-- **Backend**: Express.js + better-sqlite3
-- **Auth**: JWT (jsonwebtoken + bcryptjs)
-- **File uploads**: Multer (stored in `/uploads`)
-
-## Running the app
-
-```bash
-npm run dev
-```
-
-This starts:
-- Express API on port **3001** (internal)
-- Vite dev server on port **5000** (proxies `/api` and `/uploads` to Express)
+## How to run
+`npm run dev` starts both the Express API (port 3001) and the Vite dev server (port 5000) concurrently. The Vite dev server proxies `/api` and `/uploads` to the backend automatically.
 
 ## Default credentials
+- **Username**: `admin`
+- **Password**: `admin123`
 
-- Username: `admin`
-- Password: `admin123`
+The server auto-creates this admin account and seeds 10 sample students on first start.
 
-## Features
+## Persistent data (optional)
+Add a `MONGODB_URI` Replit Secret pointing to a MongoDB Atlas cluster to persist data across restarts. Without it the app uses an in-memory database that resets each time the server restarts.
 
-- Login with JWT session
-- Student list with filters (roll no, name, game, gender, department, year)
-- Student CRUD (create/edit/delete)
-- Printable eligibility proforma view
-- Admin approval workflow for non-admin submissions
-- User account management (admin only)
-- Dark mode toggle (persists via localStorage)
+## Project structure
+```
+server.js          Express API + Mongoose models
+client/            React frontend (Vite)
+  src/
+    pages/         Route-level page components
+    components/    Shared UI components
+    contexts/      React context (auth, etc.)
+    api/           Axios API helpers
+uploads/           Uploaded student photos (served by Express)
+```
 
 ## User preferences
-
-- White and blue theme with dark mode support
-- Modern, clean UI with Tailwind CSS
+<!-- Add any remembered preferences here -->
