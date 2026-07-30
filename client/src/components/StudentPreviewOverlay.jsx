@@ -1,12 +1,13 @@
 import React from 'react';
 import { ArrowLeft, Check, Loader2, FileText, User } from 'lucide-react';
 
-/* ── Cell styles (mirrors StudentViewPage) ────────────────────────────────── */
-const border = '1px solid #000';
-const numCell    = { border, padding: '5px 6px',  verticalAlign: 'middle', textAlign: 'center' };
-const labelCell  = { border, padding: '5px 8px',  verticalAlign: 'middle' };
-const subLabelCell = { border, padding: '5px 8px', verticalAlign: 'middle' };
-const valueCell  = { border, padding: '5px 8px',  verticalAlign: 'middle', fontWeight: 'bold' };
+/* ── Cell styles (mirrors StudentViewPage exactly) ───────────────────────── */
+const border       = '1px solid #000';
+const numCell      = { border, padding: '7px 5px',  verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap',  fontFamily: 'Arial, sans-serif' };
+const labelCell    = { border, padding: '7px 8px',  verticalAlign: 'middle', lineHeight: 1.5,     fontFamily: 'Arial, sans-serif' };
+const subLabelCell = { border, padding: '7px 8px',  verticalAlign: 'middle', whiteSpace: 'nowrap',fontFamily: 'Arial, sans-serif' };
+const valueCell    = { border, padding: '7px 8px',  verticalAlign: 'middle', fontWeight: 'bold',  wordBreak: 'break-word', fontFamily: 'Arial, sans-serif' };
+const ageCell      = { border, padding: '7px 8px',  verticalAlign: 'middle', fontWeight: 'bold',  textAlign: 'center', whiteSpace: 'nowrap', fontFamily: 'Arial, sans-serif' };
 
 const td = (v) => v || 'NIL';
 
@@ -15,6 +16,17 @@ function formatDOB(val) {
   const d = new Date(val);
   if (isNaN(d)) return val;
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
+}
+
+function calcAge(val) {
+  if (!val) return '';
+  const dob = new Date(val);
+  if (isNaN(dob)) return '';
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
 }
 
 /** Shows an attached-file badge or an existing-PDF link. */
@@ -43,17 +55,6 @@ function DocStatus({ newFile, existingPath, label }) {
 
 /**
  * Full-screen preview overlay shown between form submission and actual save.
- *
- * Props:
- *   form            – form state object
- *   imagePreview    – blob-URL of newly chosen photo (or null)
- *   currentImage    – filename of existing stored photo (or null)
- *   aadhaarFile / idCardFile / marksheetFile / feesReceiptFile – new File objects (or null)
- *   currentAadhaarPdf / currentIdCardPdf / currentMarksheetPdf / currentFeesReceiptPdf – existing paths
- *   isEdit          – boolean
- *   loading         – boolean (saving in progress)
- *   onConfirm()     – called when user clicks Confirm & Save
- *   onBack()        – called when user clicks Back to Edit
  */
 export default function StudentPreviewOverlay({
   form,
@@ -91,22 +92,11 @@ export default function StudentPreviewOverlay({
               </p>
             </div>
           </div>
-
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={onBack}
-              disabled={loading}
-              className="btn-secondary text-sm px-4 disabled:opacity-50"
-            >
+            <button type="button" onClick={onBack} disabled={loading} className="btn-secondary text-sm px-4 disabled:opacity-50">
               Back to Edit
             </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={loading}
-              className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50"
-            >
+            <button type="button" onClick={onConfirm} disabled={loading} className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50">
               {loading
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
                 : <><Check className="w-4 h-4" /> {isEdit ? 'Confirm Update' : 'Confirm & Save'}</>
@@ -129,164 +119,170 @@ export default function StudentPreviewOverlay({
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div
             id="preview-proforma"
-            style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '24px' }}
+            style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 22px', boxSizing: 'border-box' }}
           >
             {/* HEADER */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '6px' }}>
-              {/* Logo */}
-              <div style={{ width: '110px', flexShrink: 0 }}>
-                <img src="/university-logo.gif" alt="BU Logo" style={{ width: '105px', height: '105px', objectFit: 'contain' }} />
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+              <div style={{ width: '120px', flexShrink: 0 }}>
+                <img src="/university-logo.gif" alt="BU Logo" style={{ width: '115px', height: '115px', objectFit: 'contain', display: 'block' }} />
               </div>
-
-              {/* Title block */}
-              <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '10px', paddingBottom: '10px' }}>
-                <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase' }}>Bharathidasan University</div>
-                <div style={{ fontSize: '13px' }}>TIRUCHIRAPPALLI - 620 024</div>
-                <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
-                <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
-                <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}><em>{form.year || '____________'}</em></div>
+              <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '6px', paddingBottom: '6px' }}>
+                <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
+                <div style={{ fontSize: '14px' }}>TIRUCHIRAPPALLI - 620 024</div>
+                <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '3px' }}>Eligibility Proforma of Players</div>
+                <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+                <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}><em>{form.year || ''}</em></div>
               </div>
-
-              {/* Photo box */}
-              <div style={{ width: '110px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <div style={{ border: '1px solid #000', width: '90px', height: '105px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <div style={{ width: '125px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ border: '1px solid #000', width: '115px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {photoSrc
                     ? <img src={photoSrc} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ fontSize: '10px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>Photo</span>
+                    : <span style={{ fontSize: '12px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
                   }
                 </div>
               </div>
             </div>
 
             {/* College / Game line */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '10px', fontFamily: 'Arial, sans-serif' }}>
-              <div>Name of the College: <strong>Bishop Heber College, Trichy</strong></div>
-              <div>Name of the Game: <strong>{form.nameOfTheGame}{form.gender ? ' - ' + form.gender : ''}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', marginTop: '4px', fontFamily: 'Arial, sans-serif', flexWrap: 'wrap', gap: '4px' }}>
+              <div>College: <strong>Bishop Heber College, Trichy</strong></div>
+              <div>Game: <strong>{form.nameOfTheGame}{form.gender ? ' – ' + form.gender : ''}</strong></div>
             </div>
 
-            {/* MAIN TABLE */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+            {/* MAIN TABLE — 5 columns; col5 is the age box used only in row 3 */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', fontFamily: 'Arial, sans-serif', tableLayout: 'fixed' }}>
               <colgroup>
-                <col style={{ width: '4%' }} />
+                <col style={{ width: '5%' }} />
                 <col style={{ width: '38%' }} />
                 <col style={{ width: '16%' }} />
-                <col style={{ width: '42%' }} />
+                <col style={{ width: '26%' }} />
+                <col style={{ width: '15%' }} />
               </colgroup>
               <tbody>
 
-              <tr>
-                <td style={numCell}>1.</td>
-                <td colSpan={2} style={labelCell}>Name of the sportsperson</td>
-                <td style={valueCell}>{td(form.studentName)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>1.</td>
+                  <td colSpan={2} style={labelCell}>Name of the sportsperson</td>
+                  <td colSpan={2} style={valueCell}>{td(form.studentName)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>2.</td>
-                <td colSpan={2} style={labelCell}>Father's Name</td>
-                <td style={valueCell}>{td(form.fatherName)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>2.</td>
+                  <td colSpan={2} style={labelCell}>Father's Name</td>
+                  <td colSpan={2} style={valueCell}>{td(form.fatherName)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>3.</td>
-                <td colSpan={2} style={labelCell}>
-                  Date of the Birth<br />
-                  <strong>(copy of +2 Mark sheet should be enclosed)</strong>
-                </td>
-                <td style={valueCell}>{formatDOB(form.dob)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>3.</td>
+                  <td colSpan={2} style={labelCell}>
+                    Date of Birth
+                    <div style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '1px' }}>(copy of +2 Mark sheet should be enclosed)</div>
+                  </td>
+                  <td style={valueCell}>{formatDOB(form.dob)}</td>
+                  <td style={ageCell}>
+                    {form.dob && calcAge(form.dob) !== '' ? <>Age : {calcAge(form.dob)}</> : ''}
+                  </td>
+                </tr>
 
-              <tr>
-                <td rowSpan={2} style={numCell}>4.</td>
-                <td rowSpan={2} style={labelCell}>
-                  Date &amp; year of passing Qualifying Examination for First admission to a college / university
-                </td>
-                <td style={subLabelCell}>Name of Exam</td>
-                <td style={valueCell}>{td(form.nameOfExam)}</td>
-              </tr>
-              <tr>
-                <td style={subLabelCell}>Date &amp; Year</td>
-                <td style={valueCell}>{td(form.dateAndYear)}</td>
-              </tr>
+                <tr>
+                  <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>4.</td>
+                  <td rowSpan={2} style={{ ...labelCell, verticalAlign: 'middle' }}>Date &amp; year of passing Qualifying Examination for First admission to a college / university</td>
+                  <td style={subLabelCell}>Name of Exam</td>
+                  <td colSpan={2} style={valueCell}>{td(form.nameOfExam)}</td>
+                </tr>
+                <tr>
+                  <td style={subLabelCell}>Date &amp; Year</td>
+                  <td colSpan={2} style={valueCell}>{td(form.dateAndYear)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>5.</td>
-                <td colSpan={2} style={labelCell}>Present Class</td>
-                <td style={valueCell}>{td(form.presentClass)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>5.</td>
+                  <td colSpan={2} style={labelCell}>Present Class</td>
+                  <td colSpan={2} style={valueCell}>{td(form.presentClass)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>6.</td>
-                <td colSpan={2} style={labelCell}>Name of the present course</td>
-                <td style={valueCell}>{td(form.nameOfThePresentClass)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>6.</td>
+                  <td colSpan={2} style={labelCell}>Name of the present course</td>
+                  <td colSpan={2} style={valueCell}>{td(form.nameOfThePresentClass)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>7.</td>
-                <td colSpan={2} style={labelCell}>Duration of course</td>
-                <td style={valueCell}>{td(form.durationOfCourse)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>7.</td>
+                  <td colSpan={2} style={labelCell}>Duration of course</td>
+                  <td colSpan={2} style={valueCell}>{td(form.durationOfCourse)}</td>
+                </tr>
 
-              <tr>
-                <td rowSpan={2} style={numCell}>8.</td>
-                <td rowSpan={2} style={labelCell}>Date &amp; year of First admission to</td>
-                <td style={subLabelCell}>University</td>
-                <td style={valueCell}>{td(form.university)}</td>
-              </tr>
-              <tr>
-                <td style={subLabelCell}>Present course</td>
-                <td style={valueCell}>{td(form.presentCourse)}</td>
-              </tr>
+                <tr>
+                  <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>8.</td>
+                  <td rowSpan={2} style={{ ...labelCell, verticalAlign: 'middle' }}>Date &amp; year of First admission to</td>
+                  <td style={subLabelCell}>University</td>
+                  <td colSpan={2} style={valueCell}>{td(form.university)}</td>
+                </tr>
+                <tr>
+                  <td style={subLabelCell}>Present course</td>
+                  <td colSpan={2} style={valueCell}>{td(form.presentCourse)}</td>
+                </tr>
 
-              <tr>
-                <td rowSpan={2} style={numCell}>9.</td>
-                <td rowSpan={2} style={labelCell}>Number of years of previous IUT participation while pursuing</td>
-                <td style={subLabelCell}>Graduate course</td>
-                <td style={valueCell}>{td(form.graduateCourse)}</td>
-              </tr>
-              <tr>
-                <td style={subLabelCell}>P.G. course</td>
-                <td style={valueCell}>{td(form.pgCourse)}</td>
-              </tr>
+                <tr>
+                  <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>9.</td>
+                  <td rowSpan={2} style={{ ...labelCell, verticalAlign: 'middle' }}>No. of years of previous IUT participation while pursuing</td>
+                  <td style={subLabelCell}>Graduate course</td>
+                  <td colSpan={2} style={valueCell}>{td(form.graduateCourse)}</td>
+                </tr>
+                <tr>
+                  <td style={subLabelCell}>P.G. course</td>
+                  <td colSpan={2} style={valueCell}>{td(form.pgCourse)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>10.</td>
-                <td colSpan={2} style={labelCell}>
-                  Details about change of course / faculty, if any<br />
-                  (Details about the previous / new &nbsp;- course / faculty)
-                </td>
-                <td style={valueCell}>{td(form.previousCourse)}</td>
-              </tr>
+                <tr>
+                  <td style={numCell}>10.</td>
+                  <td colSpan={2} style={labelCell}>
+                    Details about change of course / faculty, if any
+                    <div style={{ fontSize: '10px', marginTop: '1px' }}>(Details about the previous / new – course / faculty)</div>
+                  </td>
+                  <td colSpan={2} style={valueCell}>{td(form.previousCourse)}</td>
+                </tr>
 
-              <tr>
-                <td style={numCell}>11.</td>
-                <td colSpan={2} style={labelCell}>Residential address (With phone / Mobile no)</td>
-                <td style={{ ...valueCell, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
-                  {form.address || '—'}
-                  {form.phoneNumber ? <><br /><strong>{form.phoneNumber}</strong></> : null}
-                </td>
-              </tr>
+                <tr>
+                  <td style={numCell}>11.</td>
+                  <td colSpan={2} style={labelCell}>Residential address (With phone / Mobile no)</td>
+                  <td colSpan={2} style={{ ...valueCell, whiteSpace: 'pre-line', lineHeight: 1.5 }}>
+                    {form.address || '—'}
+                    {form.phoneNumber ? <><br /><strong>{form.phoneNumber}</strong></> : null}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style={numCell}>12.</td>
+                  <td colSpan={4} style={{ ...valueCell, fontWeight: 'normal' }}>
+                    <span>T-Shirt Size : <strong>{form.tshirt || ''}</strong></span>
+                    <span style={{ marginLeft: '48px' }}>Track Size : <strong>{form.track || ''}</strong></span>
+                  </td>
+                </tr>
 
               </tbody>
             </table>
 
             {/* Footer notes */}
-            <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
+            <div style={{ marginTop: '14px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
               <div>*Strike out whichever is not applicable</div>
               <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
             </div>
 
-            <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
-              Signature of the student
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
-              <div>Signature of the<br />Director of Physical Education</div>
-              <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
-              <div style={{ border: '1px solid #000', padding: '10px 28px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
-                Eligibility verified<br />Local organiser Signature &amp; Seal
+            {/* Signatures */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginTop: '16px', fontSize: '13px', fontFamily: 'Arial, sans-serif' }}>
+              <div style={{ textAlign: 'right', paddingBottom: '48px' }}>
+                Signature of the student
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '48px' }}>
+                <div>Signature of the<br />Director of Physical Education</div>
+                <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div style={{ border: '1.5px solid #000', padding: '14px 48px', textAlign: 'center', fontSize: '13px' }}>
+                  Eligibility verified<br />Local organiser Signature &amp; Seal
+                </div>
               </div>
             </div>
           </div>
@@ -334,20 +330,10 @@ export default function StudentPreviewOverlay({
 
         {/* Bottom action bar */}
         <div className="flex items-center justify-end gap-3 pb-6">
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={loading}
-            className="btn-secondary px-6 disabled:opacity-50"
-          >
+          <button type="button" onClick={onBack} disabled={loading} className="btn-secondary px-6 disabled:opacity-50">
             Back to Edit
           </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={loading}
-            className="btn-primary px-8 flex items-center gap-2 disabled:opacity-50"
-          >
+          <button type="button" onClick={onConfirm} disabled={loading} className="btn-primary px-8 flex items-center gap-2 disabled:opacity-50">
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
               : <><Check className="w-4 h-4" /> {isEdit ? 'Confirm Update' : 'Confirm & Save'}</>
