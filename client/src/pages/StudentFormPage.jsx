@@ -9,6 +9,7 @@ import AadhaarUpload from '../components/AadhaarUpload';
 import IdCardUpload from '../components/IdCardUpload';
 import MarksheetUpload from '../components/MarksheetUpload';
 import FeesReceiptUpload from '../components/FeesReceiptUpload';
+import StudentPreviewOverlay from '../components/StudentPreviewOverlay';
 import Cropper from 'react-easy-crop';
 
 /* ─── Crop helpers ─────────────────────────────────────────────────────────── */
@@ -638,6 +639,7 @@ export default function StudentFormPage() {
 
   const [form, setForm]       = useState(empty);
   const [errors, setErrors]   = useState({});
+  const [showPreview, setShowPreview] = useState(false);
   const [imageFile, setImageFile]       = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [currentImage, setCurrentImage] = useState(null);
@@ -895,16 +897,23 @@ export default function StudentFormPage() {
     addToast('ID card photo applied');
   };
 
-  const handleSubmit = async (e) => {
+  // Step 1 — validate and show preview
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateAll()) { addToast('Please fix the errors before submitting', 'error'); return; }
+    setShowPreview(true);
+    window.scrollTo({ top: 0 });
+  };
+
+  // Step 2 — called from preview overlay: actually save
+  const handleConfirmSave = async () => {
     setLoading(true);
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
-      if (imageFile)   fd.append('image', imageFile);
-      if (aadhaarFile) fd.append('aadhaarPdf', aadhaarFile);
-      if (idCardFile)     fd.append('idCardPdf',    idCardFile);
+      if (imageFile)        fd.append('image',          imageFile);
+      if (aadhaarFile)      fd.append('aadhaarPdf',     aadhaarFile);
+      if (idCardFile)       fd.append('idCardPdf',      idCardFile);
       if (marksheetFile)    fd.append('marksheetPdf',   marksheetFile);
       if (feesReceiptFile)  fd.append('feesReceiptPdf', feesReceiptFile);
       if (isEdit) {
@@ -917,6 +926,7 @@ export default function StudentFormPage() {
       navigate('/');
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to save student', 'error');
+      setShowPreview(false);   // go back to form so user can fix / retry
     } finally {
       setLoading(false);
     }
@@ -2015,13 +2025,33 @@ export default function StudentFormPage() {
         <div className="flex items-center gap-4 pt-2">
           <button type="submit" disabled={loading}
             className="btn-primary flex items-center gap-2 px-8 py-2.5">
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? 'Saving…' : isEdit ? 'Update Student' : 'Submit Form'}
+            {isEdit ? 'Preview & Update' : 'Preview & Submit'}
           </button>
           <Link to="/" className="btn-secondary text-sm">Cancel</Link>
         </div>
 
       </form>
+
+      {/* ── Preview overlay (shown after validation passes) ── */}
+      {showPreview && (
+        <StudentPreviewOverlay
+          form={form}
+          imagePreview={imagePreview}
+          currentImage={currentImage}
+          aadhaarFile={aadhaarFile}
+          idCardFile={idCardFile}
+          marksheetFile={marksheetFile}
+          feesReceiptFile={feesReceiptFile}
+          currentAadhaarPdf={currentAadhaarPdf}
+          currentIdCardPdf={currentIdCardPdf}
+          currentMarksheetPdf={currentMarksheetPdf}
+          currentFeesReceiptPdf={currentFeesReceiptPdf}
+          isEdit={isEdit}
+          loading={loading}
+          onConfirm={handleConfirmSave}
+          onBack={() => setShowPreview(false)}
+        />
+      )}
     </div>
   );
 }
