@@ -39,7 +39,7 @@ const DEFAULT_GAMES = [
 
 const DEFAULT_YEARS = (() => {
   const list = [];
-  for (let y = 2018; y <= 2032; y++) list.push(`${y}-${y + 1}`);
+  for (let y = 2020; y <= 2039; y++) list.push(`${y}-${y + 1}`);
   return list;
 })();
 
@@ -119,7 +119,17 @@ const DEFAULT_COURSES = [
 /* ─── Sanitisers ───────────────────────────────────────────────────────────── */
 
 /** Strip non-digit/dash and cap at 9 chars (DDDD-DDDD) */
-const sanitizeYear    = (v) => v.replace(/[^\d-]/g, '').slice(0, 9);
+const sanitizeYear = (v) => {
+  // Keep only digits and dash, strip everything else
+  let s = v.replace(/[^\d-]/g, '');
+  // Remove any existing dashes then auto-insert after position 4
+  const digits = s.replace(/-/g, '');
+  const d1 = digits.slice(0, 4);
+  const d2 = digits.slice(4, 8);
+  if (d2.length > 0) return `${d1}-${d2}`;
+  if (d1.length === 4 && s.endsWith('-')) return `${d1}-`;
+  return d1;
+};
 const sanitizeRollNo  = (v) => v.replace(/\D/g, '').slice(0, 12);
 const sanitizeName    = (v) => v.replace(/[^a-zA-Z. ]/g, '').replace(/ {2,}/g, ' ');
 /** Game: letters/digits/spaces + allowed specials: " \u201C \u201D ' \u2018 \u2019 ( ) & [ ] . , */
