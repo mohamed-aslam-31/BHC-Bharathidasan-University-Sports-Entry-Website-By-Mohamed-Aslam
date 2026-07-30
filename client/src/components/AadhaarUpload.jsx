@@ -81,11 +81,12 @@ function parseAadhaar(rawText) {
   const flat      = allLines.join(' ');
   const latinFlat = allLines.filter(isLatinLine).join(' ');
 
-  /* 1. Aadhaar number — 12 unmasked digits */
-  const aadhaarMatch =
-    flat.match(/\b(\d{4})\s(\d{4})\s(\d{4})\b/) ||
-    flat.match(/\b(\d{4})(\d{4})(\d{4})\b/);
-  const aadhaarNo = aadhaarMatch ? aadhaarMatch[0].replace(/\s/g, '') : null;
+  /* 1. Aadhaar number — any 12 consecutive digits (strip spaces between digit groups first) */
+  // Collapse runs of digits separated only by spaces so OCR gaps don't split the number
+  const digitCollapsed = flat.replace(/(\d)\s+(\d)/g, (_, a, b) => a + b)
+                             .replace(/(\d)\s+(\d)/g, (_, a, b) => a + b); // second pass for odd-count gaps
+  const aadhaarMatch = digitCollapsed.match(/(?<!\d)(\d{12})(?!\d)/);
+  const aadhaarNo = aadhaarMatch ? aadhaarMatch[1] : null;
 
   /* Masked detection (XXXX XXXX 1234) */
   const isMasked =
