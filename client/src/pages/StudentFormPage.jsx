@@ -204,7 +204,7 @@ const sanitizeDuration = (v) => {
   // 5. Only one dash — keep the first, strip extras
   const di = v.indexOf('-');
   if (di !== -1) v = v.slice(0, di + 1) + v.slice(di + 1).replace(/-/g, '');
-  return v.slice(0, 9);
+  return v.slice(0, 7);
 };
 
 /**
@@ -257,7 +257,7 @@ const sanitizeMonthYear = (v) => {
 const validateDuration = (v) =>
   !v ? 'Duration of Course is required' :
   v.length < 6 ? 'Minimum 6 characters required' :
-  v.length > 9 ? 'Maximum 9 characters allowed' :
+  v.length > 7 ? 'Maximum 7 characters allowed' :
   / /.test(v) ? 'No spaces allowed' :
   (v.match(/\d/g) || []).length > 1 ? 'Only one digit allowed' :
   (v.match(/-/g) || []).length > 1 ? 'Only one "-" allowed' :
@@ -1380,10 +1380,10 @@ export default function StudentFormPage() {
               placeholder="Select or Add new Course Duration"
               error={errors.durationOfCourse}
               sanitizer={sanitizeDuration}
-              maxLength={9}
+              maxLength={7}
               minCreate={1}
             />
-            <FieldMeta value={form.durationOfCourse} max={9} always error={errors.durationOfCourse} />
+            <FieldMeta value={form.durationOfCourse} max={7} always error={errors.durationOfCourse} />
           </Field>
 
         </Section>
