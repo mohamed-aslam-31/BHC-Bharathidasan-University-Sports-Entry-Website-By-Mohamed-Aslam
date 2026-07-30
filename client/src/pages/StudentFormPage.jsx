@@ -942,7 +942,7 @@ export default function StudentFormPage() {
               value={form.year}
               onChange={(v) => { set('year')(v); touch('year', v); }}
               options={yearOptions}
-              placeholder="e.g. 2023-2024"
+              placeholder="Select or add new academic year"
               required
               error={errors.year}
               sanitizer={sanitizeYear}
@@ -975,7 +975,7 @@ export default function StudentFormPage() {
               value={form.nameOfTheGame}
               onChange={(v) => { set('nameOfTheGame')(v); touch('nameOfTheGame', v); }}
               options={gameOptions}
-              placeholder="Select or type a game"
+              placeholder="Select or add new game"
               required
               error={errors.nameOfTheGame}
               sanitizer={sanitizeGame}
