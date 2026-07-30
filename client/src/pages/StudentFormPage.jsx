@@ -144,6 +144,12 @@ const sanitizeAcademic = (v) => v.replace(/[^a-zA-Z0-9 [\]():;"'\u2018\u2019\u20
 const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Like sanitizeText but allows special characters — for department, course names etc. */
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
+/** Present Class: letters, digits, single interior spaces, and . - ( ) only. Max 20. */
+const sanitizePresentClass = (v) =>
+  v.replace(/[^a-zA-Z0-9 \-().]/g, '')
+   .replace(/^ /, '')
+   .replace(/ {2,}/g, ' ')
+   .slice(0, 20);
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
 const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 40);
 /** Month & Year of Passing: format = Letters-YYYY (one dash, letters before, up to 4 digits after).
@@ -551,7 +557,7 @@ export default function StudentFormPage() {
       case 'aadharNumber':         msg = validateAadhar(value);                                       break;
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
       case 'university':           msg = validateUniversity(value);                                                              break;
-      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 30, true);                                break;
+      case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 20, true);                                break;
       case 'nameOfThePresentClass':msg = validateMinMax(value, 'Month & year of first admission to present course', 8, 15, true); break;
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
       case 'graduateCourse':       msg = validateMinMax(value, 'Graduate course (No. of years)', 1, 15, true); break;
@@ -579,7 +585,7 @@ export default function StudentFormPage() {
       aadharNumber:        validateAadhar(form.aadharNumber),
       phoneNumber:         validatePhone(form.phoneNumber),
       university:          validateUniversity(form.university),
-      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 30, true),
+      presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 20, true),
       nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Month & year of first admission to present course', 8, 15, true),
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
       graduateCourse:      validateMinMax(form.graduateCourse, 'Graduate course (No. of years)', 1, 15, true),
@@ -1232,11 +1238,11 @@ export default function StudentFormPage() {
               options={classOptions}
               placeholder="e.g. I B.C.A, II B.COM(CA)"
               error={errors.presentClass}
-              sanitizer={sanitizeAcademic}
-              maxLength={30}
+              sanitizer={sanitizePresentClass}
+              maxLength={20}
               minCreate={1}
             />
-            <FieldMeta value={form.presentClass} max={30} always error={errors.presentClass} />
+            <FieldMeta value={form.presentClass} max={20} always error={errors.presentClass} />
           </Field>
 
           {/* Name of Present Course */}
