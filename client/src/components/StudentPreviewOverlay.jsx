@@ -144,6 +144,7 @@ export default function StudentPreviewOverlay({
                 <div style={{ fontSize: '13px' }}>TIRUCHIRAPPALLI - 620 024</div>
                 <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
                 <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+                <div style={{ fontSize: '13px', marginTop: '2px' }}>Academic Year: <strong>{form.year || '____________'}</strong></div>
               </div>
 
               {/* Photo box */}
