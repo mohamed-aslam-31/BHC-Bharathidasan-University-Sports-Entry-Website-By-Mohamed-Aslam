@@ -722,12 +722,12 @@ export default function StudentViewPage() {
 
       {/* Print CSS */}
       <style>{`
-        @page { size: A4 portrait; margin: 12mm 20mm; }
+        @page { size: A4 portrait; margin: 12mm 8mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
           html, body { margin: 0; padding: 0; background: #fff; }
           #element-to-print {
-            padding: 0 4mm !important;
+            padding: 0 2mm !important;
             max-width: 100% !important;
             width: 100% !important;
             margin: 0 !important;
@@ -740,7 +740,7 @@ export default function StudentViewPage() {
 }
 
 /* ── Cell styles ── */
-const border = '1.5px solid #000';
+const border = '2px solid #000000';
 const numCell      = { border, padding: '11px 7px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' };
 const labelCell    = { border, padding: '11px 8px', verticalAlign: 'middle', lineHeight: 1.4 };
 const subLabelCell = { border, padding: '11px 8px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
