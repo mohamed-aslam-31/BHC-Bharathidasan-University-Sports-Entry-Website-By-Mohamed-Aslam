@@ -1299,7 +1299,7 @@ export default function StudentFormPage() {
 
         {/* ── Change of Course / Faculty ──────────────────────────────────── */}
         <div className="card p-6">
-          <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span></h3>
+          <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span><span className="text-red-500 ml-1">*</span></h3>
           <div className="grid grid-cols-1">
             <div className="col-span-full">
               <textarea
