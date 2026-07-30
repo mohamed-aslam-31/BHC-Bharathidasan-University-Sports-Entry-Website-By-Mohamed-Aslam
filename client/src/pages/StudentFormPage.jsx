@@ -179,6 +179,29 @@ const sanitizePresentClass = (v) => {
   if (cl !== -1) v = v.slice(0, cl + 1) + v.slice(cl + 1).replace(/\)/g, '');
   return v.slice(0, 20);
 };
+/**
+ * Name of Present Course sanitizer:
+ *  - Letters and spaces only (no digits)
+ *  - Allowed specials: . , ( ) - &
+ *  - Only ONE "(" and ONE ")" allowed (one pair)
+ *  - Max 30 chars
+ */
+const sanitizePresentCourse = (v) => {
+  // 1. Strip disallowed chars — only letters, space, and . , ( ) - &
+  v = v.replace(/[^a-zA-Z .,()&-]/g, '');
+  // 2. Collapse consecutive spaces
+  v = v.replace(/ {2,}/g, ' ');
+  // 3. No leading space
+  v = v.replace(/^ /, '');
+  // 4. Only one "(" — keep the first, strip the rest
+  const op = v.indexOf('(');
+  if (op !== -1) v = v.slice(0, op + 1) + v.slice(op + 1).replace(/\(/g, '');
+  // 5. Only one ")" — keep the first, strip the rest
+  const cl = v.indexOf(')');
+  if (cl !== -1) v = v.slice(0, cl + 1) + v.slice(cl + 1).replace(/\)/g, '');
+  return v.slice(0, 30);
+};
+
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
 const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 40);
 /** Month & Year of Passing: format = Letters-YYYY (one dash, letters before, up to 4 digits after).
@@ -202,6 +225,15 @@ const sanitizeMonthYear = (v) => {
 };
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
+
+const validatePresentCourse = (v) =>
+  !v ? 'Name of Present Course is required' :
+  v.trim().length < 2 ? 'Must be at least 2 characters' :
+  v.length > 30 ? 'Maximum 30 characters allowed' :
+  /[0-9]/.test(v) ? 'Numbers are not allowed' :
+  /[^a-zA-Z .,()&-]/.test(v) ? 'Only letters and . , ( ) - & are allowed' :
+  (v.match(/\(/g) || []).length > 1 ? 'Only one "(" allowed' :
+  (v.match(/\)/g) || []).length > 1 ? 'Only one ")" allowed' : '';
 
 const validateYear = (v) =>
   !v ? 'Academic year is required' :
@@ -602,7 +634,7 @@ export default function StudentFormPage() {
       case 'durationOfCourse':     msg = validateMinMax(value, 'Duration', 1, 15, true);              break;
       case 'graduateCourse':       msg = validateMinMax(value, 'Graduate course (No. of years)', 1, 15, true); break;
       case 'pgCourse':             msg = validateMinMax(value, 'PG course (No. of years)', 1, 15, true);       break;
-      case 'presentCourse':        msg = validateMinMax(value, 'Present course', 3, 40, true);        break;
+      case 'presentCourse':        msg = validatePresentCourse(value);                                break;
       case 'nameOfExam':           msg = validateExamName(value);                                     break;
       case 'dateAndYear':          msg = validateMonthYear(value);                                    break;
       default: break;
@@ -630,7 +662,7 @@ export default function StudentFormPage() {
       durationOfCourse:    validateMinMax(form.durationOfCourse, 'Duration', 1, 15, true),
       graduateCourse:      validateMinMax(form.graduateCourse, 'Graduate course (No. of years)', 1, 15, true),
       pgCourse:            validateMinMax(form.pgCourse, 'PG course (No. of years)', 1, 15, true),
-      presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
+      presentCourse:       validatePresentCourse(form.presentCourse),
       nameOfExam:          validateExamName(form.nameOfExam),
       dateAndYear:         validateMonthYear(form.dateAndYear),
       previousCourse:      validatePrevCourse(form.previousCourse),
@@ -1292,14 +1324,14 @@ export default function StudentFormPage() {
               value={form.presentCourse}
               onChange={(v) => { set('presentCourse')(v); touch('presentCourse', v); }}
               options={courseOptions}
-              placeholder="Select or type course"
+              placeholder="Select or Add new Course"
               required
               error={errors.presentCourse}
-              sanitizer={sanitizeAcademic}
-              maxLength={40}
+              sanitizer={sanitizePresentCourse}
+              maxLength={30}
               minCreate={2}
             />
-            <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
+            <FieldMeta value={form.presentCourse} max={30} always error={errors.presentCourse} />
           </Field>
 
           {/* Duration of Course */}
