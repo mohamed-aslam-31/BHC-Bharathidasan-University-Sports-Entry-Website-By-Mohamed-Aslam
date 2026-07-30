@@ -1196,7 +1196,7 @@ export default function StudentFormPage() {
               value={form.nameOfExam}
               onChange={(v) => { set('nameOfExam')(v); touch('nameOfExam', v); }}
               options={examOptions}
-              placeholder="HSC, AISSCE, ISC"
+              placeholder="Select or add new Exam name"
               required
               error={errors.nameOfExam}
               sanitizer={sanitizeExamName}
