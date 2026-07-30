@@ -37,6 +37,17 @@ const formatDOB = (val) => {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '.');
 };
 
+const calcAge = (val) => {
+  if (!val) return '';
+  const dob = new Date(val);
+  if (isNaN(dob)) return '';
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+};
+
 /* ── Info row for Basic Info page ─────────────────────────────────────────── */
 function InfoRow({ label, value, highlight = false }) {
   return (
@@ -481,7 +492,7 @@ export default function StudentViewPage() {
 
       {/* ══ PAGE 0: PROFORMA ═════════════════════════════════════════════════ */}
       {page === 0 && (
-        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 20px', maxWidth: '760px', margin: '0 auto', boxSizing: 'border-box' }}>
+        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 20px', maxWidth: '720px', width: '100%', margin: '0 auto', boxSizing: 'border-box', overflow: 'hidden' }}>
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
@@ -536,7 +547,12 @@ export default function StudentViewPage() {
                   Date of Birth
                   <div style={{ fontSize: '9.5px', fontWeight: 'bold', marginTop: '1px' }}>(copy of +2 Mark sheet should be enclosed)</div>
                 </td>
-                <td style={valueCell}>{formatDOB(student.dateOfBirth)}</td>
+                <td style={valueCell}>
+                  {formatDOB(student.dateOfBirth)}
+                  {student.dateOfBirth && calcAge(student.dateOfBirth) !== '' && (
+                    <span style={{ marginLeft: '12px' }}>Age : {calcAge(student.dateOfBirth)}</span>
+                  )}
+                </td>
               </tr>
               <tr>
                 <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>4.</td>
@@ -597,6 +613,13 @@ export default function StudentViewPage() {
                 <td style={{ ...valueCell, whiteSpace: 'pre-line', lineHeight: 1.5 }}>
                   {student.address || '—'}
                   {student.phoneNumber ? <><br /><strong>{student.phoneNumber}</strong></> : null}
+                </td>
+              </tr>
+              <tr>
+                <td style={numCell}>12.</td>
+                <td colSpan={3} style={{ ...valueCell, fontWeight: 'normal' }}>
+                  <span>T-Shirt Size : <strong>{student.tshirt || ''}</strong></span>
+                  <span style={{ marginLeft: '40px' }}>Track Size : <strong>{student.track || ''}</strong></span>
                 </td>
               </tr>
             </tbody>
@@ -722,16 +745,29 @@ export default function StudentViewPage() {
 
       {/* Print CSS */}
       <style>{`
-        @page { size: A4 portrait; margin: 10mm 5mm; }
+        @page { size: A4 portrait; margin: 8mm 8mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
           html, body { margin: 0; padding: 0; background: #fff; }
           #element-to-print {
-            padding: 0 1mm !important;
+            padding: 0 !important;
             max-width: 100% !important;
             width: 100% !important;
             margin: 0 !important;
             box-sizing: border-box !important;
+            overflow: hidden !important;
+            font-size: 11px !important;
+          }
+          #element-to-print table {
+            width: 100% !important;
+            table-layout: fixed !important;
+            word-break: break-word !important;
+          }
+          #element-to-print td {
+            padding: 4px 5px !important;
+          }
+          #element-to-print img {
+            max-width: 100% !important;
           }
         }
       `}</style>
@@ -740,8 +776,8 @@ export default function StudentViewPage() {
 }
 
 /* ── Cell styles ── */
-const border = '2px solid #000000';
-const numCell      = { border, padding: '14px 7px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' };
-const labelCell    = { border, padding: '14px 8px', verticalAlign: 'middle', lineHeight: 1.4 };
-const subLabelCell = { border, padding: '14px 8px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
-const valueCell    = { border, padding: '14px 8px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
+const border = '1px solid #000';
+const numCell      = { border, padding: '5px 5px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' };
+const labelCell    = { border, padding: '5px 6px', verticalAlign: 'middle', lineHeight: 1.4 };
+const subLabelCell = { border, padding: '5px 6px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
+const valueCell    = { border, padding: '5px 6px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
