@@ -11,8 +11,9 @@ const app = express();
 const PORT = 3001;
 const JWT_SECRET = process.env.SESSION_SECRET || 'bhc-sports-secret-key-2024';
 
-// Ensure uploads directory exists
-if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
+// Ensure upload directories exist
+if (!fs.existsSync('./uploads'))         fs.mkdirSync('./uploads');
+if (!fs.existsSync('./uploads/aadhaar')) fs.mkdirSync('./uploads/aadhaar');
 
 // ─── MONGOOSE MODELS ──────────────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ const StudentSchema = new mongoose.Schema({
   gender:                { type: String, required: true },
   year:                  { type: String, required: true },
   aadharNumber:          String,
+  aadhaarPdf:            String,
   tournament:            String,
   tshirt:                String,
   track:                 String,
@@ -252,18 +254,26 @@ function adminOnly(req, res, next) {
   next();
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, './uploads/'),
-  filename:    (req, file, cb) => cb(null, `${Date.now()}${path.extname(file.originalname).toLowerCase()}`)
-});
-const upload = multer({
-  storage,
+const uploadFields = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      if (file.fieldname === 'aadhaarPdf') cb(null, './uploads/aadhaar/');
+      else cb(null, './uploads/');
+    },
+    filename: (req, file, cb) =>
+      cb(null, `${Date.now()}${path.extname(file.originalname).toLowerCase()}`)
+  }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    ['.jpg', '.jpeg', '.png'].includes(ext) ? cb(null, true) : cb(new Error('Only JPG/PNG allowed'));
+    if (file.fieldname === 'aadhaarPdf') {
+      const ext = path.extname(file.originalname).toLowerCase();
+      ext === '.pdf' ? cb(null, true) : cb(new Error('Aadhaar must be a PDF file'));
+    } else {
+      const ext = path.extname(file.originalname).toLowerCase();
+      ['.jpg', '.jpeg', '.png'].includes(ext) ? cb(null, true) : cb(new Error('Only JPG/PNG allowed'));
+    }
   }
-});
+}).fields([{ name: 'image', maxCount: 1 }, { name: 'aadhaarPdf', maxCount: 1 }]);
 
 // ─── IMAGE PROXY ──────────────────────────────────────────────────────────────
 
@@ -354,9 +364,11 @@ app.get('/api/students/:id', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/students', authMiddleware, upload.single('image'), async (req, res) => {
+app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
   try {
     const d = req.body;
+    const imageFile   = req.files?.image?.[0];
+    const aadhaarFile = req.files?.aadhaarPdf?.[0];
     const savedTime = new Date().toISOString().replace(/[:.]/g, '-');
     const existing = await Student.findOne({
       rollNo: d.rollNo, nameOfThePresentClass: d.nameOfThePresentClass,
@@ -371,7 +383,9 @@ app.post('/api/students', authMiddleware, upload.single('image'), async (req, re
       nameOfThePresentClass: d.nameOfThePresentClass, durationOfCourse: d.durationOfCourse,
       university: d.university, presentCourse: d.presentCourse,
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
-      address: d.address, phoneNumber: d.phoneNumber, image: req.file?.filename || null,
+      address: d.address, phoneNumber: d.phoneNumber,
+      image: imageFile?.filename || null,
+      aadhaarPdf: aadhaarFile ? `aadhaar/${aadhaarFile.filename}` : null,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       tournament: d.tournament, tshirt: d.tshirt, track: d.track,
       status: req.user.role === 'admin' ? 'approved' : 'pending',
@@ -381,13 +395,21 @@ app.post('/api/students', authMiddleware, upload.single('image'), async (req, re
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/students/:id', authMiddleware, upload.single('image'), async (req, res) => {
+app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
   try {
     const d = req.body;
+    const imageFile   = req.files?.image?.[0];
+    const aadhaarFile = req.files?.aadhaarPdf?.[0];
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
-    if (req.file && student.image) {
+    // Remove old photo if replaced
+    if (imageFile && student.image) {
       const old = path.join(__dirname, 'uploads', student.image);
+      if (fs.existsSync(old)) fs.unlinkSync(old);
+    }
+    // Remove old aadhaar PDF if replaced
+    if (aadhaarFile && student.aadhaarPdf) {
+      const old = path.join(__dirname, 'uploads', student.aadhaarPdf);
       if (fs.existsSync(old)) fs.unlinkSync(old);
     }
     Object.assign(student, {
@@ -399,7 +421,8 @@ app.put('/api/students/:id', authMiddleware, upload.single('image'), async (req,
       university: d.university, presentCourse: d.presentCourse,
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
-      image: req.file ? req.file.filename : student.image,
+      image: imageFile ? imageFile.filename : student.image,
+      aadhaarPdf: aadhaarFile ? `aadhaar/${aadhaarFile.filename}` : student.aadhaarPdf,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       tournament: d.tournament, tshirt: d.tshirt, track: d.track,
     });

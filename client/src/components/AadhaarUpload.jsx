@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { Upload, X, Eye, AlertCircle, CheckCircle, FileText, ExternalLink, Loader2 } from 'lucide-react';
@@ -203,11 +203,13 @@ function PhysicalAadhaarDiagram() {
 }
 
 /* ── Main component ──────────────────────────────────────────────────────── */
-export default function AadhaarUpload({ form, onValidationChange }) {
+// locked = true when required fields haven't been filled yet
+// onFileChange(file|null) = called whenever the user picks or clears a PDF
+export default function AadhaarUpload({ form, onValidationChange, onFileChange, locked = false }) {
   const [file, setFile]               = useState(null);
   const [blobUrl, setBlobUrl]         = useState(null);
   const [parsing, setParsing]         = useState(false);
-  const [parsingStatus, setParsingStatus] = useState('');   // human-readable progress
+  const [parsingStatus, setParsingStatus] = useState('');
   const [parsed, setParsed]           = useState(null);
   const [mismatches, setMismatches]   = useState([]);
   const [parseError, setParseError]   = useState('');
@@ -215,11 +217,21 @@ export default function AadhaarUpload({ form, onValidationChange }) {
   const [showDiagram, setShowDiagram] = useState(false);
   const fileRef = useRef(null);
 
+  // ── Live re-check whenever DOB or Aadhaar number changes after PDF parsed ──
+  useEffect(() => {
+    if (!parsed) return;
+    const issues = buildMismatches(parsed, form);
+    setMismatches(issues);
+    if (issues.length > 0) setParseError('');   // clear old upload errors; show mismatch rows
+    onValidationChange(issues.length === 0);
+  }, [form.aadharNumber, form.dob]);             // eslint-disable-line react-hooks/exhaustive-deps
+
   const reset = () => {
     if (blobUrl) URL.revokeObjectURL(blobUrl);
     setFile(null); setBlobUrl(null); setParsed(null);
     setMismatches([]); setParseError(''); setShowViewer(false);
     onValidationChange(false);
+    if (onFileChange) onFileChange(null);
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -239,6 +251,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
 
     const url = URL.createObjectURL(f);
     setFile(f); setBlobUrl(url);
+    if (onFileChange) onFileChange(f);
     setParseError(''); setParsed(null); setMismatches([]);
     onValidationChange(false);
     setParsing(true);
@@ -305,6 +318,18 @@ export default function AadhaarUpload({ form, onValidationChange }) {
   /* ── Render ────────────────────────────────────────────────────────────── */
   return (
     <div className="space-y-3">
+
+      {/* Locked — required fields not yet filled */}
+      {locked && (
+        <div className="rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-5 py-6 flex flex-col items-center gap-2 text-center">
+          <FileText className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Aadhaar upload will be available once you fill in the required fields above</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Name · Father's name · Mother's name · DOB · Aadhaar number · Phone · Address</p>
+        </div>
+      )}
+
+      {/* All upload UI hidden when locked */}
+      {!locked && <>
 
       {/* Rules banner */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
@@ -483,6 +508,8 @@ export default function AadhaarUpload({ form, onValidationChange }) {
           )}
         </div>
       )}
+
+      </>}
 
       {/* PDF viewer modal */}
       {showViewer && blobUrl && (

@@ -643,6 +643,7 @@ export default function StudentFormPage() {
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
   const [managedOpts, setManagedOpts] = useState({});
   const [aadhaarValidated, setAadhaarValidated] = useState(false);
+  const [aadhaarFile, setAadhaarFile]           = useState(null);
 
   /* ── crop state ── */
   const [cropSrc, setCropSrc]               = useState(null);
@@ -876,12 +877,12 @@ export default function StudentFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateAll()) { addToast('Please fix the errors before submitting', 'error'); return; }
-    if (!aadhaarValidated) { addToast('Please upload and verify your Aadhaar card before submitting', 'error'); return; }
     setLoading(true);
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
-      if (imageFile) fd.append('image', imageFile);
+      if (imageFile)   fd.append('image', imageFile);
+      if (aadhaarFile) fd.append('aadhaarPdf', aadhaarFile);
       if (isEdit) {
         await updateStudent(id, fd);
         addToast('Student updated successfully');
@@ -1512,20 +1513,26 @@ export default function StudentFormPage() {
             <FieldMeta value={form.address} max={100} always error={errors.address} />
           </Field>
 
-          {/* Aadhaar Card Upload */}
+          {/* Aadhaar Card Upload — optional; unlocks once required fields are filled */}
           <div className="col-span-full">
             <label className="label">
-              Aadhaar Card PDF <span className="text-red-500 ml-0.5">*</span>
+              Aadhaar Card PDF
+              <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
             <AadhaarUpload
               form={form}
               onValidationChange={setAadhaarValidated}
+              onFileChange={setAadhaarFile}
+              locked={!(
+                form.studentName.trim() &&
+                form.fatherName.trim() &&
+                form.motherName.trim() &&
+                form.dob.trim() &&
+                form.aadharNumber.trim().length === 12 &&
+                form.phoneNumber.trim().length === 10 &&
+                form.address.trim()
+              )}
             />
-            {!aadhaarValidated && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                Aadhaar verification is required before submitting
-              </p>
-            )}
           </div>
 
         </Section>
