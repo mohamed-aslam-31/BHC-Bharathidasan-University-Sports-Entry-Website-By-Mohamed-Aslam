@@ -665,9 +665,9 @@ export default function StudentFormPage() {
       case 'previousCourse':       msg = validatePrevCourse(value);                                   break;
       case 'aadharNumber':         msg = validateAadhar(value);                                       break;
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
-      case 'university':           msg = validateUniversity(value);                                                              break;
+      case 'university':           msg = validateMonthYear(value);                                                               break;
       case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 20, true);                                break;
-      case 'nameOfThePresentClass':msg = validateMinMax(value, 'Month & year of first admission to present course', 8, 15, true); break;
+      case 'nameOfThePresentClass':msg = validateMonthYear(value);                                                               break;
       case 'durationOfCourse':     msg = validateDuration(value);                                     break;
       case 'graduateCourse':       msg = validateMinMax(value, 'Graduate course (No. of years)', 1, 15, true); break;
       case 'pgCourse':             msg = validateMinMax(value, 'PG course (No. of years)', 1, 15, true);       break;
@@ -693,9 +693,9 @@ export default function StudentFormPage() {
       address:        validateAddress(form.address),
       aadharNumber:        validateAadhar(form.aadharNumber),
       phoneNumber:         validatePhone(form.phoneNumber),
-      university:          validateUniversity(form.university),
+      university:          validateMonthYear(form.university),
       presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 20, true),
-      nameOfThePresentClass: validateMinMax(form.nameOfThePresentClass, 'Month & year of first admission to present course', 8, 15, true),
+      nameOfThePresentClass: validateMonthYear(form.nameOfThePresentClass),
       durationOfCourse:    validateDuration(form.durationOfCourse),
       graduateCourse:      validateMinMax(form.graduateCourse, 'Graduate course (No. of years)', 1, 15, true),
       pgCourse:            validateMinMax(form.pgCourse, 'PG course (No. of years)', 1, 15, true),
@@ -1400,14 +1400,14 @@ export default function StudentFormPage() {
                   value={form.university}
                   onChange={(v) => { set('university')(v); touch('university', v); }}
                   options={monthYearOptions}
-                  placeholder="e.g. April-2022"
+                  placeholder="Select or Add new Month & Year"
                   required
                   error={errors.university}
                   sanitizer={sanitizeMonthYear}
-                  maxLength={15}
+                  maxLength={14}
                   minCreate={3}
                 />
-                <FieldMeta value={form.university} max={15} always error={errors.university} />
+                <FieldMeta value={form.university} max={14} always error={errors.university} />
               </Field>
             </div>
 
@@ -1418,14 +1418,14 @@ export default function StudentFormPage() {
                   value={form.nameOfThePresentClass}
                   onChange={(v) => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
                   options={monthYearOptions}
-                  placeholder="e.g. April-2022"
+                  placeholder="Select or Add new Month & Year"
                   required
                   error={errors.nameOfThePresentClass}
                   sanitizer={sanitizeMonthYear}
-                  maxLength={15}
+                  maxLength={14}
                   minCreate={3}
                 />
-                <FieldMeta value={form.nameOfThePresentClass} max={15} always error={errors.nameOfThePresentClass} />
+                <FieldMeta value={form.nameOfThePresentClass} max={14} always error={errors.nameOfThePresentClass} />
               </Field>
             </div>
           </div>
