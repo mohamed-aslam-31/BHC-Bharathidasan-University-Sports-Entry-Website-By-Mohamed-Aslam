@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AadhaarUpload from '../components/AadhaarUpload';
 import Cropper from 'react-easy-crop';
 
 /* ─── Crop helpers ─────────────────────────────────────────────────────────── */
@@ -641,6 +642,7 @@ export default function StudentFormPage() {
   const [fetching, setFetching] = useState(isEdit);
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
   const [managedOpts, setManagedOpts] = useState({});
+  const [aadhaarValidated, setAadhaarValidated] = useState(false);
 
   /* ── crop state ── */
   const [cropSrc, setCropSrc]               = useState(null);
@@ -874,6 +876,7 @@ export default function StudentFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateAll()) { addToast('Please fix the errors before submitting', 'error'); return; }
+    if (!aadhaarValidated) { addToast('Please upload and verify your Aadhaar card before submitting', 'error'); return; }
     setLoading(true);
     try {
       const fd = new FormData();
@@ -1508,6 +1511,22 @@ export default function StudentFormPage() {
             />
             <FieldMeta value={form.address} max={100} always error={errors.address} />
           </Field>
+
+          {/* Aadhaar Card Upload */}
+          <div className="col-span-full">
+            <label className="label">
+              Aadhaar Card PDF <span className="text-red-500 ml-0.5">*</span>
+            </label>
+            <AadhaarUpload
+              form={form}
+              onValidationChange={setAadhaarValidated}
+            />
+            {!aadhaarValidated && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                Aadhaar verification is required before submitting
+              </p>
+            )}
+          </div>
 
         </Section>
 
