@@ -1120,7 +1120,7 @@ export default function StudentFormPage() {
           <Field label="Aadhar Card Number" required>
             <input
               className={`input-field ${errors.aadharNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="Enter your 12-digit aadhar number"
+              placeholder="Enter your 12-digit aadhar card number"
               value={form.aadharNumber}
               inputMode="numeric"
               maxLength={12}
