@@ -110,7 +110,7 @@ const DEFAULT_UNIVERSITIES = [
 ];
 
 const DEFAULT_BLOOD_GROUPS = [
-  'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-',
+  'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'GOLDEN',
 ];
 
 const DEFAULT_COURSES = [
