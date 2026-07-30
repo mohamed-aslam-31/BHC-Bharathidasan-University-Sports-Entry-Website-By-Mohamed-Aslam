@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt } from '../api';
-import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText } from 'lucide-react';
+import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent } from '../api';
+import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
 import IdCardUpload from '../components/IdCardUpload';
@@ -661,6 +661,8 @@ export default function StudentFormPage() {
   const [deletingMarksheet, setDeletingMarksheet]       = useState(false);
   const [feesReceiptValidated, setFeesReceiptValidated] = useState(false);
   const [feesReceiptFile, setFeesReceiptFile]           = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [currentFeesReceiptPdf, setCurrentFeesReceiptPdf] = useState(null);
   const [deletingFeesReceipt, setDeletingFeesReceipt]   = useState(false);
 
@@ -955,6 +957,21 @@ export default function StudentFormPage() {
     window.scrollTo({ top: 0 });
   };
 
+  // Delete student (edit mode only)
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteStudent(id);
+      addToast('Student deleted successfully');
+      navigate('/');
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to delete student', 'error');
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Step 2 — called from preview overlay: actually save
   const handleConfirmSave = async () => {
     setLoading(true);
@@ -1022,19 +1039,67 @@ export default function StudentFormPage() {
   return (
     <div className="space-y-6 w-full">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to="/" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            {isEdit ? 'Edit Student' : 'Add New Student'}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {isEdit ? 'Update the student information below' : 'Fill in the details to register a new sportsperson'}
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 min-w-0">
+          <Link to="/" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              {isEdit ? 'Edit Student' : 'Add New Student'}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              {isEdit ? 'Update the student information below' : 'Fill in the details to register a new sportsperson'}
+            </p>
+          </div>
         </div>
+        {isEdit && (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex-shrink-0 flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />Delete
+          </button>
+        )}
       </div>
+
+      {/* Delete confirm modal — edit mode */}
+      {isEdit && showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Delete Student</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Are you sure you want to delete <strong>{form.studentName || 'this student'}</strong>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="btn-secondary text-sm px-5 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 text-sm px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? <><Loader2 className="w-4 h-4 animate-spin" />Deleting…</> : <><Trash2 className="w-4 h-4" />Delete</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isEdit && user?.role !== 'admin' && (
         <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">

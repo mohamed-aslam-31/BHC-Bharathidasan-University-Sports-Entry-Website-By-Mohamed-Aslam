@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getStudent } from '../api';
+import { getStudent, deleteStudent } from '../api';
 import { useToast } from '../components/Toast';
-import { ArrowLeft, Pencil, Printer } from 'lucide-react';
+import { ArrowLeft, Pencil, Printer, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function StudentViewPage() {
@@ -11,6 +11,22 @@ export default function StudentViewPage() {
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteStudent(id);
+      addToast('Student deleted successfully');
+      navigate('/');
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to delete student', 'error');
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     getStudent(id).then(res => {
@@ -58,8 +74,49 @@ export default function StudentViewPage() {
           <Link to={`/students/${id}/edit`} className="btn-primary flex items-center gap-2 text-sm">
             <Pencil className="w-4 h-4" />Edit
           </Link>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />Delete
+          </button>
         </div>
       </div>
+
+      {/* Delete confirm modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Delete Student</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Are you sure you want to delete <strong>{student.nameOfTheSportsperson}</strong>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="btn-secondary text-sm px-5 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 text-sm px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? <><Loader2 className="w-4 h-4 animate-spin" />Deleting…</> : <><Trash2 className="w-4 h-4" />Delete</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── PRINTABLE PROFORMA ── */}
       <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
