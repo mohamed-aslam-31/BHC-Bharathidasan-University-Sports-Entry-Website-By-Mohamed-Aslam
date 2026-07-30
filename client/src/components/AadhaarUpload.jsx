@@ -5,7 +5,7 @@ import { Upload, X, Eye, AlertCircle, CheckCircle, FileText, ExternalLink, Loade
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
-const MIN_SIZE = 500 * 1024;       // 500 KB
+const MIN_SIZE = 200 * 1024;       // 200 KB
 const MAX_SIZE = 2 * 1024 * 1024;  // 2 MB
 
 /* ── PDF text extractor ─────────────────────────────────────────────────────
@@ -196,7 +196,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
       return;
     }
     if (f.size < MIN_SIZE) {
-      setParseError(`File too small (${(f.size / 1024).toFixed(0)} KB). Minimum is 500 KB — ensure the scan is clear and high quality.`);
+      setParseError(`File too small (${(f.size / 1024).toFixed(0)} KB). Minimum is 200 KB — ensure the scan is clear and high quality.`);
       return;
     }
     if (f.size > MAX_SIZE) {
@@ -297,7 +297,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
           <li className="flex items-start gap-1.5"><span>❌</span><span>No password-protected PDF &nbsp;|&nbsp; No multi-page PDF</span></li>
           <li className="flex items-start gap-1.5">
             <span>📏</span>
-            <span>File size: <strong>500 KB – 2 MB</strong> &nbsp;|&nbsp; Format: <strong>PDF only · 1 page</strong></span>
+            <span>File size: <strong>200 KB – 2 MB</strong> &nbsp;|&nbsp; Format: <strong>PDF only · 1 page</strong></span>
           </li>
         </ul>
 
@@ -310,7 +310,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
           <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors">
             <Upload className="w-8 h-8 text-gray-400" />
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload Aadhaar PDF</span>
-            <span className="text-xs text-gray-400">PDF only · 1 page · 500 KB – 2 MB</span>
+            <span className="text-xs text-gray-400">PDF only · 1 page · 200 KB – 2 MB</span>
             <input
               ref={fileRef}
               type="file"
