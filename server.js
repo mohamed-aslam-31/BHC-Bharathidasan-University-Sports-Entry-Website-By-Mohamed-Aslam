@@ -15,7 +15,8 @@ const JWT_SECRET = process.env.SESSION_SECRET || 'bhc-sports-secret-key-2024';
 if (!fs.existsSync('./uploads'))             fs.mkdirSync('./uploads');
 if (!fs.existsSync('./uploads/aadhaar'))     fs.mkdirSync('./uploads/aadhaar');
 if (!fs.existsSync('./uploads/idcard'))      fs.mkdirSync('./uploads/idcard');
-if (!fs.existsSync('./uploads/marksheet'))   fs.mkdirSync('./uploads/marksheet');
+if (!fs.existsSync('./uploads/marksheet'))    fs.mkdirSync('./uploads/marksheet');
+if (!fs.existsSync('./uploads/feesreceipt')) fs.mkdirSync('./uploads/feesreceipt');
 
 // ─── MONGOOSE MODELS ──────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ const StudentSchema = new mongoose.Schema({
   aadhaarPdf:            String,
   idCardPdf:             String,
   marksheetPdf:          String,
+  feesReceiptPdf:        String,
   tournament:            String,
   tshirt:                String,
   track:                 String,
@@ -263,7 +265,8 @@ const uploadFields = multer({
     destination: (req, file, cb) => {
       if (file.fieldname === 'aadhaarPdf')    cb(null, './uploads/aadhaar/');
       else if (file.fieldname === 'idCardPdf')    cb(null, './uploads/idcard/');
-      else if (file.fieldname === 'marksheetPdf') cb(null, './uploads/marksheet/');
+      else if (file.fieldname === 'marksheetPdf')    cb(null, './uploads/marksheet/');
+      else if (file.fieldname === 'feesReceiptPdf')  cb(null, './uploads/feesreceipt/');
       else cb(null, './uploads/');
     },
     filename: (req, file, cb) =>
@@ -271,7 +274,7 @@ const uploadFields = multer({
   }),
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'aadhaarPdf' || file.fieldname === 'idCardPdf' || file.fieldname === 'marksheetPdf') {
+    if (['aadhaarPdf','idCardPdf','marksheetPdf','feesReceiptPdf'].includes(file.fieldname)) {
       const ext = path.extname(file.originalname).toLowerCase();
       ext === '.pdf' ? cb(null, true) : cb(new Error('Only PDF files are allowed'));
     } else {
@@ -283,7 +286,8 @@ const uploadFields = multer({
   { name: 'image',      maxCount: 1 },
   { name: 'aadhaarPdf',    maxCount: 1 },
   { name: 'idCardPdf',     maxCount: 1 },
-  { name: 'marksheetPdf',  maxCount: 1 },
+  { name: 'marksheetPdf',   maxCount: 1 },
+  { name: 'feesReceiptPdf', maxCount: 1 },
 ]);
 
 // ─── IMAGE PROXY ──────────────────────────────────────────────────────────────
@@ -381,16 +385,19 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
     const imageFile   = req.files?.image?.[0];
     const aadhaarFile = req.files?.aadhaarPdf?.[0];
     const idCardFile  = req.files?.idCardPdf?.[0];
-    const marksheetFile = req.files?.marksheetPdf?.[0];
-    // Validate idcard size (100 KB – 1 MB)
+    const marksheetFile    = req.files?.marksheetPdf?.[0];
+    const feesReceiptFile  = req.files?.feesReceiptPdf?.[0];
     if (idCardFile) {
-      if (idCardFile.size < 100 * 1024) return res.status(400).json({ error: 'ID card PDF too small (min 100 KB)' });
-      if (idCardFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'ID card PDF too large (max 1 MB)' });
+      if (idCardFile.size < 100 * 1024)       return res.status(400).json({ error: 'ID card PDF too small (min 100 KB)' });
+      if (idCardFile.size > 1 * 1024 * 1024)  return res.status(400).json({ error: 'ID card PDF too large (max 1 MB)' });
     }
-    // Validate marksheet size (100 KB – 1 MB)
     if (marksheetFile) {
-      if (marksheetFile.size < 100 * 1024) return res.status(400).json({ error: 'Marksheet PDF too small (min 100 KB)' });
+      if (marksheetFile.size < 100 * 1024)      return res.status(400).json({ error: 'Marksheet PDF too small (min 100 KB)' });
       if (marksheetFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'Marksheet PDF too large (max 1 MB)' });
+    }
+    if (feesReceiptFile) {
+      if (feesReceiptFile.size < 100 * 1024)      return res.status(400).json({ error: 'Fees receipt PDF too small (min 100 KB)' });
+      if (feesReceiptFile.size > 1 * 1024 * 1024) return res.status(400).json({ error: 'Fees receipt PDF too large (max 1 MB)' });
     }
     const savedTime = new Date().toISOString().replace(/[:.]/g, '-');
     const existing = await Student.findOne({
@@ -408,9 +415,10 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
       image: imageFile?.filename || null,
-      aadhaarPdf:    aadhaarFile    ? `aadhaar/${aadhaarFile.filename}`      : null,
-      idCardPdf:     idCardFile     ? `idcard/${idCardFile.filename}`        : null,
-      marksheetPdf:  marksheetFile  ? `marksheet/${marksheetFile.filename}`  : null,
+      aadhaarPdf:      aadhaarFile      ? `aadhaar/${aadhaarFile.filename}`            : null,
+      idCardPdf:       idCardFile       ? `idcard/${idCardFile.filename}`              : null,
+      marksheetPdf:    marksheetFile    ? `marksheet/${marksheetFile.filename}`        : null,
+      feesReceiptPdf:  feesReceiptFile  ? `feesreceipt/${feesReceiptFile.filename}`    : null,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       tournament: d.tournament, tshirt: d.tshirt, track: d.track,
       status: req.user.role === 'admin' ? 'approved' : 'pending',
@@ -457,6 +465,11 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       const old = path.join(__dirname, 'uploads', student.marksheetPdf);
       if (fs.existsSync(old)) fs.unlinkSync(old);
     }
+    // Remove old fees receipt PDF if replaced
+    if (feesReceiptFile && student.feesReceiptPdf) {
+      const old = path.join(__dirname, 'uploads', student.feesReceiptPdf);
+      if (fs.existsSync(old)) fs.unlinkSync(old);
+    }
     Object.assign(student, {
       rollNo: d.rollNo, nameOfTheGame: d.nameOfTheGame,
       nameOfTheSportsperson: d.studentName, fathersName: d.fatherName,
@@ -469,7 +482,8 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       image:         imageFile     ? imageFile.filename                      : student.image,
       aadhaarPdf:    aadhaarFile   ? `aadhaar/${aadhaarFile.filename}`       : student.aadhaarPdf,
       idCardPdf:     idCardFile    ? `idcard/${idCardFile.filename}`          : student.idCardPdf,
-      marksheetPdf:  marksheetFile ? `marksheet/${marksheetFile.filename}`   : student.marksheetPdf,
+      marksheetPdf:   marksheetFile   ? `marksheet/${marksheetFile.filename}`          : student.marksheetPdf,
+      feesReceiptPdf: feesReceiptFile ? `feesreceipt/${feesReceiptFile.filename}`      : student.feesReceiptPdf,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       tournament: d.tournament, tshirt: d.tshirt, track: d.track,
     });
@@ -503,6 +517,20 @@ app.delete('/api/students/:id/idcard', authMiddleware, async (req, res) => {
       await student.save();
     }
     res.json({ message: 'ID card PDF deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/students/:id/feesreceipt', authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    if (student.feesReceiptPdf) {
+      const filePath = path.join(__dirname, 'uploads', student.feesReceiptPdf);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      student.feesReceiptPdf = null;
+      await student.save();
+    }
+    res.json({ message: 'Fees receipt PDF deleted' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
