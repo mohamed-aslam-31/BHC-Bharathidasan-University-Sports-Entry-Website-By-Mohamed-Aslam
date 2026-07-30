@@ -139,7 +139,7 @@ export default function StudentPreviewOverlay({
               </div>
 
               {/* Title block */}
-              <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4 }}>
+              <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '10px', paddingBottom: '10px' }}>
                 <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase' }}>Bharathidasan University</div>
                 <div style={{ fontSize: '13px' }}>TIRUCHIRAPPALLI - 620 024</div>
                 <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
