@@ -146,8 +146,25 @@ const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Name of Exam: letters/digits/single spaces, allowed specials: & ( ) - _ [ ] | \ / . , : ; ' \u2018 \u2019 " \u201C \u201D # % @ * */
 const sanitizeExamName = (v) => v.replace(/[^a-zA-Z0-9 &()\-_[\]|\\/.,;:'\u2018\u2019"\u201C\u201D#%@*]/g, '').replace(/ {2,}/g, ' ').slice(0, 40);
-/** Month & Year of Passing: letters/digits and "-" only — spaces are auto-converted to "-" */
-const sanitizeMonthYear = (v) => v.replace(/ /g, '-').replace(/[^a-zA-Z0-9\-]/g, '').slice(0, 14);
+/** Month & Year of Passing: format = Letters-YYYY (one dash, letters before, up to 4 digits after).
+ *  Space is auto-converted to "-". Letters mixed into the digit section are stripped. */
+const sanitizeMonthYear = (v) => {
+  // Convert space to dash
+  v = v.replace(/ /g, '-');
+  // Strip everything except letters, digits, and dash
+  v = v.replace(/[^a-zA-Z0-9\-]/g, '');
+  if (v.includes('-')) {
+    // Collapse multiple dashes — only one allowed
+    const firstDash = v.indexOf('-');
+    const before = v.slice(0, firstDash).replace(/[^a-zA-Z]/g, ''); // letters only
+    const after  = v.slice(firstDash + 1).replace(/[^0-9]/g, '').slice(0, 4); // digits only, max 4
+    v = before + '-' + after;
+  } else {
+    // No dash yet — only letters allowed (month name)
+    v = v.replace(/[^a-zA-Z]/g, '');
+  }
+  return v.slice(0, 14);
+};
 
 /* ─── Validators ───────────────────────────────────────────────────────────── */
 
