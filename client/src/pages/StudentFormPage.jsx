@@ -424,7 +424,7 @@ const empty = {
   nameOfExam: '', dateAndYear: '',
   presentClass: '', nameOfThePresentClass: '', durationOfCourse: '',
   university: '', presentCourse: '',
-  graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: '',
+  graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'NIL',
   address: '', phoneNumber: '', aadharNumber: '',
   tournament: '', tshirt: '', track: '',
 };
@@ -489,7 +489,7 @@ export default function StudentFormPage() {
           presentCourse:         s.presentCourse           || '',
           graduateCourse:        s.graduateCourse          || 'NIL',
           pgCourse:              s.pgCourse                || 'NIL',
-          previousCourse:        s.previousCourse          || '',
+          previousCourse:        s.previousCourse          || 'NIL',
           address:               s.address                 || '',
           phoneNumber:           s.phoneNumber             || '',
           aadharNumber:          s.aadharNumber            || '',
@@ -1295,11 +1295,11 @@ export default function StudentFormPage() {
         <div className="card p-6">
           <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span></h3>
           <div className="grid grid-cols-1">
-            <Field label="Details about change of course / faculty, if any (Details about the previous / new – course / faculty)" required span={3}>
+            <div className="col-span-full">
               <textarea
                 className={`input-field resize-none ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
                 rows={2}
-                placeholder="e.g. BCOM/CA→MBA/Finance (no spaces allowed)"
+                placeholder=""
                 maxLength={100}
                 value={form.previousCourse}
                 onChange={(e) => {
@@ -1310,7 +1310,7 @@ export default function StudentFormPage() {
                 onBlur={() => touch('previousCourse', form.previousCourse)}
               />
               <FieldMeta value={form.previousCourse} max={100} always error={errors.previousCourse} />
-            </Field>
+            </div>
           </div>
         </div>
 
