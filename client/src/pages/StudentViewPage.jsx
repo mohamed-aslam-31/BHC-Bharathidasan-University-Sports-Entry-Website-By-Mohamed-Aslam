@@ -443,80 +443,119 @@ export default function StudentViewPage() {
 
       {/* ══ PAGE 0: PROFORMA ═════════════════════════════════════════════════ */}
       {page === 0 && (
-        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 20px', maxWidth: '640px', margin: '0 auto', boxSizing: 'border-box' }}>
+
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '6px' }}>
-            <div style={{ width: '110px', flexShrink: 0 }}>
-              <img src="/university-logo.gif" alt="BU Logo" style={{ width: '105px', height: '105px', objectFit: 'contain' }} />
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
+            <div style={{ width: '80px', flexShrink: 0 }}>
+              <img src="/university-logo.gif" alt="BU Logo" style={{ width: '76px', height: '76px', objectFit: 'contain', display: 'block' }} />
             </div>
-            <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4 }}>
-              <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase' }}>Bharathidasan University</div>
-              <div style={{ fontSize: '13px' }}>TIRUCHIRAPPALLI - 620 024</div>
-              <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
-              <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+            <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.35 }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
+              <div style={{ fontSize: '11px' }}>TIRUCHIRAPPALLI - 620 024</div>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
+              <div style={{ fontSize: '11px', fontStyle: 'italic', marginTop: '1px' }}>Division: <em>Trichy / Thanjavur*</em></div>
             </div>
-            <div style={{ width: '110px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <div style={{ border: '1px solid #000', width: '90px', height: '105px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ width: '72px', flexShrink: 0 }}>
+              <div style={{ border: '1px solid #000', width: '68px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {student.image
                   ? <img src={`/uploads/${student.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '10px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>Photo</span>
+                  : <span style={{ fontSize: '9px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
                 }
               </div>
             </div>
           </div>
 
           {/* College / Game line */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '10px', fontFamily: 'Arial, sans-serif' }}>
-            <div>Name of the College: <strong>Bishop Heber College, Trichy</strong></div>
-            <div>Name of the Game: <strong>{student.nameOfTheGame}{student.gender ? ' - ' + student.gender : ''}</strong></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', marginBottom: '5px', marginTop: '4px', fontFamily: 'Arial, sans-serif', flexWrap: 'wrap', gap: '4px' }}>
+            <div>College: <strong>Bishop Heber College, Trichy</strong></div>
+            <div>Game: <strong>{student.nameOfTheGame}{student.gender ? ' – ' + student.gender : ''}</strong></div>
           </div>
 
           {/* Main table */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10.5px', fontFamily: 'Arial, sans-serif', tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '4%' }} />
-              <col style={{ width: '38%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '42%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '44%' }} />
+              <col style={{ width: '18%' }} />
+              <col style={{ width: '32%' }} />
             </colgroup>
             <tbody>
-              <tr><td style={numCell}>1.</td><td colSpan={2} style={labelCell}>Name of the sportsperson</td><td style={valueCell}>{td(student.nameOfTheSportsperson)}</td></tr>
-              <tr><td style={numCell}>2.</td><td colSpan={2} style={labelCell}>Father's Name</td><td style={valueCell}>{td(student.fathersName)}</td></tr>
+              <tr>
+                <td style={numCell}>1.</td>
+                <td colSpan={2} style={labelCell}>Name of the sportsperson</td>
+                <td style={valueCell}>{td(student.nameOfTheSportsperson)}</td>
+              </tr>
+              <tr>
+                <td style={numCell}>2.</td>
+                <td colSpan={2} style={labelCell}>Father's Name</td>
+                <td style={valueCell}>{td(student.fathersName)}</td>
+              </tr>
               <tr>
                 <td style={numCell}>3.</td>
-                <td colSpan={2} style={labelCell}>Date of the Birth<br /><strong>(copy of +2 Mark sheet should be enclosed)</strong></td>
+                <td colSpan={2} style={labelCell}>
+                  Date of Birth
+                  <div style={{ fontSize: '9.5px', fontWeight: 'bold', marginTop: '1px' }}>(copy of +2 Mark sheet should be enclosed)</div>
+                </td>
                 <td style={valueCell}>{formatDOB(student.dateOfBirth)}</td>
               </tr>
               <tr>
-                <td rowSpan={2} style={numCell}>4.</td>
-                <td rowSpan={2} style={labelCell}>Date &amp; year of passing Qualifying Examination for First admission to a college / university</td>
-                <td style={subLabelCell}>Name of Exam</td><td style={valueCell}>{td(student.nameOfExam)}</td>
+                <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>4.</td>
+                <td rowSpan={2} style={{ ...labelCell, verticalAlign: 'middle' }}>Date &amp; year of passing Qualifying Examination for First admission to a college / university</td>
+                <td style={subLabelCell}>Name of Exam</td>
+                <td style={valueCell}>{td(student.nameOfExam)}</td>
               </tr>
-              <tr><td style={subLabelCell}>Date &amp; Year</td><td style={valueCell}>{td(student.dateAndYear)}</td></tr>
-              <tr><td style={numCell}>5.</td><td colSpan={2} style={labelCell}>Present Class</td><td style={valueCell}>{td(student.presentClass)}</td></tr>
-              <tr><td style={numCell}>6.</td><td colSpan={2} style={labelCell}>Name of the present course</td><td style={valueCell}>{td(student.nameOfThePresentClass)}</td></tr>
-              <tr><td style={numCell}>7.</td><td colSpan={2} style={labelCell}>Duration of course</td><td style={valueCell}>{td(student.durationOfCourse)}</td></tr>
               <tr>
-                <td rowSpan={2} style={numCell}>8.</td>
-                <td rowSpan={2} style={labelCell}>Date &amp; year of First admission to</td>
-                <td style={subLabelCell}>University</td><td style={valueCell}>{td(student.university)}</td>
+                <td style={subLabelCell}>Date &amp; Year</td>
+                <td style={valueCell}>{td(student.dateAndYear)}</td>
               </tr>
-              <tr><td style={subLabelCell}>Present course</td><td style={valueCell}>{td(student.presentCourse)}</td></tr>
               <tr>
-                <td rowSpan={2} style={numCell}>9.</td>
-                <td rowSpan={2} style={labelCell}>Number of years of previous IUT participation while pursuing</td>
-                <td style={subLabelCell}>Graduate course</td><td style={valueCell}>{td(student.graduateCourse)}</td>
+                <td style={numCell}>5.</td>
+                <td colSpan={2} style={labelCell}>Present Class</td>
+                <td style={valueCell}>{td(student.presentClass)}</td>
               </tr>
-              <tr><td style={subLabelCell}>P.G. course</td><td style={valueCell}>{td(student.pgCourse)}</td></tr>
+              <tr>
+                <td style={numCell}>6.</td>
+                <td colSpan={2} style={labelCell}>Name of the present course</td>
+                <td style={valueCell}>{td(student.nameOfThePresentClass)}</td>
+              </tr>
+              <tr>
+                <td style={numCell}>7.</td>
+                <td colSpan={2} style={labelCell}>Duration of course</td>
+                <td style={valueCell}>{td(student.durationOfCourse)}</td>
+              </tr>
+              <tr>
+                <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>8.</td>
+                <td rowSpan={2} style={{ ...labelCell, verticalAlign: 'middle' }}>Date &amp; year of First admission to</td>
+                <td style={subLabelCell}>University</td>
+                <td style={valueCell}>{td(student.university)}</td>
+              </tr>
+              <tr>
+                <td style={subLabelCell}>Present course</td>
+                <td style={valueCell}>{td(student.presentCourse)}</td>
+              </tr>
+              <tr>
+                <td rowSpan={2} style={{ ...numCell, verticalAlign: 'middle' }}>9.</td>
+                <td rowSpan={2} style={{ ...labelCell, verticalAlign: 'middle' }}>No. of years of previous IUT participation while pursuing</td>
+                <td style={subLabelCell}>Graduate course</td>
+                <td style={valueCell}>{td(student.graduateCourse)}</td>
+              </tr>
+              <tr>
+                <td style={subLabelCell}>P.G. course</td>
+                <td style={valueCell}>{td(student.pgCourse)}</td>
+              </tr>
               <tr>
                 <td style={numCell}>10.</td>
-                <td colSpan={2} style={labelCell}>Details about change of course / faculty, if any<br />(Details about the previous / new &nbsp;- course / faculty)</td>
+                <td colSpan={2} style={labelCell}>
+                  Details about change of course / faculty, if any
+                  <div style={{ fontSize: '9.5px', marginTop: '1px' }}>(Details about the previous / new – course / faculty)</div>
+                </td>
                 <td style={valueCell}>{td(student.previousCourse)}</td>
               </tr>
               <tr>
                 <td style={numCell}>11.</td>
                 <td colSpan={2} style={labelCell}>Residential address (With phone / Mobile no)</td>
-                <td style={{ ...valueCell, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+                <td style={{ ...valueCell, whiteSpace: 'pre-line', lineHeight: 1.5 }}>
                   {student.address || '—'}
                   {student.phoneNumber ? <><br /><strong>{student.phoneNumber}</strong></> : null}
                 </td>
@@ -524,20 +563,22 @@ export default function StudentViewPage() {
             </tbody>
           </table>
 
-          {/* Footer */}
-          <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
+          {/* Footer notes */}
+          <div style={{ marginTop: '8px', fontSize: '9.5px', fontFamily: 'Arial, sans-serif' }}>
             <div>*Strike out whichever is not applicable</div>
             <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
           </div>
-          <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+
+          {/* Signatures */}
+          <div style={{ textAlign: 'right', marginTop: '14px', fontSize: '10.5px', fontFamily: 'Arial, sans-serif' }}>
             Signature of the student
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '36px', fontSize: '10.5px', fontFamily: 'Arial, sans-serif' }}>
             <div>Signature of the<br />Director of Physical Education</div>
             <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
-            <div style={{ border: '1px solid #000', padding: '10px 28px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '18px' }}>
+            <div style={{ border: '1px solid #000', padding: '8px 24px', textAlign: 'center', fontSize: '10.5px', fontFamily: 'Arial, sans-serif' }}>
               Eligibility verified<br />Local organiser Signature &amp; Seal
             </div>
           </div>
@@ -655,7 +696,7 @@ export default function StudentViewPage() {
 
 /* ── Cell styles ── */
 const border = '1px solid #000';
-const numCell   = { border, padding: '5px 6px', verticalAlign: 'middle', textAlign: 'center' };
-const labelCell = { border, padding: '5px 8px', verticalAlign: 'middle' };
-const subLabelCell = { border, padding: '5px 8px', verticalAlign: 'middle' };
-const valueCell = { border, padding: '5px 8px', verticalAlign: 'middle', fontWeight: 'bold' };
+const numCell      = { border, padding: '4px 5px', verticalAlign: 'top', textAlign: 'center', whiteSpace: 'nowrap' };
+const labelCell    = { border, padding: '4px 6px', verticalAlign: 'top', lineHeight: 1.4 };
+const subLabelCell = { border, padding: '4px 6px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
+const valueCell    = { border, padding: '4px 6px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
