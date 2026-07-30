@@ -603,21 +603,21 @@ export default function StudentViewPage() {
           </table>
 
           {/* Footer notes */}
-          <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ marginTop: '12px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
             <div>*Strike out whichever is not applicable</div>
             <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
           </div>
 
           {/* Signatures */}
-          <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ textAlign: 'right', marginTop: '32px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
             Signature of the student
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '60px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
             <div>Signature of the<br />Director of Physical Education</div>
             <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-            <div style={{ border: '1px solid #000', padding: '10px 32px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
+            <div style={{ border: '1.5px solid #000', padding: '12px 40px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
               Eligibility verified<br />Local organiser Signature &amp; Seal
             </div>
           </div>
@@ -740,8 +740,8 @@ export default function StudentViewPage() {
 }
 
 /* ── Cell styles ── */
-const border = '1px solid #000';
-const numCell      = { border, padding: '6px 7px', verticalAlign: 'top', textAlign: 'center', whiteSpace: 'nowrap' };
-const labelCell    = { border, padding: '6px 8px', verticalAlign: 'top', lineHeight: 1.5 };
-const subLabelCell = { border, padding: '6px 8px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
-const valueCell    = { border, padding: '6px 8px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
+const border = '1.5px solid #000';
+const numCell      = { border, padding: '11px 7px', verticalAlign: 'middle', textAlign: 'center', whiteSpace: 'nowrap' };
+const labelCell    = { border, padding: '11px 8px', verticalAlign: 'middle', lineHeight: 1.4 };
+const subLabelCell = { border, padding: '11px 8px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
+const valueCell    = { border, padding: '11px 8px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
