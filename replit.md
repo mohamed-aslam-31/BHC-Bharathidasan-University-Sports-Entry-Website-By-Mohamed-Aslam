@@ -1,35 +1,38 @@
 # BHC Sports Entry
 
-A student sports data management system for Bharathidasan University — Sports Division.
+Student sports data management system for Bharathidasan University — Sports Division.
 
 ## Stack
-- **Frontend**: React 18 + Vite (port 5000), React Router, Tailwind CSS
-- **Backend**: Express.js (port 3001), Mongoose/MongoDB
-- **Database**: In-memory MongoDB by default (resets on restart); connect a persistent Atlas instance via `MONGODB_URI` secret
 
-## How to run
-`npm run dev` starts both the Express API (port 3001) and the Vite dev server (port 5000) concurrently. The Vite dev server proxies `/api` and `/uploads` to the backend automatically.
+- **Frontend**: React 18 + Vite + Tailwind CSS (port 5000)
+- **Backend**: Node.js + Express + Mongoose (port 3001)
+- **Database**: In-memory MongoDB (data resets on server restart)
 
-## Default credentials
-- **Username**: `admin`
-- **Password**: `admin123`
+## Running the app
 
-The server auto-creates this admin account and seeds 10 sample students on first start.
+The workflow `Start application` runs `npm run dev`, which concurrently starts:
+1. The Express API server on port 3001
+2. The Vite dev server on port 5000 (proxies `/api` and `/uploads` to port 3001)
 
-## Persistent data (optional)
-Add a `MONGODB_URI` Replit Secret pointing to a MongoDB Atlas cluster to persist data across restarts. Without it the app uses an in-memory database that resets each time the server restarts.
+The preview pane connects to port 5000.
 
-## Project structure
-```
-server.js          Express API + Mongoose models
-client/            React frontend (Vite)
-  src/
-    pages/         Route-level page components
-    components/    Shared UI components
-    contexts/      React context (auth, etc.)
-    api/           Axios API helpers
-uploads/           Uploaded student photos (served by Express)
-```
+## Default login
+
+| Username | Password  | Role  |
+|----------|-----------|-------|
+| admin    | admin123  | admin |
+
+On first start the server seeds 10 sample students automatically.
+
+## Secrets
+
+| Secret           | Purpose                                    |
+|------------------|--------------------------------------------|
+| `SESSION_SECRET` | JWT signing key (already set)              |
+| `MONGODB_URI`    | Optional — connect a persistent MongoDB Atlas instance instead of in-memory |
+
+> **Note**: Without `MONGODB_URI`, all data is stored in-memory and lost on server restart.
 
 ## User preferences
-<!-- Add any remembered preferences here -->
+
+_None recorded yet._
