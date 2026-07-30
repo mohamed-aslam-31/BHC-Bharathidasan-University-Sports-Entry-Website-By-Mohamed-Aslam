@@ -1152,7 +1152,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Gender */}
-          <Field label="Gender" required>
+          <Field label="Gender" required span={3}>
             <div className="space-y-2">
               <div className="flex gap-2 mt-1">
                 {['MALE', 'FEMALE', 'OTHER'].map((g) => (
@@ -1204,7 +1204,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Student Type */}
-          <Field label="Student Type" required>
+          <Field label="Student Type" required span={3}>
             <div className="space-y-2">
               <div className="flex gap-2 mt-1">
                 {['AIDED', 'SELF-FINANCE'].map((t) => (
@@ -1246,7 +1246,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Day Scholar / Hosteller */}
-          <Field label="Day Scholar / Hosteller" required>
+          <Field label="Day Scholar / Hosteller" required span={3}>
             <div className="space-y-2">
               <div className="flex gap-2 mt-1">
                 {['DAYSCHOLAR', 'HOSTELLER'].map((t) => (
@@ -1293,7 +1293,7 @@ export default function StudentFormPage() {
 
           {/* Hostel Name — only when HOSTELLER */}
           {form.dayType === 'HOSTELLER' && (
-            <Field label="Hostel Name" required>
+            <Field label="Hostel Name" required span={3}>
               <ComboBox
                 value={form.hostelName}
                 onChange={(v) => { set('hostelName')(v); touch('hostelName', v); }}
