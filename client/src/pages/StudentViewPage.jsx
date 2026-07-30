@@ -496,8 +496,8 @@ export default function StudentViewPage() {
 
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
-            <div style={{ width: '100px', flexShrink: 0 }}>
-              <img src="/university-logo.gif" alt="BU Logo" style={{ width: '95px', height: '95px', objectFit: 'contain', display: 'block' }} />
+            <div style={{ width: '120px', flexShrink: 0 }}>
+              <img src="/university-logo.gif" alt="BU Logo" style={{ width: '115px', height: '115px', objectFit: 'contain', display: 'block' }} />
             </div>
             <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '6px', paddingBottom: '6px' }}>
               <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
@@ -506,8 +506,8 @@ export default function StudentViewPage() {
               <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
               <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}><em>{student.year || ''}</em></div>
             </div>
-            <div style={{ width: '100px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-              <div style={{ border: '1px solid #000', width: '90px', height: '105px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ width: '125px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ border: '1px solid #000', width: '115px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {student.image
                   ? <img src={`/uploads/${student.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span style={{ fontSize: '12px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
