@@ -1046,9 +1046,9 @@ export default function StudentFormPage() {
           <Field label="Name of Sportsperson" required span={2}>
             <input
               className={`input-field ${errors.studentName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="Full name (letters only, max 40)"
+              placeholder="Enter your name as per aadhar card"
               value={form.studentName}
-              maxLength={40}
+              maxLength={50}
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('studentName')(v);
@@ -1056,7 +1056,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('studentName', form.studentName)}
             />
-            <FieldMeta value={form.studentName} max={40} always error={errors.studentName} />
+            <FieldMeta value={form.studentName} max={50} always error={errors.studentName} />
           </Field>
 
           {/* Date of Birth */}
@@ -1082,13 +1082,13 @@ export default function StudentFormPage() {
             {errors.dob && <p className="text-xs text-red-500 mt-1">{errors.dob}</p>}
           </Field>
 
-          {/* Father's Name */}
-          <Field label="Father's Name" required>
+          {/* Father Name */}
+          <Field label="Father Name" required>
             <input
               className={`input-field ${errors.fatherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="Father's full name"
+              placeholder="Enter your father name as per aadhar card"
               value={form.fatherName}
-              maxLength={40}
+              maxLength={50}
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('fatherName')(v);
@@ -1096,16 +1096,16 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('fatherName', form.fatherName)}
             />
-            <FieldMeta value={form.fatherName} max={40} always error={errors.fatherName} />
+            <FieldMeta value={form.fatherName} max={50} always error={errors.fatherName} />
           </Field>
 
-          {/* Mother's Name */}
-          <Field label="Mother's Name" required>
+          {/* Mother Name */}
+          <Field label="Mother Name" required>
             <input
               className={`input-field ${errors.motherName ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="Mother's full name"
+              placeholder="Enter your mother name"
               value={form.motherName}
-              maxLength={40}
+              maxLength={50}
               onChange={(e) => {
                 const v = sanitizeName(e.target.value);
                 set('motherName')(v);
@@ -1113,14 +1113,14 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('motherName', form.motherName)}
             />
-            <FieldMeta value={form.motherName} max={40} always error={errors.motherName} />
+            <FieldMeta value={form.motherName} max={50} always error={errors.motherName} />
           </Field>
 
-          {/* Aadhar Number */}
-          <Field label="Aadhar Number" required>
+          {/* Aadhar Card Number */}
+          <Field label="Aadhar Card Number" required>
             <input
               className={`input-field ${errors.aadharNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="12-digit Aadhar"
+              placeholder="Enter your 12-digit aadhar number"
               value={form.aadharNumber}
               inputMode="numeric"
               maxLength={12}
@@ -1138,7 +1138,7 @@ export default function StudentFormPage() {
           <Field label="Phone Number" required>
             <input
               className={`input-field ${errors.phoneNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
-              placeholder="10-digit mobile number"
+              placeholder="Enter your 10-digit mobile number"
               value={form.phoneNumber}
               inputMode="numeric"
               maxLength={10}
@@ -1157,9 +1157,9 @@ export default function StudentFormPage() {
             <textarea
               className={`input-field resize-none ${errors.address ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               rows={2}
-              placeholder="Full address"
+              placeholder="Enter your full address"
               value={form.address}
-              maxLength={80}
+              maxLength={100}
               onChange={(e) => {
                 const v = sanitizeAddress(e.target.value);
                 set('address')(v);
@@ -1167,7 +1167,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('address', form.address)}
             />
-            <FieldMeta value={form.address} max={80} always error={errors.address} />
+            <FieldMeta value={form.address} max={100} always error={errors.address} />
           </Field>
 
         </Section>
