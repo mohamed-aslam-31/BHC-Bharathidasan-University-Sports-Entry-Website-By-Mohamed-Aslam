@@ -684,12 +684,12 @@ export default function StudentViewPage() {
 
       {/* Print CSS */}
       <style>{`
-        @page { size: A4 portrait; margin: 12mm 15mm; }
+        @page { size: A4 portrait; margin: 12mm 20mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
           html, body { margin: 0; padding: 0; background: #fff; }
           #element-to-print {
-            padding: 0 !important;
+            padding: 0 4mm !important;
             max-width: 100% !important;
             width: 100% !important;
             margin: 0 !important;
