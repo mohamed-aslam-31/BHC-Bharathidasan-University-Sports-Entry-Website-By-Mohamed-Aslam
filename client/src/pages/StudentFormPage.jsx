@@ -1246,7 +1246,7 @@ export default function StudentFormPage() {
 
           <div className="grid grid-cols-2 gap-4">
             {/* University box */}
-            <div className="card p-4">
+            <div className="p-4">
               <Field label="University ( month &amp; Year )" required>
                 <ComboBox
                   value={form.university}
@@ -1264,7 +1264,7 @@ export default function StudentFormPage() {
             </div>
 
             {/* Present Course box */}
-            <div className="card p-4">
+            <div className="p-4">
               <Field label="Present Course ( month &amp; Year )" required>
                 <ComboBox
                   value={form.nameOfThePresentClass}
