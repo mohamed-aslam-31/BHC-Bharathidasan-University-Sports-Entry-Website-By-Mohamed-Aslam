@@ -187,6 +187,14 @@ const validateDob = (v) =>
 const validateAddress = (v) =>
   !v || !v.trim() ? 'Address is required' : '';
 
+const sanitizePrevCourse = (v) =>
+  v.replace(/\s/g, '').slice(0, 80);
+
+const validatePrevCourse = (v) =>
+  !v || !v.trim()   ? 'This field is required' :
+  v.trim().length < 3 ? 'Minimum 3 characters required' :
+  v.length > 80       ? 'Maximum 80 characters allowed' : '';
+
 const validateAadhar = (v) =>
   !v ? 'Aadhar number is required' :
   v.length !== 12 ? 'Aadhar must be exactly 12 digits' : '';
@@ -512,6 +520,7 @@ export default function StudentFormPage() {
       case 'motherName':     msg = validatePersonName(value, "Mother's name");  break;
       case 'dob':            msg = validateDob(value);                          break;
       case 'address':              msg = validateAddress(value);                                      break;
+      case 'previousCourse':       msg = validatePrevCourse(value);                                   break;
       case 'aadharNumber':         msg = validateAadhar(value);                                       break;
       case 'phoneNumber':          msg = validatePhone(value);                                        break;
       case 'university':           msg = validateUniversity(value);                                                              break;
@@ -547,6 +556,7 @@ export default function StudentFormPage() {
       presentCourse:       validateMinMax(form.presentCourse, 'Present course', 3, 40, true),
       nameOfExam:          validateExamName(form.nameOfExam),
       dateAndYear:         validateMonthYear(form.dateAndYear),
+      previousCourse:      validatePrevCourse(form.previousCourse),
     };
     setErrors(next);
     return Object.values(next).every((e) => !e);
@@ -1279,13 +1289,30 @@ export default function StudentFormPage() {
               {['NIL','1','2','3'].map((v) => <option key={v}>{v}</option>)}
             </select>
           </Field>
-          <Field label="Previous Course Details" span={3}>
-            <textarea className="input-field resize-none" rows={2}
-              placeholder="Details of previous course participation"
-              value={form.previousCourse} onChange={setRaw('previousCourse')} />
-            <FieldMeta value={form.previousCourse} />
-          </Field>
         </Section>
+
+        {/* ── Change of Course / Faculty ──────────────────────────────────── */}
+        <div className="card p-6">
+          <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span></h3>
+          <div className="grid grid-cols-1">
+            <Field label="Details about change of course / faculty, if any (Details about the previous / new – course / faculty)" required span={3}>
+              <textarea
+                className={`input-field resize-none ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+                rows={2}
+                placeholder="e.g. BCOM/CA→MBA/Finance (no spaces allowed)"
+                maxLength={80}
+                value={form.previousCourse}
+                onChange={(e) => {
+                  const v = sanitizePrevCourse(e.target.value);
+                  set('previousCourse')(v);
+                  touch('previousCourse', v);
+                }}
+                onBlur={() => touch('previousCourse', form.previousCourse)}
+              />
+              <FieldMeta value={form.previousCourse} max={80} always error={errors.previousCourse} />
+            </Field>
+          </div>
+        </div>
 
         {/* ── Sports / Event Details ──────────────────────────────────────── */}
         <Section title="Sports / Event Details">
