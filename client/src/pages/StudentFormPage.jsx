@@ -146,9 +146,10 @@ const sanitizeText    = (v) => v.replace(/[^a-zA-Z0-9 .]/g, '').replace(/ {2,}/g
 const sanitizeTextSpl = (v) => v.replace(/ {2,}/g, ' ').replace(/^ /, '');
 /** Present Class: letters, digits, single interior spaces, . ( ) and one "-".
  *  Rules:
- *   - Must start with a letter or digit (no leading space/dash)
- *   - Only one "-" allowed; trailing dash is kept so typing "BCA-" → "BCA-II" works
- *   - Dash position: must have at least one letter/digit before it
+ *   - Must start with a letter or digit (no leading space/dash/dot)
+ *   - Only one "-" allowed; trailing dash kept so typing "BCA-" → "BCA-II" works
+ *   - Only ONE consecutive digit allowed (e.g. "12" → "1")
+ *   - No consecutive dots — "B.C.A" valid, "B..C" → "B.C"
  *   - Only one "(" and one ")" allowed
  *   - No consecutive spaces. Max 20 chars.
  */
@@ -157,19 +158,23 @@ const sanitizePresentClass = (v) => {
   v = v.replace(/[^a-zA-Z0-9 \-().]/g, '');
   // 2. Collapse consecutive spaces
   v = v.replace(/ {2,}/g, ' ');
-  // 3. No leading space or dash — must open with a letter/digit
-  v = v.replace(/^[ \-]+/, '');
-  // 4. Only one "-": keep the FIRST, strip extras after it
+  // 3. No leading space, dash, or dot
+  v = v.replace(/^[ \-.]+/, '');
+  // 4. No consecutive digits — keep only the first digit of any run
+  v = v.replace(/(\d)\d+/g, '$1');
+  // 5. No consecutive dots — collapse to one
+  v = v.replace(/\.{2,}/g, '.');
+  // 6. Only one "-": keep the FIRST, strip extras after it
   const d = v.indexOf('-');
   if (d !== -1) {
     v = v.slice(0, d + 1) + v.slice(d + 1).replace(/-/g, '');
   }
-  // 5. Dash must not be at position 0 after all processing (safety guard)
+  // 7. Dash must not be at position 0 after all processing (safety guard)
   if (v[0] === '-') v = v.slice(1);
-  // 6. Only one "(": keep the first, strip extras
+  // 8. Only one "(": keep the first, strip extras
   const op = v.indexOf('(');
   if (op !== -1) v = v.slice(0, op + 1) + v.slice(op + 1).replace(/\(/g, '');
-  // 7. Only one ")": keep the first, strip extras
+  // 9. Only one ")": keep the first, strip extras
   const cl = v.indexOf(')');
   if (cl !== -1) v = v.slice(0, cl + 1) + v.slice(cl + 1).replace(/\)/g, '');
   return v.slice(0, 20);
@@ -303,7 +308,7 @@ function FieldMeta({ value, max, error, always }) {
  * maxLength  – caps the search input (and therefore any new value) at this many chars
  * minCreate  – minimum typed length before the "Add …" option appears (default 1)
  */
-function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1 }) {
+function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1, validateAdd }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
   const ref      = useRef(null);
@@ -334,6 +339,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   const showAdd    = trimmed.length >= minCreate &&
                      (!maxLength || trimmed.length <= maxLength) &&
                      !exactMatch;
+  const addError   = showAdd && validateAdd ? validateAdd(trimmed) : '';
 
   const select = (opt) => {
     onChange(opt);
@@ -354,7 +360,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
     if (e.key === 'Enter') {
       e.preventDefault();
       if (filtered.length === 1) select(filtered[0]);
-      else if (showAdd) select(search.trim());
+      else if (showAdd && !addError) select(search.trim());
     }
   };
 
@@ -432,14 +438,24 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
               </button>
             ))}
             {showAdd && (
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); select(search.trim()); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-t border-gray-100 dark:border-gray-800"
-              >
-                <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-                Add &ldquo;{search.trim()}&rdquo;
-              </button>
+              addError ? (
+                <div className="w-full flex items-start gap-2 px-3 py-2 text-left text-sm border-t border-gray-100 dark:border-gray-800 text-red-500 dark:text-red-400 cursor-default select-none">
+                  <Plus className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 opacity-40" />
+                  <span>
+                    <span className="opacity-60">Add &ldquo;{search.trim()}&rdquo;</span>
+                    <span className="block text-xs mt-0.5">{addError}</span>
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); select(search.trim()); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors border-t border-gray-100 dark:border-gray-800"
+                >
+                  <Plus className="w-3.5 h-3.5 flex-shrink-0" />
+                  Add &ldquo;{search.trim()}&rdquo;
+                </button>
+              )
             )}
           </div>
         </div>
@@ -1265,6 +1281,7 @@ export default function StudentFormPage() {
               sanitizer={sanitizePresentClass}
               maxLength={20}
               minCreate={1}
+              validateAdd={(v) => v.endsWith('-') || v.endsWith('.') ? 'Format incomplete — add text after the dash' : ''}
             />
             <FieldMeta value={form.presentClass} max={20} always error={errors.presentClass} />
           </Field>
