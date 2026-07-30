@@ -669,8 +669,8 @@ export default function StudentFormPage() {
       case 'presentClass':         msg = validateMinMax(value, 'Present class', 1, 20, true);                                break;
       case 'nameOfThePresentClass':msg = validateMonthYear(value);                                                               break;
       case 'durationOfCourse':     msg = validateDuration(value);                                     break;
-      case 'graduateCourse':       msg = validateMinMax(value, 'Graduate course (No. of years)', 1, 15, true); break;
-      case 'pgCourse':             msg = validateMinMax(value, 'PG course (No. of years)', 1, 15, true);       break;
+      case 'graduateCourse':       msg = validateDuration(value);                                             break;
+      case 'pgCourse':             msg = validateDuration(value);                                             break;
       case 'presentCourse':        msg = validatePresentCourse(value);                                break;
       case 'nameOfExam':           msg = validateExamName(value);                                     break;
       case 'dateAndYear':          msg = validateMonthYear(value);                                    break;
@@ -697,8 +697,8 @@ export default function StudentFormPage() {
       presentClass:        validateMinMax(form.presentClass, 'Present class', 1, 20, true),
       nameOfThePresentClass: validateMonthYear(form.nameOfThePresentClass),
       durationOfCourse:    validateDuration(form.durationOfCourse),
-      graduateCourse:      validateMinMax(form.graduateCourse, 'Graduate course (No. of years)', 1, 15, true),
-      pgCourse:            validateMinMax(form.pgCourse, 'PG course (No. of years)', 1, 15, true),
+      graduateCourse:      validateDuration(form.graduateCourse),
+      pgCourse:            validateDuration(form.pgCourse),
       presentCourse:       validatePresentCourse(form.presentCourse),
       nameOfExam:          validateExamName(form.nameOfExam),
       dateAndYear:         validateMonthYear(form.dateAndYear),
@@ -1438,28 +1438,28 @@ export default function StudentFormPage() {
               value={form.graduateCourse}
               onChange={(v) => { set('graduateCourse')(v); touch('graduateCourse', v); }}
               options={iutOptions}
-              placeholder="Select or type"
+              placeholder="Select or Add new No. of. years"
               required
               error={errors.graduateCourse}
-              sanitizer={sanitizeAcademic}
-              maxLength={15}
+              sanitizer={sanitizeDuration}
+              maxLength={7}
               minCreate={1}
             />
-            <FieldMeta value={form.graduateCourse} max={15} always error={errors.graduateCourse} />
+            <FieldMeta value={form.graduateCourse} max={7} always error={errors.graduateCourse} />
           </Field>
           <Field label="PG Course (No. of years)" required>
             <ComboBox
               value={form.pgCourse}
               onChange={(v) => { set('pgCourse')(v); touch('pgCourse', v); }}
               options={iutOptions}
-              placeholder="Select or type"
+              placeholder="Select or Add new No. of. years"
               required
               error={errors.pgCourse}
-              sanitizer={sanitizeAcademic}
-              maxLength={15}
+              sanitizer={sanitizeDuration}
+              maxLength={7}
               minCreate={1}
             />
-            <FieldMeta value={form.pgCourse} max={15} always error={errors.pgCourse} />
+            <FieldMeta value={form.pgCourse} max={7} always error={errors.pgCourse} />
           </Field>
         </Section>
 
