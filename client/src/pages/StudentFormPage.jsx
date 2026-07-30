@@ -1501,7 +1501,7 @@ export default function StudentFormPage() {
             <input
               className="input-field"
               type="number"
-              placeholder="e.g. 38"
+              placeholder="Enter Your T-Shirt Size"
               min="1"
               max="99"
               step="0.1"
@@ -1518,7 +1518,7 @@ export default function StudentFormPage() {
             <input
               className="input-field"
               type="number"
-              placeholder="e.g. 38"
+              placeholder="Enter Your Track Size"
               min="1"
               max="99"
               step="0.1"
