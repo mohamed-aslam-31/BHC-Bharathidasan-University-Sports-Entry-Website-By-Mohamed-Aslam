@@ -443,37 +443,38 @@ export default function StudentViewPage() {
 
       {/* ══ PAGE 0: PROFORMA ═════════════════════════════════════════════════ */}
       {page === 0 && (
-        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 20px', maxWidth: '640px', margin: '0 auto', boxSizing: 'border-box' }}>
+        <div id="element-to-print" style={{ fontFamily: 'Times New Roman, serif', color: '#000', background: '#fff', padding: '18px 20px', maxWidth: '760px', margin: '0 auto', boxSizing: 'border-box' }}>
 
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
-            <div style={{ width: '80px', flexShrink: 0 }}>
-              <img src="/university-logo.gif" alt="BU Logo" style={{ width: '76px', height: '76px', objectFit: 'contain', display: 'block' }} />
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+            <div style={{ width: '100px', flexShrink: 0 }}>
+              <img src="/university-logo.gif" alt="BU Logo" style={{ width: '95px', height: '95px', objectFit: 'contain', display: 'block' }} />
             </div>
-            <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.35 }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
-              <div style={{ fontSize: '11px' }}>TIRUCHIRAPPALLI - 620 024</div>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '2px' }}>Eligibility Proforma of Players</div>
-              <div style={{ fontSize: '11px', fontStyle: 'italic', marginTop: '1px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+            <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '6px', paddingBottom: '6px' }}>
+              <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
+              <div style={{ fontSize: '13px' }}>TIRUCHIRAPPALLI - 620 024</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '3px' }}>Eligibility Proforma of Players</div>
+              <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+              <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '2px' }}><em>{student.year || ''}</em></div>
             </div>
-            <div style={{ width: '72px', flexShrink: 0 }}>
-              <div style={{ border: '1px solid #000', width: '68px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div style={{ width: '100px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ border: '1px solid #000', width: '90px', height: '105px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {student.image
                   ? <img src={`/uploads/${student.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '9px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
+                  : <span style={{ fontSize: '11px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
                 }
               </div>
             </div>
           </div>
 
           {/* College / Game line */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', marginBottom: '5px', marginTop: '4px', fontFamily: 'Arial, sans-serif', flexWrap: 'wrap', gap: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', marginTop: '4px', fontFamily: 'Arial, sans-serif', flexWrap: 'wrap', gap: '4px' }}>
             <div>College: <strong>Bishop Heber College, Trichy</strong></div>
             <div>Game: <strong>{student.nameOfTheGame}{student.gender ? ' – ' + student.gender : ''}</strong></div>
           </div>
 
           {/* Main table */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10.5px', fontFamily: 'Arial, sans-serif', tableLayout: 'fixed' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', fontFamily: 'Arial, sans-serif', tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '6%' }} />
               <col style={{ width: '44%' }} />
@@ -564,21 +565,21 @@ export default function StudentViewPage() {
           </table>
 
           {/* Footer notes */}
-          <div style={{ marginTop: '8px', fontSize: '9.5px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ marginTop: '10px', fontSize: '11px', fontFamily: 'Arial, sans-serif' }}>
             <div>*Strike out whichever is not applicable</div>
             <div>Readmitted UG/PG students should enclose copy of admission fee receipt in original</div>
           </div>
 
           {/* Signatures */}
-          <div style={{ textAlign: 'right', marginTop: '14px', fontSize: '10.5px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ textAlign: 'right', marginTop: '18px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
             Signature of the student
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '36px', fontSize: '10.5px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
             <div>Signature of the<br />Director of Physical Education</div>
             <div style={{ textAlign: 'right' }}>Signature of the Principal/HOD<br />College seal with date</div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '18px' }}>
-            <div style={{ border: '1px solid #000', padding: '8px 24px', textAlign: 'center', fontSize: '10.5px', fontFamily: 'Arial, sans-serif' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+            <div style={{ border: '1px solid #000', padding: '10px 32px', textAlign: 'center', fontSize: '12px', fontFamily: 'Arial, sans-serif' }}>
               Eligibility verified<br />Local organiser Signature &amp; Seal
             </div>
           </div>
@@ -683,11 +684,17 @@ export default function StudentViewPage() {
 
       {/* Print CSS */}
       <style>{`
-        @page { margin: 10mm; }
+        @page { size: A4 portrait; margin: 12mm 15mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
-          body { margin: 0; background: #fff; }
-          #element-to-print { padding: 0 !important; max-width: 100% !important; }
+          html, body { margin: 0; padding: 0; background: #fff; }
+          #element-to-print {
+            padding: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+          }
         }
       `}</style>
     </div>
@@ -696,7 +703,7 @@ export default function StudentViewPage() {
 
 /* ── Cell styles ── */
 const border = '1px solid #000';
-const numCell      = { border, padding: '4px 5px', verticalAlign: 'top', textAlign: 'center', whiteSpace: 'nowrap' };
-const labelCell    = { border, padding: '4px 6px', verticalAlign: 'top', lineHeight: 1.4 };
-const subLabelCell = { border, padding: '4px 6px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
-const valueCell    = { border, padding: '4px 6px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
+const numCell      = { border, padding: '6px 7px', verticalAlign: 'top', textAlign: 'center', whiteSpace: 'nowrap' };
+const labelCell    = { border, padding: '6px 8px', verticalAlign: 'top', lineHeight: 1.5 };
+const subLabelCell = { border, padding: '6px 8px', verticalAlign: 'middle', whiteSpace: 'nowrap' };
+const valueCell    = { border, padding: '6px 8px', verticalAlign: 'middle', fontWeight: 'bold', wordBreak: 'break-word' };
