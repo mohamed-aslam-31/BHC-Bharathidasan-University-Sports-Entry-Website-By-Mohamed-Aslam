@@ -8,76 +8,65 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 const MIN_SIZE = 500 * 1024;       // 500 KB
 const MAX_SIZE = 2 * 1024 * 1024;  // 2 MB
 
-/* ── PDF text extractor ──────────────────────────────────────────────────── */
-
+/* ── PDF text extractor ─────────────────────────────────────────────────────
+   Returns { text, numPages }.
+   Throws if the PDF is password-protected.
+────────────────────────────────────────────────────────────────────────────── */
 async function extractPdfText(file) {
-  const ab = await file.arrayBuffer();
+  const ab  = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
-  let raw = '';
-  for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
-    const page = await pdf.getPage(i);
-    const tc = await page.getTextContent();
-    // keep each item on its own line so we can detect line boundaries
-    raw += tc.items.map((it) => it.str).join('\n') + '\n';
-  }
-  return raw;
+
+  // Only extract the first (and only) page — page count is checked by the caller
+  const page = await pdf.getPage(1);
+  const tc   = await page.getTextContent();
+  const text = tc.items.map((it) => it.str).join('\n');
+
+  return { text, numPages: pdf.numPages };
 }
 
-/* ── Aadhaar data parser ─────────────────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
 
-// Returns true when a string is primarily Latin/ASCII (English text).
-// Bilingual e-Aadhaar PDFs contain Tamil / Hindi lines — we must skip those.
+// True when a string is ≥80 % Latin/ASCII (filters Tamil/Hindi script lines)
 function isLatinLine(s) {
-  // Count characters that are clearly Latin/ASCII letters, digits, spaces or punctuation
-  const latinChars = (s.match(/[a-zA-Z0-9 .,'"/\\()\-:]/g) || []).length;
-  return latinChars / s.length >= 0.80;   // at least 80 % Latin
+  const latin = (s.match(/[a-zA-Z0-9 .,'"/\\()\-:]/g) || []).length;
+  return latin / s.length >= 0.80;
 }
 
-// Boilerplate / non-personal lines to always skip
 const BOILERPLATE =
   /government|of india|uidai|unique identification|authority|enrolment|enrollment|eid\b|vid\b|help|download|verify|\.gov|www\.|digital|electronically|generated|issued|this is|e-aadhaar|eaadhaar|resident|आधार|ஆதார்/i;
 
-// Lines that start with a standalone date or are purely numeric → skip
 const DATE_LINE   = /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/;
 const NUMERIC     = /^[\d\s\/\-]+$/;
-
-// Field-label lines that are not personal names
 const FIELD_LABEL = /^(?:DOB|Date\s+of\s+Birth|Gender|Address|VID|EID|Mobile|Phone|Email|Year\s+of\s+Birth)/i;
-
-// Relationship indicators that mark a father/guardian line
-// Supported: S/O  C/O  D/O  G/O  W/O  H/O
 const REL_INDICATOR = /\b(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\b/i;
 
+/* ── Aadhaar data parser ─────────────────────────────────────────────────── */
 function parseAadhaar(rawText) {
-  // Split, trim, drop blanks
   const allLines = rawText
     .split('\n')
     .map((l) => l.replace(/[ \t]+/g, ' ').trim())
     .filter(Boolean);
 
-  const flat = allLines.join(' ');
+  const flat      = allLines.join(' ');
+  const latinFlat = allLines.filter(isLatinLine).join(' ');
 
-  /* ── 1. Aadhaar number — 12 unmasked digits ── */
+  /* 1. Aadhaar number — 12 unmasked digits */
   const aadhaarMatch =
     flat.match(/\b(\d{4})\s(\d{4})\s(\d{4})\b/) ||
     flat.match(/\b(\d{4})(\d{4})(\d{4})\b/);
   const aadhaarNo = aadhaarMatch ? aadhaarMatch[0].replace(/\s/g, '') : null;
 
-  /* Masked Aadhaar detection (XXXX XXXX 1234) */
+  /* Masked detection (XXXX XXXX 1234) */
   const isMasked =
     /[Xx]{4}\s?[Xx]{4}\s?\d{4}/.test(flat) ||
     /\b[Xx]{4}\s?[Xx]{4}\b/.test(flat);
 
-  /* ── 2. DOB — prefer explicit "DOB:" label; only fall back to bare date as last resort ── */
-  // Explicit label first (avoids picking up Tamil-script date lines)
+  /* 2. DOB — prefer explicit "DOB:" label; bare date only from Latin lines */
   const dobLabelled = flat.match(
     /(?:DOB|Date\s+of\s+Birth|D\.O\.B\.?)\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/i,
   );
-  // Bare date only from explicitly Latin lines (avoid Tamil numerals that look similar)
-  const latinFlat = allLines.filter(isLatinLine).join(' ');
   const dobBare = latinFlat.match(/\b(\d{2}[\/\-]\d{2}[\/\-]\d{4})\b/);
-
-  const dobRaw = dobLabelled ? dobLabelled[1] : dobBare ? dobBare[1] : null;
+  const dobRaw  = dobLabelled ? dobLabelled[1] : dobBare ? dobBare[1] : null;
   let dob = null;
   if (dobRaw) {
     const parts = dobRaw.split(/[\/\-]/);
@@ -87,54 +76,29 @@ function parseAadhaar(rawText) {
     }
   }
 
-  /* ── 3 & 4: Name (line 1) and Father name (line 2) ──
-   *
-   * Strategy:
-   *  a) Keep only Latin lines (drops Tamil/Hindi script lines).
-   *  b) Drop boilerplate, numeric, date, and field-label lines.
-   *  c) First remaining line  = cardholder's full name.
-   *  d) Second remaining line = father/guardian name line.
-   *
-   * Father name formats on e-Aadhaar:
-   *   A) "RAMESH KUMAR S/O"   → name BEFORE indicator
-   *   B) "S/O RAMESH KUMAR"   → indicator BEFORE name
-   *   C) "S/O: RAMESH KUMAR"  → indicator with colon before name
-   *   D) "RAMESH KUMAR"       → bare name (no indicator; rare)
-   */
+  /* 3. Name + father name (informational only — not verified) */
   const meaningful = allLines.filter((l) => {
-    if (!isLatinLine(l))   return false;   // drop non-English (Tamil/Hindi) lines
-    if (l.length < 3)      return false;
-    if (NUMERIC.test(l))   return false;
-    if (DATE_LINE.test(l)) return false;
+    if (!isLatinLine(l))     return false;
+    if (l.length < 3)        return false;
+    if (NUMERIC.test(l))     return false;
+    if (DATE_LINE.test(l))   return false;
     if (BOILERPLATE.test(l)) return false;
     if (FIELD_LABEL.test(l)) return false;
     return true;
   });
 
-  /* Cardholder full name = first meaningful line */
   const name = meaningful[0] || null;
 
-  /* Father / guardian name = second meaningful line */
   let fatherName = null;
   const fatherLine = meaningful[1] || '';
-
   if (fatherLine) {
     if (REL_INDICATOR.test(fatherLine)) {
-      // Strip the indicator and trim both sides
       const withoutRel = fatherLine.replace(REL_INDICATOR, '').replace(/:/g, '').trim();
-      // Format A: text before the indicator  → "RAMESH KUMAR S/O" → withoutRel = "RAMESH KUMAR"
-      // Format B/C: text after the indicator → "S/O RAMESH KUMAR" → withoutRel = "RAMESH KUMAR"
-      // Both cases reduce to the same withoutRel after stripping the indicator, so just use it
-      if (withoutRel.length > 1 && /^[A-Za-z]/.test(withoutRel)) {
-        fatherName = withoutRel;
-      }
+      if (withoutRel.length > 1 && /^[A-Za-z]/.test(withoutRel)) fatherName = withoutRel;
     } else if (/^[A-Za-z][A-Za-z .]{1,}$/.test(fatherLine)) {
-      // Format D: bare name line
       fatherName = fatherLine;
     }
   }
-
-  /* Fallback: scan all Latin text for any "S/O / C/O …" pattern */
   if (!fatherName) {
     const m = latinFlat.match(
       /(?:S\/O|C\/O|D\/O|G\/O|W\/O|H\/O)\s*:?\s*([A-Za-z][A-Za-z .]{2,})(?=\s{2,}|\d|$|,)/i,
@@ -142,30 +106,12 @@ function parseAadhaar(rawText) {
     if (m) fatherName = m[1].trim();
   }
 
-  return { aadhaarNo, dob, fatherName, name, isMasked };
+  return { aadhaarNo, dob, name, fatherName, isMasked };
 }
 
-/* ── Comparison helpers ──────────────────────────────────────────────────── */
-
-function norm(s) {
-  return (s || '').toUpperCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
-}
-
-function nameMatches(a, b) {
-  const na = norm(a), nb = norm(b);
-  if (!na || !nb) return false;
-  if (na === nb) return true;
-  if (na.includes(nb) || nb.includes(na)) return true;
-  // At least 60 % of the shorter name's words appear in the longer
-  const wa = na.split(' ').filter((w) => w.length > 1);
-  const wb = nb.split(' ').filter((w) => w.length > 1);
-  const common = wa.filter((w) => wb.includes(w));
-  return common.length >= Math.ceil(Math.min(wa.length, wb.length) * 0.6);
-}
-
+/* ── Verification (DOB + Aadhaar number only) ────────────────────────────── */
 function buildMismatches(parsed, form) {
   const issues = [];
-
   if (parsed.aadhaarNo && form.aadharNumber) {
     if (parsed.aadhaarNo !== form.aadharNumber.replace(/\s/g, ''))
       issues.push({ field: 'Aadhaar Number', pdf: parsed.aadhaarNo, entered: form.aadharNumber });
@@ -174,27 +120,66 @@ function buildMismatches(parsed, form) {
     if (parsed.dob !== form.dob)
       issues.push({ field: 'Date of Birth', pdf: parsed.dob, entered: form.dob });
   }
-  if (parsed.name && form.studentName) {
-    if (!nameMatches(parsed.name, form.studentName))
-      issues.push({ field: 'Name', pdf: parsed.name, entered: form.studentName });
-  }
-  if (parsed.fatherName && form.fatherName) {
-    if (!nameMatches(parsed.fatherName, form.fatherName))
-      issues.push({ field: "Father's Name", pdf: parsed.fatherName, entered: form.fatherName });
-  }
   return issues;
 }
 
-/* ── Component ───────────────────────────────────────────────────────────── */
+/* ── Physical Aadhaar layout diagram ─────────────────────────────────────── */
+function PhysicalAadhaarDiagram() {
+  return (
+    <div className="mt-3 border border-blue-200 dark:border-blue-700 rounded-xl overflow-hidden">
+      <div className="bg-blue-100/60 dark:bg-blue-900/30 px-3 py-2 text-xs font-semibold text-blue-800 dark:text-blue-300 border-b border-blue-200 dark:border-blue-700">
+        📐 How to arrange physical Aadhaar (front + back) in one PDF page
+      </div>
+      <div className="p-3 bg-white dark:bg-gray-800/60">
+        {/* A4 page mockup */}
+        <div className="mx-auto border-2 border-gray-400 dark:border-gray-500 rounded bg-gray-50 dark:bg-gray-700/50"
+             style={{ width: '100%', maxWidth: 320, aspectRatio: '210/297' }}>
+          <div className="h-full flex flex-col gap-2 p-3">
+            {/* Front card */}
+            <div className="flex-1 border-2 border-dashed border-amber-400 dark:border-amber-500 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex flex-col items-center justify-center gap-1">
+              <div className="w-8 h-5 rounded bg-amber-300 dark:bg-amber-600 opacity-70" />
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">FRONT SIDE</p>
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 text-center px-2">
+                Name · DOB · Photo · Aadhaar No.
+              </p>
+            </div>
+            {/* Back card */}
+            <div className="flex-1 border-2 border-dashed border-sky-400 dark:border-sky-500 rounded-lg bg-sky-50 dark:bg-sky-900/20 flex flex-col items-center justify-center gap-1">
+              <div className="w-10 h-2 rounded bg-sky-300 dark:bg-sky-600 opacity-70 mb-1" />
+              <div className="w-8 h-2 rounded bg-sky-300 dark:bg-sky-600 opacity-50" />
+              <p className="text-xs font-bold text-sky-700 dark:text-sky-400 mt-1">BACK SIDE</p>
+              <p className="text-[10px] text-sky-600 dark:text-sky-500 text-center px-2">
+                Address · QR Code
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+          Place both sides on a single A4 page, then export / print to PDF
+        </p>
+        {/* Step instructions */}
+        <div className="mt-2 space-y-1 text-xs text-gray-600 dark:text-gray-400">
+          <p className="font-semibold text-gray-700 dark:text-gray-300">Quick steps:</p>
+          <p>1. Take a clear photo of the <strong>front</strong> and <strong>back</strong> of your Aadhaar card</p>
+          <p>2. Open <strong>Google Docs / Word / Paint</strong> and paste both images on one page (top + bottom)</p>
+          <p>3. <strong>File → Print → Save as PDF</strong> (or export as PDF)</p>
+          <p>4. Upload the resulting single-page PDF here</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
+/* ── Main component ──────────────────────────────────────────────────────── */
 export default function AadhaarUpload({ form, onValidationChange }) {
-  const [file, setFile]           = useState(null);
-  const [blobUrl, setBlobUrl]     = useState(null);
-  const [parsing, setParsing]     = useState(false);
-  const [parsed, setParsed]       = useState(null);
+  const [file, setFile]             = useState(null);
+  const [blobUrl, setBlobUrl]       = useState(null);
+  const [parsing, setParsing]       = useState(false);
+  const [parsed, setParsed]         = useState(null);
   const [mismatches, setMismatches] = useState([]);
   const [parseError, setParseError] = useState('');
   const [showViewer, setShowViewer] = useState(false);
+  const [showDiagram, setShowDiagram] = useState(false);
   const fileRef = useRef(null);
 
   const reset = () => {
@@ -206,22 +191,16 @@ export default function AadhaarUpload({ form, onValidationChange }) {
   };
 
   const handleFile = async (f) => {
-    // Type check
     if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
       setParseError('Only PDF files are allowed.');
       return;
     }
-    // Size check
     if (f.size < MIN_SIZE) {
-      setParseError(
-        `File too small (${(f.size / 1024).toFixed(0)} KB). Minimum is 500 KB — ensure the image is clear and high quality.`,
-      );
+      setParseError(`File too small (${(f.size / 1024).toFixed(0)} KB). Minimum is 500 KB — ensure the scan is clear and high quality.`);
       return;
     }
     if (f.size > MAX_SIZE) {
-      setParseError(
-        `File too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Maximum is 2 MB.`,
-      );
+      setParseError(`File too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Maximum is 2 MB.`);
       return;
     }
 
@@ -232,20 +211,27 @@ export default function AadhaarUpload({ form, onValidationChange }) {
     setParsing(true);
 
     try {
-      const rawText = await extractPdfText(f);
-      const result  = parseAadhaar(rawText);
+      const { text, numPages } = await extractPdfText(f);
 
-      if (result.isMasked) {
+      // ── 1-page enforcement ──
+      if (numPages > 1) {
         setParseError(
-          'This looks like a masked Aadhaar (XXXX XXXX 1234). Please upload a full unmasked Aadhaar PDF.',
+          `This PDF has ${numPages} pages. Only a single-page PDF is allowed. ` +
+          'If you have a physical Aadhaar, place both sides on one page before converting to PDF.',
         );
         onValidationChange(false);
         return;
       }
+
+      const result = parseAadhaar(text);
+
+      if (result.isMasked) {
+        setParseError('This looks like a masked Aadhaar (XXXX XXXX 1234). Please upload a full unmasked Aadhaar PDF.');
+        onValidationChange(false);
+        return;
+      }
       if (!result.aadhaarNo) {
-        setParseError(
-          'No Aadhaar number found in this PDF. Please upload a valid e-Aadhaar or a clear scanned Aadhaar PDF.',
-        );
+        setParseError('No Aadhaar number found in this PDF. Please upload a valid e-Aadhaar or a clear scanned Aadhaar PDF.');
         onValidationChange(false);
         return;
       }
@@ -269,8 +255,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
 
   const isValid = parsed && !parseError && mismatches.length === 0;
 
-  /* ── Render ──────────────────────────────────────────────────────────── */
-
+  /* ── Render ────────────────────────────────────────────────────────────── */
   return (
     <div className="space-y-3">
 
@@ -279,7 +264,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
         <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
           <FileText className="w-4 h-4" /> Aadhaar Upload Guidelines
         </p>
-        <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
+        <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1.5">
           <li className="flex items-start gap-1.5">
             <span className="mt-px">⭐</span>
             <span>
@@ -293,24 +278,39 @@ export default function AadhaarUpload({ form, onValidationChange }) {
               </a>
             </span>
           </li>
-          <li className="flex items-start gap-1.5"><span>📄</span><span>Or scan your physical Aadhaar card clearly and convert to PDF</span></li>
-          <li className="flex items-start gap-1.5"><span>✅</span><span>Name, Aadhaar number, Father's name and Date of Birth must be fully visible</span></li>
+          <li className="flex items-start gap-1.5">
+            <span>📄</span>
+            <span>
+              Physical Aadhaar: scan/photograph <strong>both sides</strong> and place them on{' '}
+              <strong>one page</strong> before converting to PDF —{' '}
+              <button
+                type="button"
+                onClick={() => setShowDiagram((v) => !v)}
+                className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+              >
+                {showDiagram ? 'hide example' : 'see example'}
+              </button>
+            </span>
+          </li>
+          <li className="flex items-start gap-1.5"><span>✅</span><span>Aadhaar number and Date of Birth must be clearly visible</span></li>
           <li className="flex items-start gap-1.5"><span>❌</span><span>No masked Aadhaar (XXXX XXXX 1234 format)</span></li>
-          <li className="flex items-start gap-1.5"><span>❌</span><span>No password-protected PDF</span></li>
+          <li className="flex items-start gap-1.5"><span>❌</span><span>No password-protected PDF &nbsp;|&nbsp; No multi-page PDF</span></li>
           <li className="flex items-start gap-1.5">
             <span>📏</span>
-            <span>File size: <strong>500 KB – 2 MB</strong> &nbsp;|&nbsp; Format: <strong>PDF only</strong></span>
+            <span>File size: <strong>500 KB – 2 MB</strong> &nbsp;|&nbsp; Format: <strong>PDF only · 1 page</strong></span>
           </li>
         </ul>
+
+        {showDiagram && <PhysicalAadhaarDiagram />}
       </div>
 
-      {/* Upload area (no file yet) */}
+      {/* Upload area (no file selected yet) */}
       {!file && (
         <>
           <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors">
             <Upload className="w-8 h-8 text-gray-400" />
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Click to upload Aadhaar PDF</span>
-            <span className="text-xs text-gray-400">PDF only · 500 KB – 2 MB</span>
+            <span className="text-xs text-gray-400">PDF only · 1 page · 500 KB – 2 MB</span>
             <input
               ref={fileRef}
               type="file"
@@ -347,7 +347,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
             }`} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{file.name}</p>
-              <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB</p>
+              <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(0)} KB · 1 page PDF</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
@@ -375,7 +375,7 @@ export default function AadhaarUpload({ form, onValidationChange }) {
             </div>
           )}
 
-          {/* Parse error */}
+          {/* Parse / page error */}
           {!parsing && parseError && (
             <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -383,18 +383,16 @@ export default function AadhaarUpload({ form, onValidationChange }) {
             </div>
           )}
 
-          {/* Extracted details */}
+          {/* Verification results — DOB and Aadhaar number only */}
           {!parsing && parsed && !parseError && (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                Extracted from PDF
+                Verified from PDF
               </p>
 
               {[
                 { label: 'Aadhaar Number', pdf: parsed.aadhaarNo, entered: form.aadharNumber },
-                { label: 'Name',           pdf: parsed.name,      entered: form.studentName },
-                { label: "Father's Name",  pdf: parsed.fatherName,entered: form.fatherName  },
-                { label: 'Date of Birth',  pdf: parsed.dob,       entered: form.dob         },
+                { label: 'Date of Birth',  pdf: parsed.dob,       entered: form.dob          },
               ].map(({ label, pdf, entered }) => {
                 if (!pdf) return null;
                 const mis = mismatches.find((m) => m.field === label);
@@ -426,12 +424,12 @@ export default function AadhaarUpload({ form, onValidationChange }) {
               {mismatches.length > 0 ? (
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-red-600 dark:text-red-400 pt-1">
                   <AlertCircle className="w-3.5 h-3.5" />
-                  Details don't match — correct the form fields above or upload the right Aadhaar
+                  Details don't match — correct the form fields or upload the correct Aadhaar
                 </p>
               ) : (
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-green-600 dark:text-green-400 pt-1">
                   <CheckCircle className="w-3.5 h-3.5" />
-                  All details verified ✓
+                  Aadhaar verified ✓
                 </p>
               )}
             </div>
