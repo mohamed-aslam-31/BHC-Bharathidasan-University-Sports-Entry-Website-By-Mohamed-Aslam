@@ -613,7 +613,7 @@ export default function DashboardPage() {
     if (name && !s.nameOfTheSportsperson?.toLowerCase().includes(name.toLowerCase())) return false;
     if (games.length && !games.includes(s.nameOfTheGame)) return false;
     if (genders.length && !genders.includes(s.gender)) return false;
-    if (departments.length && !departments.includes(s.nameOfThePresentClass)) return false;
+    if (departments.length && !departments.includes(s.presentCourse)) return false;
     if (years.length && !years.includes(s.year)) return false;
     if (studentTypes.length && !studentTypes.includes(s.studentType)) return false;
     if (dayTypes.length && !dayTypes.includes(s.dayType)) return false;
@@ -640,7 +640,7 @@ export default function DashboardPage() {
     return {
       total:      all.length,
       sportsList: [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].sort(),
-      deptList:   [...new Set(all.map(s => s.nameOfThePresentClass).filter(Boolean))].sort(),
+      deptList:   [...new Set(all.map(s => s.presentCourse).filter(Boolean))].sort(),
       yearList:   [...new Set(all.map(s => s.year).filter(Boolean))].sort(),
       bloodGroupList: [...new Set(all.map(s => s.bloodGroup).filter(Boolean))].sort(),
       studentTypeList: [...new Set(all.map(s => s.studentType).filter(Boolean))].sort(),
@@ -724,7 +724,7 @@ export default function DashboardPage() {
   };
 
   /* ── department & year options ── */
-  const deptOptions  = meta.departments.length ? meta.departments : [...new Set(allStudents.map(s => s.nameOfThePresentClass).filter(Boolean))];
+  const deptOptions  = meta.departments.length ? meta.departments : [...new Set(allStudents.map(s => s.presentCourse).filter(Boolean))];
   const yearOptions  = meta.years.length ? meta.years : [...new Set(allStudents.map(s => s.year).filter(Boolean))];
   const gameOptions  = GAMES;
   const genderOptions = ['MALE', 'FEMALE'];

@@ -348,7 +348,7 @@ app.get('/api/students', authMiddleware, async (req, res) => {
     if (name)       filter.nameOfTheSportsperson = { $regex: name, $options: 'i' };
     if (game)       filter.nameOfTheGame         = game;
     if (gender)     filter.gender               = gender;
-    if (department) filter.nameOfThePresentClass = department;
+    if (department) filter.presentCourse = department;
     if (year)       filter.year                 = year;
     const students = await Student.find(filter).sort({ createdAt: -1 }).lean();
     res.json(students);
@@ -358,7 +358,7 @@ app.get('/api/students', authMiddleware, async (req, res) => {
 app.get('/api/students/meta', authMiddleware, async (req, res) => {
   try {
     const [departments, years, games] = await Promise.all([
-      Student.distinct('nameOfThePresentClass'),
+      Student.distinct('presentCourse'),
       Student.distinct('year'),
       Student.distinct('nameOfTheGame'),
     ]);
