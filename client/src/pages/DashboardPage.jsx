@@ -665,6 +665,11 @@ export default function DashboardPage() {
       sportsList: [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].sort(),
       deptList:   [...new Set(all.map(s => s.nameOfThePresentClass).filter(Boolean))].sort(),
       yearList:   [...new Set(all.map(s => s.year).filter(Boolean))].sort(),
+      bloodGroupList: [...new Set(all.map(s => s.bloodGroup).filter(Boolean))].sort(),
+      studentTypeList: [...new Set(all.map(s => s.studentType).filter(Boolean))].sort(),
+      shiftList: [...new Set(all.map(s => s.shift).filter(Boolean))].sort(),
+      dayTypeList: [...new Set(all.map(s => s.dayType).filter(Boolean))].sort(),
+      hostelList: [...new Set(all.map(s => s.hostelName).filter(Boolean))].sort(),
       male:       all.filter(s => s.gender === 'MALE').length,
       female:     all.filter(s => s.gender === 'FEMALE').length,
     };
@@ -848,44 +853,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Selected filter values ── */}
-      {(studentTypes.length > 0 || dayTypes.length > 0 || hostels.length > 0 || shifts.length > 0 || bloodGroups.length > 0) && (
-        <div className="card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Selected Filters</span>
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              {studentTypes.length + dayTypes.length + hostels.length + shifts.length + bloodGroups.length} selected
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {[
-              { label: 'Blood Group', values: bloodGroups, color: 'red' },
-              { label: 'Student Type', values: studentTypes, color: 'blue' },
-              { label: 'Shift', values: shifts, color: 'purple' },
-              { label: 'Day / Hosteller', values: dayTypes, color: 'green' },
-              { label: 'Hostel Name', values: hostels, color: 'orange' },
-            ].filter(({ values }) => values.length > 0).map(({ label, values, color }) => {
-              const colors = {
-                red: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
-                blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-                purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-                green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-                orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
-              };
-              return (
-                <div key={label} className={`rounded-xl px-3 py-2.5 ${colors[color]}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold">{label}</p>
-                    <span className="text-[11px] font-bold opacity-70">{values.length}</span>
-                  </div>
-                  <p className="text-xs mt-1 break-words">{values.join(' · ')}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* ── Live filter summary ── */}
       <div className="space-y-3">
         {/* Row 1: count cards */}
@@ -915,16 +882,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Row 2: list cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             { icon: Trophy,        label: 'Sports',        list: filteredStats.sportsList, color: 'purple' },
             { icon: GraduationCap, label: 'Departments',   list: filteredStats.deptList,   color: 'indigo' },
             { icon: CalendarDays,  label: 'Academic Year', list: filteredStats.yearList,   color: 'yellow' },
+            { icon: User,           label: 'Blood Group',   list: filteredStats.bloodGroupList, color: 'red' },
+            { icon: GraduationCap,  label: 'Student Type',  list: filteredStats.studentTypeList, color: 'blue' },
+            { icon: CalendarDays,   label: 'Shift',         list: filteredStats.shiftList, color: 'purple' },
+            { icon: User2,          label: 'Day / Hosteller', list: filteredStats.dayTypeList, color: 'green' },
+            ...(filteredStats.hostelList.length > 0
+              ? [{ icon: GraduationCap, label: 'Hostel Name', list: filteredStats.hostelList, color: 'orange' }]
+              : []),
           ].map(({ icon: Icon, label, list, color }) => {
             const colors = {
               purple: { bg: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400', dot: 'bg-purple-400 dark:bg-purple-500' },
               indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-400 dark:bg-indigo-500' },
               yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400', dot: 'bg-yellow-400 dark:bg-yellow-500' },
+              red:    { bg: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400', dot: 'bg-red-400 dark:bg-red-500' },
+              blue:   { bg: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400', dot: 'bg-blue-400 dark:bg-blue-500' },
+              green:  { bg: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400', dot: 'bg-green-400 dark:bg-green-500' },
+              orange: { bg: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400', dot: 'bg-orange-400 dark:bg-orange-500' },
             };
             return (
               <div key={label} className="card p-4">
