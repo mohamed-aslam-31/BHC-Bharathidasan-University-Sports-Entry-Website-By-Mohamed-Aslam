@@ -1037,8 +1037,8 @@ export default function StudentFormPage() {
     try {
       const check = await deleteOption({ key, value: opt, confirmed: false });
       if (check.data.requiresConfirmation) {
-        const ok = window.confirm(`${opt} is used by ${check.data.used} student record(s). Delete it and set that field to Unknown in those records?`);
-        if (!ok) return;
+        // The ComboBox already displayed and received confirmation through its
+        // inline panel. Complete the server-side confirmation without a popup.
         await deleteOption({ key, value: opt, confirmed: true });
       }
       setManagedOpts((p) => ({ ...p, [key]: curOpts.filter((o) => o !== opt) }));
