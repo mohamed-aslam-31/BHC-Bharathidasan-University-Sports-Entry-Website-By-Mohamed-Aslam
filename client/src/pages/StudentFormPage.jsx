@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
@@ -1023,13 +1023,30 @@ export default function StudentFormPage() {
   const bloodGroupOptions = managedOpts.bloodGroup ?? DEFAULT_BLOOD_GROUPS;
 
   /* ── Managed-options helpers ── */
-  const mkEdit = (key, curOpts, ...fks) => (old, nv) => {
+  const mkEdit = (key, curOpts, ...fks) => async (old, nv) => {
     setManagedOpts((p) => ({ ...p, [key]: curOpts.map((o) => (o === old ? nv : o)) }));
     fks.forEach((fk) => { if (form[fk] === old) set(fk)(nv); });
+    try {
+      await renameOption({ key, oldValue: old, newValue: nv });
+      addToast('Option updated in all student records');
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to update option', 'error');
+    }
   };
-  const mkDel = (key, curOpts, ...fks) => (opt) => {
-    setManagedOpts((p) => ({ ...p, [key]: curOpts.filter((o) => o !== opt) }));
-    fks.forEach((fk) => { if (form[fk] === opt) set(fk)(''); });
+  const mkDel = (key, curOpts, ...fks) => async (opt) => {
+    try {
+      const check = await deleteOption({ key, value: opt, confirmed: false });
+      if (check.data.requiresConfirmation) {
+        const ok = window.confirm(`${opt} is used by ${check.data.used} student record(s). Delete it and set that field to Unknown in those records?`);
+        if (!ok) return;
+        await deleteOption({ key, value: opt, confirmed: true });
+      }
+      setManagedOpts((p) => ({ ...p, [key]: curOpts.filter((o) => o !== opt) }));
+      fks.forEach((fk) => { if (form[fk] === opt) set(fk)('Unknown'); });
+      addToast('Option deleted; affected records set to Unknown');
+    } catch (err) {
+      addToast(err.response?.data?.error || 'Failed to delete option', 'error');
+    }
   };
 
   /* ── early return ── */

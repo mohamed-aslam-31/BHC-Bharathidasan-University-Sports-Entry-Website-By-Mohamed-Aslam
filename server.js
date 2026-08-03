@@ -370,6 +370,43 @@ app.get('/api/students/meta', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── SHARED OPTION MANAGEMENT ────────────────────────────────────────────────
+const OPTION_FIELDS = {
+  year: ['year'], game: ['nameOfTheGame'], dept: ['presentCourse'],
+  university: ['university'], class: ['presentClass'],
+  duration: ['durationOfCourse'], course: ['presentCourse'],
+  exam: ['nameOfExam'], monthYear: ['dateAndYear', 'university', 'nameOfThePresentClass'],
+  iut: ['graduateCourse', 'pgCourse'], hostel: ['hostelName'],
+  bloodGroup: ['bloodGroup'],
+};
+
+app.post('/api/options/rename', authMiddleware, async (req, res) => {
+  try {
+    const { key, oldValue, newValue } = req.body;
+    const fields = OPTION_FIELDS[key];
+    if (!fields || !oldValue || !newValue) return res.status(400).json({ error: 'Invalid option change' });
+    const result = await Promise.all(fields.map((field) =>
+      Student.updateMany({ [field]: oldValue }, { $set: { [field]: newValue } })
+    ));
+    res.json({ message: 'Option updated across student records', updated: result.reduce((n, r) => n + r.modifiedCount, 0) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/options/delete', authMiddleware, async (req, res) => {
+  try {
+    const { key, value, confirmed } = req.body;
+    const fields = OPTION_FIELDS[key];
+    if (!fields || !value) return res.status(400).json({ error: 'Invalid option deletion' });
+    const query = { $or: fields.map((field) => ({ [field]: value })) };
+    const used = await Student.countDocuments(query);
+    if (used && !confirmed) return res.json({ used, requiresConfirmation: true });
+    const result = await Promise.all(fields.map((field) =>
+      Student.updateMany({ [field]: value }, { $set: { [field]: 'Unknown' } })
+    ));
+    res.json({ message: 'Option deleted and matching student fields set to Unknown', used, updated: result.reduce((n, r) => n + r.modifiedCount, 0) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/students/:id', authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id).lean();
