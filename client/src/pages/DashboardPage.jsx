@@ -541,6 +541,14 @@ const GAMES = [
   'ARCHERY','TENNIS','KABADDI','ATHLETICS','KHO - KHO','BEST PHYSIQUE',
   'NETBALL','HANDBALL','BOXING','BALL BADMINTON','YOGASANA','TAEKWONDO','KARATE'
 ];
+const STUDENT_TYPES = ['AIDED', 'SELF-FINANCE'];
+const DAY_TYPES = ['DAYSCHOLAR', 'HOSTELLER'];
+const SHIFTS = ['MORNING', 'EVENING'];
+const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'GOLDEN'];
+const HOSTELS = [
+  'Mens Hostel', 'Womens Hostel', 'Boys Hostel No.1', 'Boys Hostel No.2',
+  'Girls Hostel No.1', 'Girls Hostel No.2', 'Research Scholars Hostel',
+];
 
 /* ─── MAIN COMPONENT ──────────────────────────────────────────────────────── */
 export default function DashboardPage() {
@@ -569,6 +577,11 @@ export default function DashboardPage() {
   const [genders, setGenders]     = useState([]);
   const [departments, setDepts]   = useState([]);
   const [years, setYears]         = useState([]);
+  const [studentTypes, setStudentTypes] = useState([]);
+  const [dayTypes, setDayTypes]         = useState([]);
+  const [hostels, setHostels]           = useState([]);
+  const [shifts, setShifts]             = useState([]);
+  const [bloodGroups, setBloodGroups]   = useState([]);
 
   /* sort + pagination */
   const [sortBy, setSortBy]       = useState(['new-to-old']);
@@ -597,7 +610,13 @@ export default function DashboardPage() {
   }, []);
 
   /* reset to page 1 whenever a filter/sort/rows changes */
-  useEffect(() => { setPage(1); }, [rollNo, name, games, genders, departments, years, sortBy, rowsPerPage]);
+  useEffect(() => { setPage(1); }, [
+    rollNo, name, games, genders, departments, years,
+    studentTypes, dayTypes, hostels, shifts, bloodGroups, sortBy, rowsPerPage
+  ]);
+  useEffect(() => {
+    if (!dayTypes.includes('HOSTELLER') && hostels.length > 0) setHostels([]);
+  }, [dayTypes]);
 
   /* ── computed: sorted + filtered ── */
   const sortFn = (a, b) => {
@@ -619,6 +638,11 @@ export default function DashboardPage() {
     if (genders.length && !genders.includes(s.gender)) return false;
     if (departments.length && !departments.includes(s.nameOfThePresentClass)) return false;
     if (years.length && !years.includes(s.year)) return false;
+    if (studentTypes.length && !studentTypes.includes(s.studentType)) return false;
+    if (dayTypes.length && !dayTypes.includes(s.dayType)) return false;
+    if (hostels.length && !hostels.includes(s.hostelName)) return false;
+    if (shifts.length && !shifts.includes(s.shift)) return false;
+    if (bloodGroups.length && !bloodGroups.includes(s.bloodGroup)) return false;
     return true;
   };
 
@@ -627,7 +651,10 @@ export default function DashboardPage() {
     const pinned  = sorted.filter(s => selected.has(s._id));
     const rest    = sorted.filter(s => !selected.has(s._id) && matchesFilter(s));
     return { pinnedRows: pinned, filteredRows: rest, totalVisible: pinned.length + rest.length };
-  }, [allStudents, selected, rollNo, name, games, genders, departments, years, sortBy]);
+  }, [
+    allStudents, selected, rollNo, name, games, genders, departments, years,
+    studentTypes, dayTypes, hostels, shifts, bloodGroups, sortBy
+  ]);
 
   const combined = [...pinnedRows, ...filteredRows];
 
@@ -642,7 +669,10 @@ export default function DashboardPage() {
       female:     all.filter(s => s.gender === 'FEMALE').length,
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allStudents, rollNo, name, games, genders, departments, years]);
+  }, [
+    allStudents, rollNo, name, games, genders, departments, years,
+    studentTypes, dayTypes, hostels, shifts, bloodGroups
+  ]);
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
   const pageStart = (safePage - 1) * rowsPerPage;
@@ -699,12 +729,15 @@ export default function DashboardPage() {
   const nonDefaultSort = sortBy.filter(v => v !== 'new-to-old');
   const activeFilterCount = [
     rollNo, name,
-    ...games, ...genders, ...departments, ...years, ...nonDefaultSort
+    ...games, ...genders, ...departments, ...years,
+    ...studentTypes, ...dayTypes, ...hostels, ...shifts, ...bloodGroups,
+    ...nonDefaultSort
   ].filter(Boolean).length;
 
   const clearAllFilters = () => {
     setRollNo(''); setName('');
     setGames([]); setGenders([]); setDepts([]); setYears([]);
+    setStudentTypes([]); setDayTypes([]); setHostels([]); setShifts([]); setBloodGroups([]);
     setSortBy(['new-to-old']);
   };
 
@@ -713,6 +746,11 @@ export default function DashboardPage() {
   const yearOptions  = meta.years.length ? meta.years : [...new Set(allStudents.map(s => s.year).filter(Boolean))];
   const gameOptions  = GAMES;
   const genderOptions = ['MALE', 'FEMALE'];
+  const studentTypeOptions = [...new Set([...STUDENT_TYPES, ...allStudents.map(s => s.studentType).filter(Boolean)])];
+  const dayTypeOptions = [...new Set([...DAY_TYPES, ...allStudents.map(s => s.dayType).filter(Boolean)])];
+  const shiftOptions = [...new Set([...SHIFTS, ...allStudents.map(s => s.shift).filter(Boolean)])];
+  const bloodGroupOptions = [...new Set([...BLOOD_GROUPS, ...allStudents.map(s => s.bloodGroup).filter(Boolean)])];
+  const hostelOptions = [...new Set([...HOSTELS, ...allStudents.map(s => s.hostelName).filter(Boolean)])];
 
   return (
     <div className="space-y-6">
@@ -778,6 +816,13 @@ export default function DashboardPage() {
           <MultiSelect label="Gender"         options={genderOptions} value={genders}  onChange={setGenders} placeholder="All Genders"     />
           <MultiSelect label="Department"     options={deptOptions}   value={departments} onChange={setDepts} placeholder="All Departments" />
           <MultiSelect label="Academic Year"  options={yearOptions}   value={years}    onChange={setYears}   placeholder="All Years"       />
+          <MultiSelect label="Student Type"   options={studentTypeOptions} value={studentTypes} onChange={setStudentTypes} placeholder="All Student Types" />
+          <MultiSelect label="Day / Hosteller" options={dayTypeOptions} value={dayTypes} onChange={setDayTypes} placeholder="All Day Types" />
+          {dayTypes.includes('HOSTELLER') && (
+            <MultiSelect label="Hostel Name" options={hostelOptions} value={hostels} onChange={setHostels} placeholder="All Hostels" />
+          )}
+          <MultiSelect label="Shift"           options={shiftOptions} value={shifts} onChange={setShifts} placeholder="All Shifts" />
+          <MultiSelect label="Blood Group"     options={bloodGroupOptions} value={bloodGroups} onChange={setBloodGroups} placeholder="All Blood Groups" />
           <MultiSelect
             label="Sort by"
             options={['New to Old', 'Old to New', 'A to Z', 'Z to A']}
@@ -802,6 +847,44 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* ── Selected filter values ── */}
+      {(studentTypes.length > 0 || dayTypes.length > 0 || hostels.length > 0 || shifts.length > 0 || bloodGroups.length > 0) && (
+        <div className="card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Selected Filters</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              {studentTypes.length + dayTypes.length + hostels.length + shifts.length + bloodGroups.length} selected
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {[
+              { label: 'Blood Group', values: bloodGroups, color: 'red' },
+              { label: 'Student Type', values: studentTypes, color: 'blue' },
+              { label: 'Shift', values: shifts, color: 'purple' },
+              { label: 'Day / Hosteller', values: dayTypes, color: 'green' },
+              { label: 'Hostel Name', values: hostels, color: 'orange' },
+            ].filter(({ values }) => values.length > 0).map(({ label, values, color }) => {
+              const colors = {
+                red: 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400',
+                blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+                purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+                green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
+                orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400',
+              };
+              return (
+                <div key={label} className={`rounded-xl px-3 py-2.5 ${colors[color]}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold">{label}</p>
+                    <span className="text-[11px] font-bold opacity-70">{values.length}</span>
+                  </div>
+                  <p className="text-xs mt-1 break-words">{values.join(' · ')}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Live filter summary ── */}
       <div className="space-y-3">
