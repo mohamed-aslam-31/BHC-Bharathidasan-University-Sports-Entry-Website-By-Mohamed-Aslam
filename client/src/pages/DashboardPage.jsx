@@ -851,15 +851,40 @@ export default function DashboardPage() {
         {/* Row 2: list cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
-            { icon: Trophy,        label: 'Sports',        list: filteredStats.sportsList, color: 'purple' },
-            { icon: GraduationCap, label: 'Departments',   list: filteredStats.deptList,   color: 'indigo' },
-            { icon: CalendarDays,  label: 'Academic Year', list: filteredStats.yearList,   color: 'yellow' },
-            { icon: User,           label: 'Blood Group',   list: filteredStats.bloodGroupList, color: 'red' },
-            { icon: GraduationCap,  label: 'Student Type',  list: filteredStats.studentTypeList, color: 'blue' },
-            { icon: CalendarDays,   label: 'Shift',         list: filteredStats.shiftList, color: 'purple' },
-            { icon: User2,          label: 'Day / Hosteller', list: filteredStats.dayTypeList, color: 'green' },
-            ...(filteredStats.hostelList.length > 0
-              ? [{ icon: GraduationCap, label: 'Hostel Name', list: filteredStats.hostelList, color: 'orange' }]
+            { icon: Trophy,        label: 'Sports',          list: filteredStats.sportsList, color: 'purple' },
+            { icon: GraduationCap, label: 'Departments',     list: filteredStats.deptList,   color: 'indigo' },
+            { icon: CalendarDays,  label: 'Academic Year',   list: filteredStats.yearList,   color: 'yellow' },
+            {
+              icon: User,
+              label: 'Blood Group',
+              list: bloodGroups.length ? bloodGroups : filteredStats.bloodGroupList,
+              color: 'red',
+            },
+            {
+              icon: GraduationCap,
+              label: 'Student Type',
+              list: studentTypes.length ? studentTypes : filteredStats.studentTypeList,
+              color: 'blue',
+            },
+            {
+              icon: CalendarDays,
+              label: 'Shift',
+              list: shifts.length ? shifts : filteredStats.shiftList,
+              color: 'purple',
+            },
+            {
+              icon: User2,
+              label: 'Day / Hosteller',
+              list: dayTypes.length ? dayTypes : filteredStats.dayTypeList,
+              color: 'green',
+            },
+            ...((hostels.length > 0 || filteredStats.hostelList.length > 0)
+              ? [{
+                  icon: GraduationCap,
+                  label: 'Hostel Name',
+                  list: hostels.length ? hostels : filteredStats.hostelList,
+                  color: 'orange',
+                }]
               : []),
           ].map(({ icon: Icon, label, list, color }) => {
             const colors = {
