@@ -399,7 +399,9 @@ app.post('/api/options/delete', authMiddleware, async (req, res) => {
     if (!fields || !value) return res.status(400).json({ error: 'Invalid option deletion' });
     const query = { $or: fields.map((field) => ({ [field]: value })) };
     const used = await Student.countDocuments(query);
-    if (used && !confirmed) return res.json({ used, requiresConfirmation: true });
+    // Always require an explicit second confirmation. This keeps deletion
+    // inside the option panel even when no existing student uses the value.
+    if (!confirmed) return res.json({ used, requiresConfirmation: true });
     const result = await Promise.all(fields.map((field) =>
       Student.updateMany({ [field]: value }, { $set: { [field]: 'Unknown' } })
     ));

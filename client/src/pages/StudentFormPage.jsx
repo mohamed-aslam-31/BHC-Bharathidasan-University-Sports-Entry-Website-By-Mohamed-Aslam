@@ -414,7 +414,7 @@ function FieldMeta({ value, max, error, always }) {
  *   onDeleteOption(opt)           – called when user deletes an option
  * Both are optional; omitting them hides the edit/delete icons.
  */
-function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1, validateAdd, onEditOption, onDeleteOption }) {
+function ComboBox({ value, onChange, options, placeholder, required, error, sanitizer, maxLength, minCreate = 1, validateAdd, onEditOption, onDeleteOption, deleteWarning }) {
   const [open,             setOpen]             = useState(false);
   const [search,           setSearch]           = useState('');
   const [editingOpt,       setEditingOpt]       = useState(null);
@@ -553,8 +553,8 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
                     {/* Delete confirmation panel */}
                     {confirmDeleteOpt === opt && (
                       <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
-                        <p className="text-xs text-red-600 dark:text-red-400 mb-2">
-                          Delete <span className="font-semibold">"{opt}"</span>?
+                         <p className="text-xs text-red-600 dark:text-red-400 mb-2">
+                           {deleteWarning || <>Delete <span className="font-semibold">"{opt}"</span>?</>}
                         </p>
                         <div className="flex gap-2">
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); confirmDelete(); }}
@@ -651,6 +651,8 @@ export default function StudentFormPage() {
   const [fetching, setFetching] = useState(isEdit);
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
   const [managedOpts, setManagedOpts] = useState({});
+  const [deleteWarning, setDeleteWarning] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [aadhaarValidated, setAadhaarValidated] = useState(false);
   const [aadhaarFile, setAadhaarFile]           = useState(null);
   const [currentAadhaarPdf, setCurrentAadhaarPdf] = useState(null);   // existing PDF on edit
@@ -1035,17 +1037,24 @@ export default function StudentFormPage() {
   };
   const mkDel = (key, curOpts, ...fks) => async (opt) => {
     try {
-      const check = await deleteOption({ key, value: opt, confirmed: false });
+      const isConfirmed = pendingDelete?.key === key && pendingDelete?.value === opt;
+      const check = await deleteOption({ key, value: opt, confirmed: isConfirmed });
       if (check.data.requiresConfirmation) {
-        // The ComboBox already displayed and received confirmation through its
-        // inline panel. Complete the server-side confirmation without a popup.
-        await deleteOption({ key, value: opt, confirmed: true });
+        setPendingDelete({ key, value: opt });
+        setDeleteWarning(check.data.used
+          ? `This option is used by ${check.data.used} student(s). Confirm delete to change their data to Unknown.`
+          : 'This option is not currently used. Confirm delete to remove it from the option list.');
+        return false;
       }
+      setPendingDelete(null);
+      setDeleteWarning('');
       setManagedOpts((p) => ({ ...p, [key]: curOpts.filter((o) => o !== opt) }));
       fks.forEach((fk) => { if (form[fk] === opt) set(fk)('Unknown'); });
       addToast('Option deleted; affected records set to Unknown');
+      return true;
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to delete option', 'error');
+      return false;
     }
   };
 
@@ -1336,7 +1345,7 @@ export default function StudentFormPage() {
               maxLength={9}
               minCreate={9}
               onEditOption={mkEdit('year', yearOptions, 'year')}
-              onDeleteOption={mkDel('year', yearOptions, 'year')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('year', yearOptions, 'year')}
             />
             <FieldMeta value={form.year} max={9} always error={errors.year} />
           </Field>
@@ -1371,7 +1380,7 @@ export default function StudentFormPage() {
               maxLength={30}
               minCreate={3}
               onEditOption={mkEdit('game', gameOptions, 'nameOfTheGame')}
-              onDeleteOption={mkDel('game', gameOptions, 'nameOfTheGame')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('game', gameOptions, 'nameOfTheGame')}
             />
             <FieldMeta value={form.nameOfTheGame} max={30} always error={errors.nameOfTheGame} />
           </Field>
@@ -1389,7 +1398,7 @@ export default function StudentFormPage() {
               maxLength={3}
               minCreate={2}
               onEditOption={mkEdit('bloodGroup', bloodGroupOptions, 'bloodGroup')}
-              onDeleteOption={mkDel('bloodGroup', bloodGroupOptions, 'bloodGroup')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('bloodGroup', bloodGroupOptions, 'bloodGroup')}
             />
             <FieldMeta value={form.bloodGroup} max={3} always error={errors.bloodGroup} />
           </Field>
@@ -1590,7 +1599,7 @@ export default function StudentFormPage() {
                 maxLength={50}
                 minCreate={3}
                 onEditOption={mkEdit('hostel', hostelOptions, 'hostelName')}
-                onDeleteOption={mkDel('hostel', hostelOptions, 'hostelName')}
+                deleteWarning={deleteWarning} onDeleteOption={mkDel('hostel', hostelOptions, 'hostelName')}
               />
               <FieldMeta value={form.hostelName} max={50} always error={errors.hostelName} />
             </Field>
@@ -1869,7 +1878,7 @@ export default function StudentFormPage() {
               maxLength={40}
               minCreate={3}
               onEditOption={mkEdit('exam', examOptions, 'nameOfExam')}
-              onDeleteOption={mkDel('exam', examOptions, 'nameOfExam')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('exam', examOptions, 'nameOfExam')}
             />
             <FieldMeta value={form.nameOfExam} max={40} always error={errors.nameOfExam} />
           </Field>
@@ -1885,7 +1894,7 @@ export default function StudentFormPage() {
               maxLength={14}
               minCreate={3}
               onEditOption={mkEdit('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
-              onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
             />
             <FieldMeta value={form.dateAndYear} max={14} always error={errors.dateAndYear} />
           </Field>
@@ -1962,7 +1971,7 @@ export default function StudentFormPage() {
               minCreate={1}
               validateAdd={(v) => v.endsWith('-') || v.endsWith('.') ? 'Format incomplete — add text after the dash' : ''}
               onEditOption={mkEdit('class', classOptions, 'presentClass')}
-              onDeleteOption={mkDel('class', classOptions, 'presentClass')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('class', classOptions, 'presentClass')}
             />
             <FieldMeta value={form.presentClass} max={20} always error={errors.presentClass} />
           </Field>
@@ -1980,7 +1989,7 @@ export default function StudentFormPage() {
               maxLength={30}
               minCreate={2}
               onEditOption={mkEdit('course', courseOptions, 'presentCourse')}
-              onDeleteOption={mkDel('course', courseOptions, 'presentCourse')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('course', courseOptions, 'presentCourse')}
             />
             <FieldMeta value={form.presentCourse} max={30} always error={errors.presentCourse} />
           </Field>
@@ -1997,7 +2006,7 @@ export default function StudentFormPage() {
               maxLength={7}
               minCreate={1}
               onEditOption={mkEdit('duration', durationOptions, 'durationOfCourse')}
-              onDeleteOption={mkDel('duration', durationOptions, 'durationOfCourse')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('duration', durationOptions, 'durationOfCourse')}
             />
             <FieldMeta value={form.durationOfCourse} max={7} always error={errors.durationOfCourse} />
           </Field>
@@ -2076,7 +2085,7 @@ export default function StudentFormPage() {
                   maxLength={14}
                   minCreate={3}
                   onEditOption={mkEdit('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
-                  onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
+                  deleteWarning={deleteWarning} onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
                 />
                 <FieldMeta value={form.university} max={14} always error={errors.university} />
               </Field>
@@ -2096,7 +2105,7 @@ export default function StudentFormPage() {
                   maxLength={14}
                   minCreate={3}
                   onEditOption={mkEdit('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
-                  onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
+                  deleteWarning={deleteWarning} onDeleteOption={mkDel('monthYear', monthYearOptions, 'dateAndYear', 'university', 'nameOfThePresentClass')}
                 />
                 <FieldMeta value={form.nameOfThePresentClass} max={14} always error={errors.nameOfThePresentClass} />
               </Field>
@@ -2118,7 +2127,7 @@ export default function StudentFormPage() {
               maxLength={7}
               minCreate={1}
               onEditOption={mkEdit('iut', iutOptions, 'graduateCourse', 'pgCourse')}
-              onDeleteOption={mkDel('iut', iutOptions, 'graduateCourse', 'pgCourse')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('iut', iutOptions, 'graduateCourse', 'pgCourse')}
             />
             <FieldMeta value={form.graduateCourse} max={7} always error={errors.graduateCourse} />
           </Field>
@@ -2134,7 +2143,7 @@ export default function StudentFormPage() {
               maxLength={7}
               minCreate={1}
               onEditOption={mkEdit('iut', iutOptions, 'graduateCourse', 'pgCourse')}
-              onDeleteOption={mkDel('iut', iutOptions, 'graduateCourse', 'pgCourse')}
+              deleteWarning={deleteWarning} onDeleteOption={mkDel('iut', iutOptions, 'graduateCourse', 'pgCourse')}
             />
             <FieldMeta value={form.pgCourse} max={7} always error={errors.pgCourse} />
           </Field>
