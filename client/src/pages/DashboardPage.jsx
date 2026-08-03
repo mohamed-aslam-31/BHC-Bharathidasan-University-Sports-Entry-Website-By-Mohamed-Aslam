@@ -990,7 +990,7 @@ export default function DashboardPage() {
                               : 'bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400'
                           }`}>{s.gender}</span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[160px] truncate">{s.nameOfThePresentClass || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[160px] truncate">{s.presentCourse || '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{s.year || '—'}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
