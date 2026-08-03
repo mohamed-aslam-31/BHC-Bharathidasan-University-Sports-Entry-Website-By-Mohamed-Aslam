@@ -466,7 +466,11 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   /* delete helpers */
   const startDelete   = (opt) => { setConfirmDeleteOpt(opt); setEditingOpt(null); };
   const cancelDelete  = () => setConfirmDeleteOpt(null);
-  const confirmDelete = () => { if (onDeleteOption) onDeleteOption(confirmDeleteOpt); setConfirmDeleteOpt(null); };
+  const confirmDelete = async () => {
+    if (!onDeleteOption || !confirmDeleteOpt) return;
+    const deleted = await onDeleteOption(confirmDeleteOpt);
+    if (deleted) setConfirmDeleteOpt(null);
+  };
 
   return (
     <div ref={ref} className="relative">
