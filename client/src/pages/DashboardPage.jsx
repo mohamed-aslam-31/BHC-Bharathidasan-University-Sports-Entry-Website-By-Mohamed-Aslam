@@ -3,12 +3,12 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { getStudents, getStudentMeta, deleteStudent, getAdminStats, bulkDeleteStudents } from '../api';
+import { getStudents, getStudentMeta, deleteStudent, bulkDeleteStudents } from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, X,
-  Users, CheckCircle, Clock, Trophy, AlertTriangle, Check,
+  Users, Trophy, AlertTriangle, Check,
   ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding, User
 } from 'lucide-react';
 
@@ -116,27 +116,6 @@ function MultiSelect({ label, options, value, onChange, placeholder, noSearch })
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-/* ─── Stat card ───────────────────────────────────────────────────────────── */
-function StatCard({ icon: Icon, label, value, color }) {
-  const colors = {
-    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-    green: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400',
-    yellow: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400',
-    purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
-  };
-  return (
-    <div className="card p-5 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors[color]}`}>
-        <Icon className="w-6 h-6" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-      </div>
     </div>
   );
 }
@@ -558,7 +537,6 @@ export default function DashboardPage() {
   /* raw data */
   const [allStudents, setAllStudents] = useState([]);
   const [meta, setMeta] = useState({ departments: [], years: [], games: [] });
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   /* single delete */
@@ -606,7 +584,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAll();
     getStudentMeta().then(r => setMeta(r.data)).catch(() => {});
-    if (user?.role === 'admin') getAdminStats().then(r => setStats(r.data)).catch(() => {});
   }, []);
 
   /* reset to page 1 whenever a filter/sort/rows changes */
@@ -759,16 +736,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      {user?.role === 'admin' && stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={Users}       label="Total Students" value={stats.total}    color="blue"   />
-          <StatCard icon={CheckCircle} label="Approved"       value={stats.approved} color="green"  />
-          <StatCard icon={Clock}       label="Pending"        value={stats.pending}  color="yellow" />
-          <StatCard icon={Trophy}      label="Sports"         value={stats.games}    color="purple" />
-        </div>
-      )}
-
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
