@@ -1012,7 +1012,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Table ── */}
-      <div className="card overflow-hidden">
+      <div id="dashboard-table-card" className="card overflow-hidden">
         {loading ? (
           <div className="py-16 flex justify-center"><LoadingSpinner text="Loading students…" /></div>
         ) : combined.length === 0 ? (
@@ -1353,7 +1353,7 @@ export default function DashboardPage() {
       {/* Dashboard print CSS */}
       <style>{`
         @media print {
-          @page { size: A4 landscape; margin: 10mm; }
+          @page { size: A4 landscape; }
           html, body, main, main > div { margin: 0 !important; padding: 0 !important; }
           body * { visibility: hidden; }
           #dashboard-print-area, #dashboard-print-area * { visibility: visible; }
@@ -1375,6 +1375,8 @@ export default function DashboardPage() {
           #dashboard-print-area td:first-child,
           #dashboard-print-area th:last-child,
           #dashboard-print-area td:last-child { display: none !important; }
+          /* table on new page */
+          #dashboard-table-card { break-before: page; }
           /* stat cards */
           #dashboard-print-area .card { border: 1px solid #e5e7eb !important; background: #fff !important; border-radius: 0 !important; box-shadow: none !important; }
         }
