@@ -577,7 +577,7 @@ export default function StudentViewPage() {
               <img src="/university-logo.gif" alt="BU Logo" style={{ width: '115px', height: '115px', objectFit: 'contain', display: 'block' }} />
             </div>
             <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '6px', paddingBottom: '6px' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
+              <div id="proforma-uni-title" style={{ fontSize: '24px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
               <div style={{ fontSize: '15px' }}>TIRUCHIRAPPALLI - 620 024</div>
               <div style={{ fontSize: '20px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '4px' }}>Eligibility Proforma of Players</div>
               <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '3px' }}>Division: <em>Trichy / Thanjavur*</em></div>
@@ -909,6 +909,9 @@ export default function StudentViewPage() {
           }
           #element-to-print img {
             max-width: 100% !important;
+          }
+          #proforma-uni-title {
+            font-size: 28px !important;
           }
         }
       `}</style>
