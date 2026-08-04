@@ -1567,6 +1567,27 @@ export default function StudentFormPage() {
             </div>
           </Field>
 
+          {/* Hostel Name — only when HOSTELLER */}
+          {form.dayType === 'HOSTELLER' && (
+            <Field label="Hostel Name" required span={3} id="field-hostelName">
+              <ComboBox
+                value={form.hostelName}
+                onChange={(v) => { set('hostelName')(v); touch('hostelName', v); }}
+                options={hostelOptions}
+                placeholder="Select or Add Hostel Name"
+                required
+                error={errors.hostelName}
+                sanitizer={sanitizeAcademic}
+                maxLength={50}
+                minCreate={3}
+                onEditOption={mkEdit('hostel', hostelOptions, 'hostelName')}
+                onAddOption={mkAdd('hostel', hostelOptions)}
+                deleteWarning={deleteWarning} onDeleteOption={mkDel('hostel', hostelOptions, 'hostelName')}
+              />
+              <FieldMeta value={form.hostelName} max={50} always error={errors.hostelName} />
+            </Field>
+          )}
+
           {/* Shift */}
           <Field label="Shift" required span={3} id="field-shift">
             <div className="space-y-2">
@@ -1609,26 +1630,67 @@ export default function StudentFormPage() {
             </div>
           </Field>
 
-          {/* Hostel Name — only when HOSTELLER */}
-          {form.dayType === 'HOSTELLER' && (
-            <Field label="Hostel Name" required span={3} id="field-hostelName">
-              <ComboBox
-                value={form.hostelName}
-                onChange={(v) => { set('hostelName')(v); touch('hostelName', v); }}
-                options={hostelOptions}
-                placeholder="Select or Add Hostel Name"
-                required
-                error={errors.hostelName}
-                sanitizer={sanitizeAcademic}
-                maxLength={50}
-                minCreate={3}
-                onEditOption={mkEdit('hostel', hostelOptions, 'hostelName')}
-                onAddOption={mkAdd('hostel', hostelOptions)}
-                deleteWarning={deleteWarning} onDeleteOption={mkDel('hostel', hostelOptions, 'hostelName')}
-              />
-              <FieldMeta value={form.hostelName} max={50} always error={errors.hostelName} />
-            </Field>
-          )}
+          {/* ID Card PDF Upload */}
+          <div className="col-span-full">
+            <label className="label">
+              ID Card PDF
+              <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+            </label>
+
+            {/* Edit mode: show existing PDF with delete button */}
+            {isEdit && currentIdCardPdf && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                    Stored ID Card PDF
+                  </p>
+                  <a
+                    href={`/uploads/${currentIdCardPdf}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800"
+                  >
+                    View current PDF
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  disabled={deletingIdCard}
+                  onClick={async () => {
+                    if (!window.confirm('Delete the stored ID Card PDF? This cannot be undone.')) return;
+                    setDeletingIdCard(true);
+                    try {
+                      await deleteStudentIdCard(id);
+                      setCurrentIdCardPdf(null);
+                      addToast('ID Card PDF deleted');
+                    } catch {
+                      addToast('Failed to delete ID Card PDF', 'error');
+                    } finally {
+                      setDeletingIdCard(false);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                >
+                  {deletingIdCard ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  {deletingIdCard ? 'Deleting…' : 'Delete PDF'}
+                </button>
+              </div>
+            )}
+
+            <IdCardUpload
+              onValidationChange={setIdCardValidated}
+              onFileChange={setIdCardFile}
+              locked={!(
+                form.studentName.trim() &&
+                form.fatherName.trim() &&
+                form.motherName.trim() &&
+                form.dob.trim() &&
+                form.phoneNumber.trim().length === 10 &&
+                form.address.trim()
+              )}
+            />
+          </div>
 
         </Section>
 
@@ -1814,68 +1876,6 @@ export default function StudentFormPage() {
             <AadhaarUpload
               onValidationChange={setAadhaarValidated}
               onFileChange={setAadhaarFile}
-              locked={!(
-                form.studentName.trim() &&
-                form.fatherName.trim() &&
-                form.motherName.trim() &&
-                form.dob.trim() &&
-                form.phoneNumber.trim().length === 10 &&
-                form.address.trim()
-              )}
-            />
-          </div>
-
-          {/* ID Card PDF Upload */}
-          <div className="col-span-full">
-            <label className="label">
-              ID Card PDF
-              <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
-            </label>
-
-            {/* Edit mode: show existing PDF with delete button */}
-            {isEdit && currentIdCardPdf && (
-              <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">
-                <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                    Stored ID Card PDF
-                  </p>
-                  <a
-                    href={`/uploads/${currentIdCardPdf}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800"
-                  >
-                    View current PDF
-                  </a>
-                </div>
-                <button
-                  type="button"
-                  disabled={deletingIdCard}
-                  onClick={async () => {
-                    if (!window.confirm('Delete the stored ID Card PDF? This cannot be undone.')) return;
-                    setDeletingIdCard(true);
-                    try {
-                      await deleteStudentIdCard(id);
-                      setCurrentIdCardPdf(null);
-                      addToast('ID Card PDF deleted');
-                    } catch {
-                      addToast('Failed to delete ID Card PDF', 'error');
-                    } finally {
-                      setDeletingIdCard(false);
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                >
-                  {deletingIdCard ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                  {deletingIdCard ? 'Deleting…' : 'Delete PDF'}
-                </button>
-              </div>
-            )}
-
-            <IdCardUpload
-              onValidationChange={setIdCardValidated}
-              onFileChange={setIdCardFile}
               locked={!(
                 form.studentName.trim() &&
                 form.fatherName.trim() &&
