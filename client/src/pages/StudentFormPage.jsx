@@ -3,7 +3,7 @@ import { useNavigate, useParams, Link, useLocation, useBlocker } from 'react-rou
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent, uploadDraftFiles, deleteDraftFiles } from '../api';
-import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle, BookOpen, Save } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle, BookOpen, Save, Clock } from 'lucide-react';
 import { saveDraft, getDraft, deleteDraft, isDraftDuplicate, completionPercent, storableToFile } from '../utils/drafts';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
@@ -656,6 +656,8 @@ export default function StudentFormPage() {
   const [showPreview, setShowPreview] = useState(false);
 
   /* ── Draft state ── */
+  const [studentCreatedAt, setStudentCreatedAt] = useState(null);
+  const [studentUpdatedAt, setStudentUpdatedAt] = useState(null);
   const [draftId, setDraftId]             = useState(null);  // id of the draft being edited
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const pendingNavRef                      = useRef(null);    // path to navigate after modal action
@@ -826,6 +828,8 @@ export default function StudentFormPage() {
         if (s.marksheetPdf)    setCurrentMarksheetPdf(s.marksheetPdf);
         if (s.feesReceiptPdf)  setCurrentFeesReceiptPdf(s.feesReceiptPdf);
         setInitialVerified(!!s.documentsVerified);
+        if (s.createdAt) setStudentCreatedAt(s.createdAt);
+        if (s.updatedAt) setStudentUpdatedAt(s.updatedAt);
       })
       .catch(() => { addToast('Failed to load student', 'error'); navigate('/'); })
       .finally(() => setFetching(false));
@@ -1298,13 +1302,28 @@ export default function StudentFormPage() {
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               {isEdit ? 'Edit Student' : 'Add New Student'}
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {isEdit
-                ? 'Update the student information below'
-                : draftId
+            {isEdit && (studentCreatedAt || studentUpdatedAt) ? (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-1">
+                {studentCreatedAt && (
+                  <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                    <Clock className="w-3 h-3" />
+                    Created:&nbsp;{new Date(studentCreatedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                )}
+                {studentUpdatedAt && (
+                  <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                    <Clock className="w-3 h-3" />
+                    Last updated:&nbsp;{new Date(studentUpdatedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {draftId
                   ? 'Resuming saved draft — continue filling in details'
                   : 'Fill in the details to register a new sportsperson'}
-            </p>
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">

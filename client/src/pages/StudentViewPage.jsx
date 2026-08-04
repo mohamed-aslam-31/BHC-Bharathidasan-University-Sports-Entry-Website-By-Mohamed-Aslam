@@ -7,7 +7,7 @@ import { useToast } from '../components/Toast';
 import {
   ArrowLeft, Pencil, Printer, Trash2, AlertTriangle, Loader2,
   ChevronLeft, ChevronRight, FileText, User, BookOpen,
-  Download, Check,
+  Download, Check, Clock,
 } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -29,6 +29,14 @@ const PRINT_ITEMS = [
 
 /* ── Small helpers ────────────────────────────────────────────────────────── */
 const td = (v) => v || 'NIL';
+
+const formatDateTime = (iso) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  });
+};
 
 const formatDOB = (val) => {
   if (!val) return '—';
@@ -768,6 +776,19 @@ export default function StudentViewPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-1 pt-2">Sportsman Dress</p>
           <InfoRow label="T-Shirt Size" value={student.tshirt} />
           <InfoRow label="Track Size" value={student.track} />
+
+          {/* Record timestamps */}
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-1 pt-2">Record</p>
+          <div className="flex items-center gap-2 py-3 px-4 rounded-xl border bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/40">
+            <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-40 flex-shrink-0">Created</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{formatDateTime(student.createdAt)}</span>
+          </div>
+          <div className="flex items-center gap-2 py-3 px-4 rounded-xl border bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/40">
+            <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 w-40 flex-shrink-0">Last Updated</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{formatDateTime(student.updatedAt)}</span>
+          </div>
         </div>
       )}
 
