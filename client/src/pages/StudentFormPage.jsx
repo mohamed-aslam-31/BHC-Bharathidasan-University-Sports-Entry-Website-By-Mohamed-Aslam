@@ -1923,7 +1923,7 @@ export default function StudentFormPage() {
 
             <IdCardUpload
               onValidationChange={setIdCardValidated}
-              onFileChange={setIdCardFile}
+              onFileChange={(file) => { setIdCardFile(file); if (!file && draftIdCardPath) { deleteDraftFiles([draftIdCardPath]).catch(() => {}); setDraftIdCardPath(null); } }}
               initialFile={idCardFile}
               locked={!(
                 form.year &&
@@ -2138,7 +2138,7 @@ export default function StudentFormPage() {
 
             <AadhaarUpload
               onValidationChange={setAadhaarValidated}
-              onFileChange={setAadhaarFile}
+              onFileChange={(file) => { setAadhaarFile(file); if (!file && draftAadhaarPath) { deleteDraftFiles([draftAadhaarPath]).catch(() => {}); setDraftAadhaarPath(null); } }}
               initialFile={aadhaarFile}
               locked={!(
                 form.studentName.trim() &&
@@ -2257,7 +2257,7 @@ export default function StudentFormPage() {
 
             <MarksheetUpload
               onValidationChange={setMarksheetValidated}
-              onFileChange={setMarksheetFile}
+              onFileChange={(file) => { setMarksheetFile(file); if (!file && draftMarksheetPath) { deleteDraftFiles([draftMarksheetPath]).catch(() => {}); setDraftMarksheetPath(null); } }}
               initialFile={marksheetFile}
             />
           </div>
@@ -2389,7 +2389,7 @@ export default function StudentFormPage() {
 
             <FeesReceiptUpload
               onValidationChange={setFeesReceiptValidated}
-              onFileChange={setFeesReceiptFile}
+              onFileChange={(file) => { setFeesReceiptFile(file); if (!file && draftFeesReceiptPath) { deleteDraftFiles([draftFeesReceiptPath]).catch(() => {}); setDraftFeesReceiptPath(null); } }}
               initialFile={feesReceiptFile}
             />
           </div>
