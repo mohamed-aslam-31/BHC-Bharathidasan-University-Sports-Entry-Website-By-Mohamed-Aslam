@@ -1682,12 +1682,14 @@ export default function StudentFormPage() {
               onValidationChange={setIdCardValidated}
               onFileChange={setIdCardFile}
               locked={!(
-                form.studentName.trim() &&
-                form.fatherName.trim() &&
-                form.motherName.trim() &&
-                form.dob.trim() &&
-                form.phoneNumber.trim().length === 10 &&
-                form.address.trim()
+                form.year &&
+                form.rollNo.trim() &&
+                form.nameOfTheGame &&
+                form.gender &&
+                form.shift &&
+                form.studentType &&
+                form.dayType &&
+                (form.dayType !== 'HOSTELLER' || form.hostelName)
               )}
             />
           </div>
