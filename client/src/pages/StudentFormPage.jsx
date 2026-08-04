@@ -1175,7 +1175,6 @@ export default function StudentFormPage() {
         else fd.append(k, v);
       });
       if (imageFile)              fd.append('image',               imageFile);
-      else if (imageFromUrl)      fd.append('imageUrl',            imageFromUrl);
       if (aadhaarFile)            fd.append('aadhaarPdf',          aadhaarFile);
       else if (draftAadhaarPath)  fd.append('aadhaarDraftPath',    draftAadhaarPath);
       if (idCardFile)             fd.append('idCardPdf',           idCardFile);
@@ -1185,11 +1184,11 @@ export default function StudentFormPage() {
       if (feesReceiptFile)              fd.append('feesReceiptPdf',      feesReceiptFile);
       else if (draftFeesReceiptPath)    fd.append('feesReceiptDraftPath', draftFeesReceiptPath);
       if (isEdit) {
-        await updateStudent(id, fd);
+        await updateStudent(id, fd, imageFromUrl);
         await verifyStudent(id, verified);
         addToast('Student updated successfully');
       } else {
-        const res = await createStudent(fd);
+        const res = await createStudent(fd, imageFromUrl);
         if (verified && res.data.id) {
           await verifyStudent(res.data.id, true);
         }

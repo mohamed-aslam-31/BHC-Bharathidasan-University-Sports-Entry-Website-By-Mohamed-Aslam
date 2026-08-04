@@ -8,12 +8,14 @@ export const getOptions = () => axios.get('/api/options');
 export const addOption = (data) => axios.post('/api/options/add', data);
 export const renameOption = (data) => axios.post('/api/options/rename', data);
 export const deleteOption = (data) => axios.post('/api/options/delete', data);
-export const createStudent = (formData) => axios.post('/api/students', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
-export const updateStudent = (id, formData) => axios.put(`/api/students/${id}`, formData, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
+export const createStudent = (formData, imageUrl) => axios.post(
+  imageUrl ? `/api/students?imageUrl=${encodeURIComponent(imageUrl)}` : '/api/students',
+  formData
+);
+export const updateStudent = (id, formData, imageUrl) => axios.put(
+  imageUrl ? `/api/students/${id}?imageUrl=${encodeURIComponent(imageUrl)}` : `/api/students/${id}`,
+  formData
+);
 export const deleteStudent = (id) => axios.delete(`/api/students/${id}`);
 export const deleteStudentAadhaar = (id) => axios.delete(`/api/students/${id}/aadhaar`);
 export const deleteStudentIdCard  = (id) => axios.delete(`/api/students/${id}/idcard`);
@@ -50,9 +52,10 @@ export const fetchProxyImage = (url) =>
 // Self-registration (public — no auth token needed)
 export const selfRegVerify   = (data) => axios.post('/api/self-reg/verify', data);
 export const selfRegOptions  = ()     => axios.get('/api/self-reg/options');
-export const selfRegSubmit   = (fd)   => axios.post('/api/self-reg/submit', fd, {
-  headers: { 'Content-Type': 'multipart/form-data' },
-});
+export const selfRegSubmit   = (fd, imageUrl) => axios.post(
+  imageUrl ? `/api/self-reg/submit?imageUrl=${encodeURIComponent(imageUrl)}` : '/api/self-reg/submit',
+  fd
+);
 
 // Admin: self-reg access management
 export const getSelfRegAccess    = ()         => axios.get('/api/admin/self-reg-access');

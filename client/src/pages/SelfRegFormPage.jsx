@@ -502,13 +502,12 @@ export default function SelfRegFormPage() {
       fd.append('track',            form.track);
       // Files
       if (imageFile)         fd.append('image',    imageFile);
-      else if (imageFromUrl) fd.append('imageUrl', imageFromUrl);
       fd.append('aadhaarPdf',     aadhaarFile);
       fd.append('marksheetPdf',   marksheetFile);
       fd.append('feesReceiptPdf', feesReceiptFile);
       if (idCardFile) fd.append('idCardPdf', idCardFile);
 
-      await selfRegSubmit(fd);
+      await selfRegSubmit(fd, imageFromUrl);
       sessionStorage.removeItem('bhc_self_reg');
       setSubmitted(true);
     } catch (err) {
