@@ -579,6 +579,26 @@ export default function DashboardPage() {
     }
   };
 
+  const [bulkUnverifying, setBulkUnverifying] = useState(false);
+  const handleBulkUnverify = async () => {
+    const toUnverify = allStudents.filter(s =>
+      selected.has(s._id) && s.documentsVerified
+    );
+    if (!toUnverify.length) return;
+    setBulkUnverifying(true);
+    try {
+      await Promise.all(toUnverify.map(s => verifyStudent(s._id, false)));
+      setAllStudents((prev) => prev.map(s =>
+        toUnverify.some(v => v._id === s._id) ? { ...s, documentsVerified: false } : s
+      ));
+      addToast(`${toUnverify.length} student${toUnverify.length > 1 ? 's' : ''} marked as not verified`);
+    } catch {
+      addToast('Failed to update some students', 'error');
+    } finally {
+      setBulkUnverifying(false);
+    }
+  };
+
   /* bulk */
   const [selected, setSelected] = useState(new Set());
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
@@ -1245,6 +1265,35 @@ export default function DashboardPage() {
                 {bulkVerifying
                   ? <Loader2 className="w-5 h-5 animate-spin" />
                   : <Check className="w-5 h-5" />}
+              </button>
+            </div>
+          )}
+
+          {/* Unverify Selected — shown when at least one selected student is verified */}
+          {allStudents.some(s => selected.has(s._id) && s.documentsVerified) && (
+            <div className="group flex items-center gap-3">
+              <span className="opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 pointer-events-none
+                text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-xl shadow-lg
+                text-yellow-700 dark:text-white
+                bg-yellow-50/90 dark:bg-white/10 backdrop-blur-md
+                border border-yellow-200 dark:border-white/20">
+                Mark Not Verified
+              </span>
+              <button
+                onClick={handleBulkUnverify}
+                disabled={bulkUnverifying}
+                className="w-14 h-14 rounded-full flex items-center justify-center
+                  bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-500/40 dark:hover:bg-yellow-500/60
+                  backdrop-blur-md
+                  border border-yellow-400 dark:border-yellow-400/50
+                  text-white
+                  shadow-lg hover:shadow-yellow-500/40
+                  transition-all duration-200 hover:scale-110
+                  disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {bulkUnverifying
+                  ? <Loader2 className="w-5 h-5 animate-spin" />
+                  : <X className="w-5 h-5" />}
               </button>
             </div>
           )}
