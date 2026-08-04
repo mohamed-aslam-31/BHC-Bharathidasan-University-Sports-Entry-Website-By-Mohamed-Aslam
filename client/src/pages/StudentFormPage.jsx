@@ -1748,7 +1748,7 @@ export default function StudentFormPage() {
           {/* Address */}
           <Field label="Address" required span={2} id="field-address">
             <textarea
-              className={`input-field ${errors.address ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+              className={`input-field textarea-scroll ${errors.address ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               rows={3}
               placeholder="Enter your full address"
               value={form.address}
@@ -2189,7 +2189,7 @@ export default function StudentFormPage() {
           <div className="grid grid-cols-1">
             <div className="col-span-full">
               <textarea
-                className={`input-field ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
+                className={`input-field textarea-scroll ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
                 rows={3}
                 placeholder=""
                 maxLength={100}

@@ -35,6 +35,26 @@
   }
 }
 
+/* Glass scrollbar for textareas */
+.textarea-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+.textarea-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.textarea-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.textarea-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+}
+.textarea-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
 /* Lock background scroll when group-view modal is open */
 body.group-view-open {
   overflow: hidden;
