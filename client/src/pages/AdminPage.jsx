@@ -507,8 +507,18 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">#{s.rollNo}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                          <div className="relative w-7 h-7 rounded-full overflow-hidden bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
                             <span className="text-xs font-bold text-yellow-700 dark:text-yellow-400">{s.nameOfTheSportsperson?.charAt(0)}</span>
+                            {(s.image || s.rollNo) && (
+                              <img
+                                src={s.image
+                                  ? (s.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(s.image)}` : `/uploads/${s.image}`)
+                                  : `/api/proxy-image?url=${encodeURIComponent(`http://115.245.30.252:10108/photoUpdation/view/stu_pics/${s.rollNo}.jpg`)}`}
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover"
+                                onError={(e) => e.currentTarget.remove()}
+                              />
+                            )}
                           </div>
                           <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">{s.nameOfTheSportsperson}</span>
                         </div>
