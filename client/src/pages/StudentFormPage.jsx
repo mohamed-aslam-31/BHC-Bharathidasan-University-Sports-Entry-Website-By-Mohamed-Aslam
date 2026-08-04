@@ -994,7 +994,7 @@ export default function StudentFormPage() {
   };
 
   // Step 2 — called from preview overlay: actually save
-  const handleConfirmSave = async () => {
+  const handleConfirmSave = async (verified = false) => {
     setLoading(true);
     try {
       const fd = new FormData();
@@ -1002,6 +1002,7 @@ export default function StudentFormPage() {
         if (k === 'previousCourse') fd.append(k, v.trim() || 'NIL');
         else fd.append(k, v);
       });
+      fd.append('documentsVerified', String(verified));
       if (imageFile)        fd.append('image',          imageFile);
       if (aadhaarFile)      fd.append('aadhaarPdf',     aadhaarFile);
       if (idCardFile)       fd.append('idCardPdf',      idCardFile);
@@ -2272,6 +2273,7 @@ export default function StudentFormPage() {
           onBack={() => setShowPreview(false)}
         />
       )}
+
     </div>
   );
 }

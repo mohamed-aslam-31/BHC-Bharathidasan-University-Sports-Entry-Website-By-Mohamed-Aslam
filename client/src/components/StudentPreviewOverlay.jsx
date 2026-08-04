@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, Check, Loader2, FileText, User } from 'lucide-react';
 
 /* ── Cell styles (mirrors StudentViewPage exactly) ───────────────────────── */
@@ -69,6 +69,16 @@ export default function StudentPreviewOverlay({
 }) {
   const photoSrc = imagePreview || (currentImage ? `/uploads/${currentImage}` : null);
 
+  const docCount = [
+    aadhaarFile     || currentAadhaarPdf,
+    idCardFile      || currentIdCardPdf,
+    marksheetFile   || currentMarksheetPdf,
+    feesReceiptFile || currentFeesReceiptPdf,
+  ].filter(Boolean).length;
+  const allDocsReady = docCount === 4;
+
+  const [verified, setVerified] = useState(false);
+
   return (
     <div className="fixed inset-0 z-50 bg-gray-100 dark:bg-gray-950 overflow-y-auto">
       {/* ── Sticky action bar ── */}
@@ -96,7 +106,7 @@ export default function StudentPreviewOverlay({
             <button type="button" onClick={onBack} disabled={loading} className="btn-secondary text-sm px-4 disabled:opacity-50">
               Back to Edit
             </button>
-            <button type="button" onClick={onConfirm} disabled={loading} className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50">
+            <button type="button" onClick={() => onConfirm(verified)} disabled={loading} className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50">
               {loading
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
                 : <><Check className="w-4 h-4" /> {isEdit ? 'Confirm Update' : 'Confirm & Save'}</>
@@ -309,8 +319,17 @@ export default function StudentPreviewOverlay({
 
         {/* ── Uploaded documents card ── */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800">
+          <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Uploaded Documents</h2>
+            {allDocsReady ? (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />4/4 Uploaded
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />{docCount}/4 Uploaded
+              </span>
+            )}
           </div>
           <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <DocRow label="Aadhaar PDF">
@@ -326,6 +345,32 @@ export default function StudentPreviewOverlay({
               <DocStatus newFile={feesReceiptFile} existingPath={currentFeesReceiptPdf} label="Fees Receipt PDF" />
             </DocRow>
           </div>
+
+          {/* ── Verify toggle ── */}
+          <div className={`px-5 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between ${!allDocsReady ? 'opacity-40' : ''}`}>
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Mark Documents as Verified</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {allDocsReady ? 'All 4 documents uploaded — you can verify now.' : `Upload all 4 documents first (${docCount}/4 done).`}
+              </p>
+            </div>
+            <label className={`flex items-center gap-3 ${!allDocsReady ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+              <span className={`text-sm font-semibold ${verified ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                {verified ? 'Verified' : 'Not Verified'}
+              </span>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={verified}
+                  disabled={!allDocsReady}
+                  onChange={(e) => setVerified(e.target.checked)}
+                />
+                <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${verified ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${verified ? 'translate-x-5' : 'translate-x-0'}`} />
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Bottom action bar */}
@@ -333,7 +378,7 @@ export default function StudentPreviewOverlay({
           <button type="button" onClick={onBack} disabled={loading} className="btn-secondary px-6 disabled:opacity-50">
             Back to Edit
           </button>
-          <button type="button" onClick={onConfirm} disabled={loading} className="btn-primary px-8 flex items-center gap-2 disabled:opacity-50">
+          <button type="button" onClick={() => onConfirm(verified)} disabled={loading} className="btn-primary px-8 flex items-center gap-2 disabled:opacity-50">
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
               : <><Check className="w-4 h-4" /> {isEdit ? 'Confirm Update' : 'Confirm & Save'}</>

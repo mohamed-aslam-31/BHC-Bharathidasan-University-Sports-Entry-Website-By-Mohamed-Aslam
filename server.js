@@ -581,6 +581,7 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       studentType: d.studentType, dayType: d.dayType, hostelName: d.hostelName,
       tshirt: d.tshirt, track: d.track,
       status: req.user.role === 'admin' ? 'approved' : 'pending',
+      documentsVerified: d.documentsVerified === 'true',
     });
     const msg = student.status === 'approved' ? 'Student created successfully' : 'Student submitted for approval';
     res.json({ message: msg, savedTime });
@@ -649,6 +650,7 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       shift: d.shift,
       studentType: d.studentType, dayType: d.dayType, hostelName: d.hostelName,
       tshirt: d.tshirt, track: d.track,
+      documentsVerified: d.documentsVerified === 'true',
     });
     await student.save();
     res.json({ message: 'Student updated successfully' });
