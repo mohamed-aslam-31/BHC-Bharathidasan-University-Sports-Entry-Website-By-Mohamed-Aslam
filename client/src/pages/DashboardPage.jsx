@@ -9,7 +9,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, X,
   Users, Trophy, AlertTriangle, Check,
-  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding, User, Loader2
+  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding, User, Loader2, Printer
 } from 'lucide-react';
 
 /* ─── Circular checkbox ───────────────────────────────────────────────────── */
@@ -822,6 +822,9 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={() => window.print()} className="btn-secondary flex items-center gap-2 text-sm">
+            <Printer className="w-4 h-4" />Print
+          </button>
           <Link to="/students/new" className="btn-primary flex items-center gap-2 text-sm">
             <Plus className="w-4 h-4" />Add Student
           </Link>
@@ -901,6 +904,9 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* ── Print area: stats + table ── */}
+      <div id="dashboard-print-area">
 
       {/* ── Live filter summary ── */}
       <div className="space-y-3">
@@ -1198,6 +1204,8 @@ export default function DashboardPage() {
         )}
       </div>
 
+      </div>{/* end #dashboard-print-area */}
+
       {/* Single delete dialog */}
       {deleteTarget && (() => {
         const s = allStudents.find(x => x._id === deleteTarget);
@@ -1341,6 +1349,36 @@ export default function DashboardPage() {
           onDeleted={(ids) => { const gone = new Set(ids); setSelected(prev => { const n = new Set(prev); ids.forEach(id => n.delete(id)); return n; }); fetchAll(); }}
         />
       )}
+
+      {/* Dashboard print CSS */}
+      <style>{`
+        @media print {
+          @page { size: A4 landscape; margin: 10mm; }
+          html, body, main, main > div { margin: 0 !important; padding: 0 !important; }
+          body * { visibility: hidden; }
+          #dashboard-print-area, #dashboard-print-area * { visibility: visible; }
+          #dashboard-print-area {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+          }
+          /* hide icon-only elements that don't render well in print */
+          #dashboard-print-area button,
+          #dashboard-print-area a[href] { display: none !important; }
+          /* table: clean borders */
+          #dashboard-print-area table { border-collapse: collapse !important; width: 100% !important; font-size: 11px !important; }
+          #dashboard-print-area th,
+          #dashboard-print-area td { border: 1px solid #ccc !important; padding: 5px 8px !important; color: #000 !important; }
+          #dashboard-print-area thead tr { background: #f3f4f6 !important; }
+          /* hide checkbox col and actions col */
+          #dashboard-print-area th:first-child,
+          #dashboard-print-area td:first-child,
+          #dashboard-print-area th:last-child,
+          #dashboard-print-area td:last-child { display: none !important; }
+          /* stat cards */
+          #dashboard-print-area .card { border: 1px solid #e5e7eb !important; background: #fff !important; border-radius: 0 !important; box-shadow: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
