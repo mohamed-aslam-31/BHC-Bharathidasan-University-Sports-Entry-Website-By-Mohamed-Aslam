@@ -607,8 +607,8 @@ export default function SelfRegFormPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 py-8">
       {/* Header */}
       <div className="text-center mb-6">
-        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md shadow-blue-500/30">
-          <Trophy className="w-6 h-6 text-white" />
+        <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
+          <img src="/pe-logo.png" alt="Department of Physical Education" className="w-16 h-16 object-contain rounded-full" />
         </div>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
         <p className="text-xs text-gray-500 dark:text-gray-400">Bharathidasan University — Student Self Registration</p>

@@ -248,8 +248,8 @@ export default function SelfRegPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-4 py-10">
       {/* Header */}
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-          <Trophy className="w-8 h-8 text-white" />
+        <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
+          <img src="/pe-logo.png" alt="Department of Physical Education" className="w-20 h-20 object-contain rounded-full" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bharathidasan University — Student Self Registration</p>
@@ -337,8 +337,8 @@ function PageShell({ children }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-4 py-10">
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-          <Trophy className="w-8 h-8 text-white" />
+        <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
+          <img src="/pe-logo.png" alt="Department of Physical Education" className="w-20 h-20 object-contain rounded-full" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bharathidasan University — Student Self Registration</p>
