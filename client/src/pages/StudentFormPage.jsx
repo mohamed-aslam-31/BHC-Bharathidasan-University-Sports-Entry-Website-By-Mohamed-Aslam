@@ -1323,7 +1323,7 @@ export default function StudentFormPage() {
                 <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Unsaved progress</h2>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">You have unsaved progress</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   You've filled in {pct}% of this form. What would you like to do before leaving?
                 </p>
@@ -1336,7 +1336,14 @@ export default function StudentFormPage() {
                 className="w-full flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
               >
                 <Save className="w-4 h-4" />
-                Save as Draft &amp; Leave
+                Move to Draft
+              </button>
+              <button
+                type="button"
+                onClick={handleStay}
+                className="w-full flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-lg btn-secondary"
+              >
+                Cancel — Back to Editing
               </button>
               <button
                 type="button"
@@ -1345,13 +1352,6 @@ export default function StudentFormPage() {
               >
                 <Trash2 className="w-4 h-4" />
                 Clear All &amp; Leave
-              </button>
-              <button
-                type="button"
-                onClick={handleStay}
-                className="w-full flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-lg btn-secondary"
-              >
-                Stay on this page
               </button>
             </div>
           </div>
