@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, ChevronDown, X } from 'lucide-react';
-import { selfRegVerify, selfRegOptions } from '../api';
+import { Trophy, ChevronDown, X, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { selfRegVerify, selfRegOptions, selfRegReapply } from '../api';
 
 /* ── Read-only searchable combo ─────────────────────────────────────────────── */
 function ComboBox({ value, onChange, options, placeholder, error }) {
@@ -66,6 +66,148 @@ function ComboBox({ value, onChange, options, placeholder, error }) {
   );
 }
 
+const CONTACT = 'Department of Physical Education, Bishop Heber College';
+
+/* ── Status screens ─────────────────────────────────────────────────────────── */
+function PendingScreen({ onBack }) {
+  return (
+    <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+      <div className="w-14 h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Clock className="w-7 h-7 text-yellow-600 dark:text-yellow-400" />
+      </div>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Submission Pending</h2>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        Your proforma has been submitted and is <strong>still pending for verification</strong>.
+      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-500 mt-3">
+        If you need any assistance, please contact:
+      </p>
+      <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mt-1">{CONTACT}</p>
+      <button onClick={onBack} className="mt-6 text-xs text-gray-400 dark:text-gray-500 hover:underline">← Back</button>
+    </div>
+  );
+}
+
+function ApprovedScreen({ onBack }) {
+  return (
+    <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+      <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+        <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
+      </div>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Successfully Verified!</h2>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        You have been <strong>successfully verified</strong>. Your registration is complete.
+      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-500 mt-3">
+        If you need any help, please contact:
+      </p>
+      <p className="text-sm font-medium text-blue-700 dark:text-blue-400 mt-1">{CONTACT}</p>
+      <button onClick={onBack} className="mt-6 text-xs text-gray-400 dark:text-gray-500 hover:underline">← Back</button>
+    </div>
+  );
+}
+
+function RejectedScreen({ rejectionReason, form, onBack }) {
+  const navigate = useNavigate();
+  const [showReapply, setShowReapply] = useState(false);
+  const [reapplyReason, setReapplyReason] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+
+  const handleReapply = async () => {
+    if (!reapplyReason.trim()) { setError('Please provide a reason for reapplying.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      const res = await selfRegReapply({
+        rollNo: form.rollNo,
+        nameOfGame: form.nameOfGame,
+        year: form.year,
+        reapplyReason: reapplyReason.trim(),
+      });
+      // Store access data + existing student data for the form
+      sessionStorage.setItem('bhc_self_reg', JSON.stringify(form));
+      sessionStorage.setItem('bhc_self_reg_reapply', JSON.stringify({
+        studentId: res.data.studentId,
+        studentData: res.data.studentData,
+        reapplyReason: reapplyReason.trim(),
+      }));
+      navigate('/self-register/form');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to submit reapply request. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
+      <div className="text-center mb-5">
+        <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <XCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Submission Rejected</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Your previous submission was rejected.</p>
+      </div>
+
+      {rejectionReason && (
+        <div className="mb-5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl">
+          <p className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide mb-1">Reason from admin</p>
+          <p className="text-sm text-red-800 dark:text-red-300">{rejectionReason}</p>
+        </div>
+      )}
+
+      <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+        You may reapply to submit a new form with updated information.
+      </p>
+
+      {!showReapply ? (
+        <button
+          onClick={() => setShowReapply(true)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition-colors"
+        >
+          <RotateCcw className="w-4 h-4" /> Reapply
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Why do you want to reapply? <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={reapplyReason}
+              onChange={e => { setReapplyReason(e.target.value); setError(''); }}
+              rows={3}
+              placeholder="Briefly explain the reason for your reapplication…"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-sm outline-none transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50 resize-none"
+            />
+            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+          </div>
+          <button
+            onClick={handleReapply}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-medium text-sm transition-colors"
+          >
+            {loading
+              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>
+              : <><RotateCcw className="w-4 h-4" /> Submit Reapply Request</>}
+          </button>
+          <button onClick={() => { setShowReapply(false); setError(''); setReapplyReason(''); }}
+            className="w-full text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors py-1">
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
+        <p className="text-xs text-gray-400 dark:text-gray-500">Need help? Contact:</p>
+        <p className="text-xs font-medium text-blue-700 dark:text-blue-400">{CONTACT}</p>
+      </div>
+      <button onClick={onBack} className="mt-4 w-full text-xs text-gray-400 dark:text-gray-500 hover:underline">← Back</button>
+    </div>
+  );
+}
+
 /* ── Main page ──────────────────────────────────────────────────────────────── */
 export default function SelfRegPage() {
   const navigate = useNavigate();
@@ -74,6 +216,8 @@ export default function SelfRegPage() {
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
   const [options, setOptions]   = useState({ game: [], year: [] });
+  const [screen, setScreen]     = useState('form'); // 'form' | 'pending' | 'approved' | 'rejected'
+  const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
     selfRegOptions()
@@ -97,9 +241,18 @@ export default function SelfRegPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await selfRegVerify({ rollNo: form.rollNo, nameOfGame: form.nameOfGame, year: form.year });
-      // Store access data in sessionStorage so the form page can read it
+      const res = await selfRegVerify({ rollNo: form.rollNo, nameOfGame: form.nameOfGame, year: form.year });
+      const data = res.data;
+      if (data.status === 'pending') { setScreen('pending'); return; }
+      if (data.status === 'approved') { setScreen('approved'); return; }
+      if (data.status === 'rejected') {
+        setRejectionReason(data.rejectionReason || '');
+        setScreen('rejected');
+        return;
+      }
+      // success: true — proceed to form
       sessionStorage.setItem('bhc_self_reg', JSON.stringify(form));
+      sessionStorage.removeItem('bhc_self_reg_reapply');
       navigate('/self-register/form');
     } catch (err) {
       setApiError(err.response?.data?.error || 'Verification failed. Please try again.');
@@ -107,6 +260,12 @@ export default function SelfRegPage() {
       setLoading(false);
     }
   };
+
+  const handleBack = () => { setScreen('form'); setApiError(''); };
+
+  if (screen === 'pending')  return <PageShell><PendingScreen  onBack={handleBack} /></PageShell>;
+  if (screen === 'approved') return <PageShell><ApprovedScreen onBack={handleBack} /></PageShell>;
+  if (screen === 'rejected') return <PageShell><RejectedScreen rejectionReason={rejectionReason} form={form} onBack={handleBack} /></PageShell>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-4 py-10">
@@ -192,6 +351,22 @@ export default function SelfRegPage() {
         </form>
       </div>
 
+      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© {new Date().getFullYear()} Bharathidasan University · Sports Division</p>
+    </div>
+  );
+}
+
+function PageShell({ children }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-4 py-10">
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+          <Trophy className="w-8 h-8 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bharathidasan University — Student Self Registration</p>
+      </div>
+      {children}
       <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© {new Date().getFullYear()} Bharathidasan University · Sports Division</p>
     </div>
   );

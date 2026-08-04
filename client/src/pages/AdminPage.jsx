@@ -263,6 +263,7 @@ export default function AdminPage() {
   const [pending, setPending]       = useState([]);
   const [loadingPending, setLoadingPending] = useState(true);
   const [rejectTarget, setRejectTarget]     = useState(null);
+  const [rejectReason, setRejectReason]     = useState('');
 
   // Access management state
   const [accessList, setAccessList]         = useState([]);
@@ -359,14 +360,17 @@ export default function AdminPage() {
   };
 
   const handleReject = async () => {
+    if (!rejectReason.trim()) return;
     try {
-      await rejectStudent(rejectTarget);
-      addToast('Student rejected and removed');
+      await rejectStudent(rejectTarget, rejectReason.trim());
+      addToast('Student rejected');
       setPending(p => p.filter(s => s._id !== rejectTarget));
       setRejectTarget(null);
+      setRejectReason('');
     } catch {
       addToast('Failed to reject student', 'error');
       setRejectTarget(null);
+      setRejectReason('');
     }
   };
 
@@ -841,15 +845,40 @@ export default function AdminPage() {
         </div>
       )}
 
-      <ConfirmDialog
-        open={!!rejectTarget}
-        title="Reject Student"
-        message="This student's form will be permanently deleted. This action cannot be undone."
-        confirmLabel="Reject & Delete"
-        confirmClass="btn-danger"
-        onConfirm={handleReject}
-        onCancel={() => setRejectTarget(null)}
-      />
+      {/* Reject with reason modal */}
+      {!!rejectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-red-500" /> Reject Student
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              The student will be notified with your reason. They may reapply if access is still granted.
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Rejection reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                rows={3}
+                placeholder="e.g. Incomplete documents, incorrect information…"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-sm outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:border-red-400 focus:ring-2 focus:ring-red-300/40 resize-none transition-colors"
+              />
+              {!rejectReason.trim() && <p className="mt-1 text-xs text-red-500">A reason is required.</p>}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setRejectTarget(null); setRejectReason(''); }}
+                className="flex-1 btn-secondary text-sm">Cancel</button>
+              <button onClick={handleReject} disabled={!rejectReason.trim()}
+                className="flex-1 flex items-center justify-center gap-2 text-sm px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                <XCircle className="w-4 h-4" /> Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <ConfirmDialog
         open={!!deleteAccessTarget}
         title="Revoke Access"

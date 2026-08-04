@@ -27,7 +27,7 @@ export const verifyStudent = (id, verified) => axios.patch(`/api/students/${id}/
 // Admin
 export const getPendingStudents = () => axios.get('/api/admin/pending');
 export const approveStudent = (id) => axios.post(`/api/admin/approve/${id}`);
-export const rejectStudent = (id) => axios.post(`/api/admin/reject/${id}`);
+export const rejectStudent = (id, reason) => axios.post(`/api/admin/reject/${id}`, { reason });
 export const getAdminStats = () => axios.get('/api/admin/stats');
 export const getUsers = () => axios.get('/api/admin/users');
 export const createUser = (data) => axios.post('/api/admin/users', data);
@@ -54,6 +54,11 @@ export const selfRegVerify   = (data) => axios.post('/api/self-reg/verify', data
 export const selfRegOptions  = ()     => axios.get('/api/self-reg/options');
 export const selfRegSubmit   = (fd, imageUrl) => axios.post(
   imageUrl ? `/api/self-reg/submit?imageUrl=${encodeURIComponent(imageUrl)}` : '/api/self-reg/submit',
+  fd
+);
+export const selfRegReapply  = (data) => axios.post('/api/self-reg/reapply', data);
+export const selfRegResubmit = (id, fd, imageUrl) => axios.put(
+  imageUrl ? `/api/self-reg/resubmit/${id}?imageUrl=${encodeURIComponent(imageUrl)}` : `/api/self-reg/resubmit/${id}`,
   fd
 );
 

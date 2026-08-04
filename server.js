@@ -64,7 +64,9 @@ const StudentSchema = new mongoose.Schema({
   studentType:           String,
   dayType:               String,
   hostelName:            String,
-  status:                { type: String, default: 'approved', enum: ['pending', 'approved'] },
+  status:                { type: String, default: 'approved', enum: ['pending', 'approved', 'rejected'] },
+  rejectionReason:       { type: String, default: '' },
+  reapplyReason:         { type: String, default: '' },
   documentsVerified:     { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -893,12 +895,70 @@ app.post('/api/admin/approve/:id', authMiddleware, adminOnly, async (req, res) =
 
 app.post('/api/admin/reject/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
+    const { reason } = req.body;
+    await Student.findByIdAndUpdate(req.params.id, {
+      status: 'rejected',
+      rejectionReason: reason || '',
+    });
+    res.json({ message: 'Student rejected' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Self-reg reapply request (no auth) — student provides reason and gets existing data back
+app.post('/api/self-reg/reapply', async (req, res) => {
+  try {
+    const { rollNo, nameOfGame, year, reapplyReason } = req.body;
+    if (!rollNo || !nameOfGame || !year)
+      return res.status(400).json({ error: 'Roll number, game and year are required' });
+    const access = await SelfRegAccess.findOne({ rollNo, nameOfGame, year });
+    if (!access)
+      return res.status(403).json({ error: 'Access not granted for this combination. Contact your admin.' });
+    const student = await Student.findOne({ rollNo, nameOfTheGame: nameOfGame, year, status: 'rejected' });
+    if (!student)
+      return res.status(404).json({ error: 'No rejected submission found for this combination.' });
+    await Student.findByIdAndUpdate(student._id, { reapplyReason: reapplyReason || '' });
+    res.json({ success: true, studentId: student._id, studentData: student });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Self-reg resubmit (no auth) — update existing rejected record, reset to pending
+app.put('/api/self-reg/resubmit/:id', uploadFields, async (req, res) => {
+  try {
     const student = await Student.findById(req.params.id);
-    if (student) {
-      deleteStudentFiles(student);
-      await student.deleteOne();
-    }
-    res.json({ message: 'Student rejected and removed' });
+    if (!student) return res.status(404).json({ error: 'Submission not found' });
+    if (student.status !== 'rejected') return res.status(400).json({ error: 'Only rejected submissions can be resubmitted' });
+
+    const d = req.body;
+    const imageFile       = req.files?.image?.[0];
+    const aadhaarFile     = req.files?.aadhaarPdf?.[0];
+    const idCardFile      = req.files?.idCardPdf?.[0];
+    const marksheetFile   = req.files?.marksheetPdf?.[0];
+    const feesReceiptFile = req.files?.feesReceiptPdf?.[0];
+
+    const updates = {
+      nameOfTheSportsperson: d.studentName, fathersName: d.fatherName,
+      motherName: d.motherName, dateOfBirth: d.dob, nameOfExam: d.nameOfExam,
+      dateAndYear: d.dateAndYear, presentClass: d.presentClass,
+      nameOfThePresentClass: d.nameOfThePresentClass, durationOfCourse: d.durationOfCourse,
+      university: d.university, presentCourse: d.presentCourse,
+      graduateCourse: d.graduateCourse || 'NIL', pgCourse: d.pgCourse || 'NIL',
+      previousCourse: d.previousCourse || 'NIL',
+      address: d.address, phoneNumber: d.phoneNumber,
+      gender: d.gender, aadharNumber: d.aadharNumber, bloodGroup: d.bloodGroup,
+      shift: d.shift, studentType: d.studentType, dayType: d.dayType,
+      hostelName: d.hostelName || '', tshirt: d.tshirt || '', track: d.track || '',
+      status: 'pending', rejectionReason: '', reapplyReason: '',
+    };
+
+    if (imageFile) updates.image = imageFile.filename;
+    else if (req.query.imageUrl) updates.image = req.query.imageUrl;
+    if (aadhaarFile)     updates.aadhaarPdf     = `aadhaar/${aadhaarFile.filename}`;
+    if (idCardFile)      updates.idCardPdf       = `idcard/${idCardFile.filename}`;
+    if (marksheetFile)   updates.marksheetPdf    = `marksheet/${marksheetFile.filename}`;
+    if (feesReceiptFile) updates.feesReceiptPdf  = `feesreceipt/${feesReceiptFile.filename}`;
+
+    await Student.findByIdAndUpdate(student._id, updates);
+    res.json({ success: true, message: 'Resubmission received. Awaiting admin approval.' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -961,8 +1021,14 @@ app.post('/api/self-reg/verify', async (req, res) => {
     if (!access)
       return res.status(403).json({ error: 'Access not granted for this combination. Contact your admin.' });
     const existing = await Student.findOne({ rollNo, nameOfTheGame: nameOfGame, year });
-    if (existing)
-      return res.status(409).json({ error: 'You have already submitted a registration for this game and year.' });
+    if (existing) {
+      if (existing.status === 'pending')
+        return res.json({ status: 'pending' });
+      if (existing.status === 'approved')
+        return res.json({ status: 'approved' });
+      if (existing.status === 'rejected')
+        return res.json({ status: 'rejected', rejectionReason: existing.rejectionReason || '', studentId: existing._id });
+    }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload, Loader2, User, Check } from 'lucide-react';
-import { selfRegOptions, selfRegSubmit, fetchProxyImage } from '../api';
+import { selfRegOptions, selfRegSubmit, selfRegResubmit, fetchProxyImage } from '../api';
 import Cropper from 'react-easy-crop';
 import AadhaarUpload from '../components/AadhaarUpload';
 import MarksheetUpload from '../components/MarksheetUpload';
@@ -247,10 +247,65 @@ export default function SelfRegFormPage() {
 
   /* ── Access data from sessionStorage ── */
   const [accessData, setAccessData] = useState(null);
+  const [reapplyData, setReapplyData] = useState(null); // {studentId, studentData, reapplyReason}
+
   useEffect(() => {
     const stored = sessionStorage.getItem('bhc_self_reg');
     if (!stored) { navigate('/self-register', { replace: true }); return; }
-    try { setAccessData(JSON.parse(stored)); } catch { navigate('/self-register', { replace: true }); }
+    try { setAccessData(JSON.parse(stored)); } catch { navigate('/self-register', { replace: true }); return; }
+
+    // Check for reapply mode
+    const reapplyStored = sessionStorage.getItem('bhc_self_reg_reapply');
+    if (reapplyStored) {
+      try {
+        const rd = JSON.parse(reapplyStored);
+        setReapplyData(rd);
+        // Pre-fill form from existing student data
+        const s = rd.studentData;
+        if (s) {
+          setForm({
+            studentName:           s.nameOfTheSportsperson || '',
+            fatherName:            s.fathersName           || '',
+            motherName:            s.motherName            || '',
+            dob:                   s.dateOfBirth           || '',
+            gender:                s.gender                || '',
+            bloodGroup:            s.bloodGroup            || '',
+            phoneNumber:           s.phoneNumber           || '',
+            aadharNumber:          s.aadharNumber          || '',
+            address:               s.address               || '',
+            studentType:           s.studentType           || '',
+            dayType:               s.dayType               || '',
+            hostelName:            s.hostelName            || '',
+            shift:                 s.shift                 || '',
+            nameOfExam:            s.nameOfExam            || '',
+            dateAndYear:           s.dateAndYear           || '',
+            presentClass:          s.presentClass          || '',
+            nameOfThePresentClass: s.nameOfThePresentClass || '',
+            durationOfCourse:      s.durationOfCourse      || '',
+            presentCourse:         s.presentCourse         || '',
+            university:            s.university            || '',
+            graduateCourse:        s.graduateCourse        || 'NIL',
+            pgCourse:              s.pgCourse              || 'NIL',
+            previousCourse:        s.previousCourse        || '',
+            tshirt:                s.tshirt                || '',
+            track:                 s.track                 || '',
+          });
+          // Mark existing docs as validated so student can proceed without re-uploading
+          if (s.aadhaarPdf)     setAadhaarValidated(true);
+          if (s.idCardPdf)      setIdCardValidated(true);
+          if (s.marksheetPdf)   setMarksheetValidated(true);
+          if (s.feesReceiptPdf) setFeesReceiptValidated(true);
+          // Set photo preview from existing image
+          if (s.image) {
+            const imgSrc = s.image.startsWith('http')
+              ? `/api/proxy-image?url=${encodeURIComponent(s.image)}`
+              : `/uploads/${s.image}`;
+            setImagePreview(imgSrc);
+            setImageFromUrl(s.image.startsWith('http') ? s.image : null);
+          }
+        }
+      } catch { /* ignore */ }
+    }
   }, []);
 
   /* ── Form state ── */
@@ -500,15 +555,23 @@ export default function SelfRegFormPage() {
       fd.append('previousCourse',   form.previousCourse || 'NIL');
       fd.append('tshirt',           form.tshirt);
       fd.append('track',            form.track);
-      // Files
-      if (imageFile)         fd.append('image',    imageFile);
-      fd.append('aadhaarPdf',     aadhaarFile);
-      fd.append('marksheetPdf',   marksheetFile);
-      fd.append('feesReceiptPdf', feesReceiptFile);
-      if (idCardFile) fd.append('idCardPdf', idCardFile);
+      // Files — only append newly uploaded files
+      if (imageFile)         fd.append('image',          imageFile);
+      if (aadhaarFile)       fd.append('aadhaarPdf',     aadhaarFile);
+      if (marksheetFile)     fd.append('marksheetPdf',   marksheetFile);
+      if (feesReceiptFile)   fd.append('feesReceiptPdf', feesReceiptFile);
+      if (idCardFile)        fd.append('idCardPdf',      idCardFile);
 
-      await selfRegSubmit(fd, imageFromUrl);
-      sessionStorage.removeItem('bhc_self_reg');
+      if (reapplyData) {
+        // Reapply mode: update the existing rejected record
+        await selfRegResubmit(reapplyData.studentId, fd, imageFromUrl);
+        sessionStorage.removeItem('bhc_self_reg');
+        sessionStorage.removeItem('bhc_self_reg_reapply');
+      } else {
+        // Normal new submission
+        await selfRegSubmit(fd, imageFromUrl);
+        sessionStorage.removeItem('bhc_self_reg');
+      }
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err.response?.data?.error || 'Submission failed. Please try again.');
