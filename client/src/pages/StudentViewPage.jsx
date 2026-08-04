@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { PDFDocument } from 'pdf-lib';
 import html2canvas from 'html2canvas';
-import { getStudent, deleteStudent } from '../api';
+import { getStudent, deleteStudent, verifyStudent } from '../api';
 import { useToast } from '../components/Toast';
 import {
   ArrowLeft, Pencil, Printer, Trash2, AlertTriangle, Loader2,
@@ -391,6 +391,21 @@ export default function StudentViewPage() {
     return () => window.removeEventListener('beforeprint', fit);
   }, [student, page]);
 
+  const [verifying, setVerifying] = useState(false);
+
+  const handleVerify = async (checked) => {
+    setVerifying(true);
+    try {
+      await verifyStudent(id, checked);
+      setStudent((prev) => ({ ...prev, documentsVerified: checked }));
+      addToast(checked ? 'Documents marked as verified' : 'Verification removed');
+    } catch {
+      addToast('Failed to update verification', 'error');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -720,6 +735,49 @@ export default function StudentViewPage() {
       {/* ══ PAGE 2: DOCUMENTS ═══════════════════════════════════════════════ */}
       {page === 2 && (
         <div className="no-print print:hidden space-y-8">
+          {/* ── Document count & verify toggle ── */}
+          {(() => {
+            const docs = [student.aadhaarPdf, student.idCardPdf, student.marksheetPdf, student.feesReceiptPdf];
+            const uploaded = docs.filter(Boolean).length;
+            const allUploaded = uploaded === 4;
+            return (
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40">
+                <div className="flex items-center gap-2">
+                  {student.documentsVerified ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                      <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                      Verified
+                    </span>
+                  ) : allUploaded ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
+                      <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />
+                      Not Verified
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                      <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                      {uploaded}/4 Documents Uploaded
+                    </span>
+                  )}
+                </div>
+                <label className={`flex items-center gap-2 cursor-pointer select-none ${!allUploaded ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Mark as Verified</span>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={!!student.documentsVerified}
+                      disabled={verifying || !allUploaded}
+                      onChange={(e) => handleVerify(e.target.checked)}
+                    />
+                    <div className={`w-10 h-6 rounded-full transition-colors ${student.documentsVerified ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${student.documentsVerified ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                </label>
+              </div>
+            );
+          })()}
+
           <DocPanel title="Aadhaar Card"   path={student.aadhaarPdf}     icon={FileText} />
           <DocPanel title="ID Card"        path={student.idCardPdf}      icon={FileText} />
           <DocPanel title="12th Marksheet" path={student.marksheetPdf}   icon={FileText} />

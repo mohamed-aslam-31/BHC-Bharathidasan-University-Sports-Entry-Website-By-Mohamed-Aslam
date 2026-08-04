@@ -951,7 +951,7 @@ export default function DashboardPage() {
                     <th className="pl-4 pr-2 py-3 w-10">
                       <CircleCheckbox checked={allPageChecked} indeterminate={somePageChecked} onChange={toggleAll} />
                     </th>
-                    {['Roll No', 'Name', 'Game', 'Gender', 'Department', 'Year', 'Actions'].map(h => (
+                    {['Roll No', 'Name', 'Game', 'Gender', 'Department', 'Year', 'Status', 'Actions'].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
@@ -999,6 +999,33 @@ export default function DashboardPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[160px] truncate">{s.presentCourse || '—'}</td>
                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">{s.year || '—'}</td>
+                        <td className="px-4 py-3">
+                          {(() => {
+                            const uploaded = [s.aadhaarPdf, s.idCardPdf, s.marksheetPdf, s.feesReceiptPdf].filter(Boolean).length;
+                            if (s.documentsVerified) {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 whitespace-nowrap">
+                                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block flex-shrink-0" />
+                                  Verified
+                                </span>
+                              );
+                            }
+                            if (uploaded === 4) {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 whitespace-nowrap">
+                                  <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block flex-shrink-0" />
+                                  Not Verified
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 whitespace-nowrap">
+                                <span className="w-2 h-2 rounded-full bg-red-500 inline-block flex-shrink-0" />
+                                {uploaded}/4 Docs
+                              </span>
+                            );
+                          })()}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <Link to={`/students/${s._id}/view`} className="p-1.5 rounded-lg text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors" title="View">

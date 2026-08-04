@@ -61,7 +61,8 @@ const StudentSchema = new mongoose.Schema({
   studentType:           String,
   dayType:               String,
   hostelName:            String,
-  status:                { type: String, default: 'approved', enum: ['pending', 'approved'] }
+  status:                { type: String, default: 'approved', enum: ['pending', 'approved'] },
+  documentsVerified:     { type: Boolean, default: false }
 }, { timestamps: true });
 
 const OptionListSchema = new mongoose.Schema({
@@ -737,6 +738,17 @@ app.post('/api/students/bulk-delete', authMiddleware, async (req, res) => {
       await s.deleteOne();
     }
     res.json({ message: `${students.length} student(s) deleted` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── VERIFY DOCUMENTS ────────────────────────────────────────────────────────
+app.patch('/api/students/:id/verify', authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    student.documentsVerified = !!req.body.verified;
+    await student.save();
+    res.json({ documentsVerified: student.documentsVerified });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

@@ -20,6 +20,7 @@ export const deleteStudentIdCard  = (id) => axios.delete(`/api/students/${id}/id
 export const deleteStudentMarksheet  = (id) => axios.delete(`/api/students/${id}/marksheet`);
 export const deleteStudentFeesReceipt = (id) => axios.delete(`/api/students/${id}/feesreceipt`);
 export const bulkDeleteStudents = (ids) => axios.post('/api/students/bulk-delete', { ids });
+export const verifyStudent = (id, verified) => axios.patch(`/api/students/${id}/verify`, { verified });
 
 // Admin
 export const getPendingStudents = () => axios.get('/api/admin/pending');
