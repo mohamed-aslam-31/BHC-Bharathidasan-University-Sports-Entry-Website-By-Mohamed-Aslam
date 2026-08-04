@@ -39,12 +39,12 @@ export function storableToFile({ dataUrl, name, type }) {
 }
 
 /**
- * Save a draft. Accepts an optional `files` map of { key: File }.
- * Files are serialised to base64 data-URLs so they survive page refreshes.
- * If the combined payload exceeds the localStorage quota the function throws
- * with a user-readable message.
+ * Save a draft.
+ * `files`       — map of { key: File } for base64-serialised files (image only; PDFs go server-side).
+ * `serverFiles` — map of server-relative paths already uploaded to /api/draft-files,
+ *                 e.g. { aadhaarPath: 'drafts/...', idCardPath: 'drafts/...', ... }
  */
-export async function saveDraft(id, form, files = {}) {
+export async function saveDraft(id, form, files = {}, serverFiles = {}) {
   const drafts = getDrafts();
   const now    = new Date().toISOString();
 
@@ -65,6 +65,7 @@ export async function saveDraft(id, form, files = {}) {
     id,
     form,
     files: serialisedFiles,
+    serverFiles, // server-relative paths for PDFs uploaded via /api/draft-files
     createdAt: idx >= 0 ? drafts[idx].createdAt : now,
     updatedAt: now,
   };
@@ -127,8 +128,10 @@ export function completionPercent(form) {
   return Math.round((filled / required.length) * 100);
 }
 
-/** Count how many document files are stored in a draft */
+/** Count how many document files are stored in a draft (base64 + server-side) */
 export function draftFileCount(draft) {
-  if (!draft?.files) return 0;
-  return Object.keys(draft.files).length;
+  let count = 0;
+  if (draft?.files) count += Object.keys(draft.files).length;
+  if (draft?.serverFiles) count += Object.values(draft.serverFiles).filter(Boolean).length;
+  return count;
 }

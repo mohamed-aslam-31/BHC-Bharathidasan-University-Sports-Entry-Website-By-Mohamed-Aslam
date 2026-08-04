@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent, uploadDraftFiles, deleteDraftFiles } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle, BookOpen, Save } from 'lucide-react';
 import { saveDraft, getDraft, deleteDraft, isDraftDuplicate, completionPercent, storableToFile } from '../utils/drafts';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -683,6 +683,11 @@ export default function StudentFormPage() {
   const [deletingMarksheet, setDeletingMarksheet]       = useState(false);
   const [feesReceiptValidated, setFeesReceiptValidated] = useState(false);
   const [feesReceiptFile, setFeesReceiptFile]           = useState(null);
+  // Server-side draft file paths (uploaded to /api/draft-files on "Move to Draft")
+  const [draftAadhaarPath,     setDraftAadhaarPath]     = useState(null);
+  const [draftIdCardPath,      setDraftIdCardPath]      = useState(null);
+  const [draftMarksheetPath,   setDraftMarksheetPath]   = useState(null);
+  const [draftFeesReceiptPath, setDraftFeesReceiptPath] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [currentFeesReceiptPdf, setCurrentFeesReceiptPdf] = useState(null);
@@ -717,27 +722,27 @@ export default function StudentFormPage() {
     setDraftId(resumeId);
     setForm((prev) => ({ ...prev, ...draft.form }));
 
-    // Restore uploaded files from serialised base64 data
+    // Restore photo from base64 (images are small, kept in localStorage)
+    if (draft.files?.imageFile) {
+      try {
+        const file = storableToFile(draft.files.imageFile);
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+      } catch { /* skip */ }
+    }
+    // Restore server-side draft PDF paths
+    if (draft.serverFiles) {
+      if (draft.serverFiles.aadhaarPath)     setDraftAadhaarPath(draft.serverFiles.aadhaarPath);
+      if (draft.serverFiles.idCardPath)      setDraftIdCardPath(draft.serverFiles.idCardPath);
+      if (draft.serverFiles.marksheetPath)   setDraftMarksheetPath(draft.serverFiles.marksheetPath);
+      if (draft.serverFiles.feesReceiptPath) setDraftFeesReceiptPath(draft.serverFiles.feesReceiptPath);
+    }
+    // Legacy: restore PDFs from base64 (drafts saved before server-side storage was added)
     if (draft.files) {
-      if (draft.files.imageFile) {
-        try {
-          const file = storableToFile(draft.files.imageFile);
-          setImageFile(file);
-          setImagePreview(URL.createObjectURL(file));
-        } catch { /* skip */ }
-      }
-      if (draft.files.aadhaarFile) {
-        try { setAadhaarFile(storableToFile(draft.files.aadhaarFile)); } catch { /* skip */ }
-      }
-      if (draft.files.idCardFile) {
-        try { setIdCardFile(storableToFile(draft.files.idCardFile)); } catch { /* skip */ }
-      }
-      if (draft.files.marksheetFile) {
-        try { setMarksheetFile(storableToFile(draft.files.marksheetFile)); } catch { /* skip */ }
-      }
-      if (draft.files.feesReceiptFile) {
-        try { setFeesReceiptFile(storableToFile(draft.files.feesReceiptFile)); } catch { /* skip */ }
-      }
+      if (draft.files.aadhaarFile)     try { setAadhaarFile(storableToFile(draft.files.aadhaarFile)); }     catch { /* skip */ }
+      if (draft.files.idCardFile)      try { setIdCardFile(storableToFile(draft.files.idCardFile)); }       catch { /* skip */ }
+      if (draft.files.marksheetFile)   try { setMarksheetFile(storableToFile(draft.files.marksheetFile)); } catch { /* skip */ }
+      if (draft.files.feesReceiptFile) try { setFeesReceiptFile(storableToFile(draft.files.feesReceiptFile)); } catch { /* skip */ }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1062,11 +1067,41 @@ export default function StudentFormPage() {
   const handleMoveToDraft = async (thenNavigate = false) => {
     const id = draftId || `draft_${Date.now()}`;
     setDraftId(id);
+
+    // Upload any newly-selected PDF files to the server
+    const newServerFiles = {
+      aadhaarPath:     draftAadhaarPath,
+      idCardPath:      draftIdCardPath,
+      marksheetPath:   draftMarksheetPath,
+      feesReceiptPath: draftFeesReceiptPath,
+    };
+    const oldPathsToDelete = [];
     try {
-      await saveDraft(id, form, { imageFile, aadhaarFile, idCardFile, marksheetFile, feesReceiptFile });
+      const pdfsToUpload = {};
+      if (aadhaarFile instanceof File)     pdfsToUpload.aadhaarPdf     = aadhaarFile;
+      if (idCardFile instanceof File)      pdfsToUpload.idCardPdf      = idCardFile;
+      if (marksheetFile instanceof File)   pdfsToUpload.marksheetPdf   = marksheetFile;
+      if (feesReceiptFile instanceof File) pdfsToUpload.feesReceiptPdf = feesReceiptFile;
+
+      if (Object.keys(pdfsToUpload).length > 0) {
+        const fd = new FormData();
+        for (const [field, file] of Object.entries(pdfsToUpload)) fd.append(field, file);
+        const { data } = await uploadDraftFiles(fd);
+        if (data.aadhaarPath)     { if (draftAadhaarPath)     oldPathsToDelete.push(draftAadhaarPath);     newServerFiles.aadhaarPath     = data.aadhaarPath;     setDraftAadhaarPath(data.aadhaarPath);     setAadhaarFile(null); }
+        if (data.idCardPath)      { if (draftIdCardPath)      oldPathsToDelete.push(draftIdCardPath);      newServerFiles.idCardPath      = data.idCardPath;      setDraftIdCardPath(data.idCardPath);       setIdCardFile(null); }
+        if (data.marksheetPath)   { if (draftMarksheetPath)   oldPathsToDelete.push(draftMarksheetPath);   newServerFiles.marksheetPath   = data.marksheetPath;   setDraftMarksheetPath(data.marksheetPath); setMarksheetFile(null); }
+        if (data.feesReceiptPath) { if (draftFeesReceiptPath) oldPathsToDelete.push(draftFeesReceiptPath); newServerFiles.feesReceiptPath = data.feesReceiptPath; setDraftFeesReceiptPath(data.feesReceiptPath); setFeesReceiptFile(null); }
+      }
+    } catch {
+      addToast('Documents could not be saved to server — they will need to be re-uploaded when you resume', 'warning');
+    }
+    if (oldPathsToDelete.length) deleteDraftFiles(oldPathsToDelete).catch(() => {});
+
+    try {
+      await saveDraft(id, form, { imageFile }, newServerFiles);
       addToast('Saved to drafts');
     } catch (err) {
-      addToast(err.message || 'Saved to drafts (documents could not be stored)', 'warning');
+      addToast(err.message || 'Saved to drafts', 'warning');
     }
     notifyNavbar();
     setShowLeaveModal(false);
@@ -1078,6 +1113,9 @@ export default function StudentFormPage() {
 
   const handleClearAndLeave = () => {
     if (draftId) { deleteDraft(draftId); notifyNavbar(); }
+    // Clean up any server-side draft files
+    const allDraftPaths = [draftAadhaarPath, draftIdCardPath, draftMarksheetPath, draftFeesReceiptPath].filter(Boolean);
+    if (allDraftPaths.length) deleteDraftFiles(allDraftPaths).catch(() => {});
     setShowLeaveModal(false);
     const dest = pendingNavRef.current || '/';
     pendingNavRef.current = null;
@@ -1113,11 +1151,15 @@ export default function StudentFormPage() {
         if (k === 'previousCourse') fd.append(k, v.trim() || 'NIL');
         else fd.append(k, v);
       });
-      if (imageFile)        fd.append('image',          imageFile);
-      if (aadhaarFile)      fd.append('aadhaarPdf',     aadhaarFile);
-      if (idCardFile)       fd.append('idCardPdf',      idCardFile);
-      if (marksheetFile)    fd.append('marksheetPdf',   marksheetFile);
-      if (feesReceiptFile)  fd.append('feesReceiptPdf', feesReceiptFile);
+      if (imageFile)              fd.append('image',               imageFile);
+      if (aadhaarFile)            fd.append('aadhaarPdf',          aadhaarFile);
+      else if (draftAadhaarPath)  fd.append('aadhaarDraftPath',    draftAadhaarPath);
+      if (idCardFile)             fd.append('idCardPdf',           idCardFile);
+      else if (draftIdCardPath)   fd.append('idCardDraftPath',     draftIdCardPath);
+      if (marksheetFile)          fd.append('marksheetPdf',        marksheetFile);
+      else if (draftMarksheetPath) fd.append('marksheetDraftPath', draftMarksheetPath);
+      if (feesReceiptFile)              fd.append('feesReceiptPdf',      feesReceiptFile);
+      else if (draftFeesReceiptPath)    fd.append('feesReceiptDraftPath', draftFeesReceiptPath);
       if (isEdit) {
         await updateStudent(id, fd);
         await verifyStudent(id, verified);
@@ -1130,6 +1172,14 @@ export default function StudentFormPage() {
         addToast(res.data.message);
         // Clean up the draft now that it's been submitted
         if (draftId) { deleteDraft(draftId); notifyNavbar(); }
+        // Delete any draft files that were replaced by a newly-uploaded file (orphans)
+        const orphanPaths = [
+          aadhaarFile     && draftAadhaarPath     ? draftAadhaarPath     : null,
+          idCardFile      && draftIdCardPath      ? draftIdCardPath      : null,
+          marksheetFile   && draftMarksheetPath   ? draftMarksheetPath   : null,
+          feesReceiptFile && draftFeesReceiptPath ? draftFeesReceiptPath : null,
+        ].filter(Boolean);
+        if (orphanPaths.length) deleteDraftFiles(orphanPaths).catch(() => {});
       }
       navigate('/');
     } catch (err) {
@@ -1813,6 +1863,23 @@ export default function StudentFormPage() {
               <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
 
+            {/* Draft mode: show server-saved PDF */}
+            {!isEdit && draftIdCardPath && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">ID Card PDF saved in draft</p>
+                  <a href={`/uploads/${draftIdCardPath}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 dark:text-emerald-400 underline hover:text-emerald-800">View saved PDF</a>
+                </div>
+                <button type="button" onClick={async () => {
+                  try { await deleteDraftFiles([draftIdCardPath]); } catch {}
+                  setDraftIdCardPath(null);
+                }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Remove
+                </button>
+              </div>
+            )}
+
             {/* Edit mode: show existing PDF with delete button */}
             {isEdit && currentIdCardPdf && (
               <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">
@@ -2011,6 +2078,23 @@ export default function StudentFormPage() {
               <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
 
+            {/* Draft mode: show server-saved PDF */}
+            {!isEdit && draftAadhaarPath && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">Aadhaar PDF saved in draft</p>
+                  <a href={`/uploads/${draftAadhaarPath}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 dark:text-emerald-400 underline hover:text-emerald-800">View saved PDF</a>
+                </div>
+                <button type="button" onClick={async () => {
+                  try { await deleteDraftFiles([draftAadhaarPath]); } catch {}
+                  setDraftAadhaarPath(null);
+                }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Remove
+                </button>
+              </div>
+            )}
+
             {/* Edit mode: show existing PDF with delete button */}
             {isEdit && currentAadhaarPdf && (
               <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">
@@ -2112,6 +2196,23 @@ export default function StudentFormPage() {
               +2 Marksheet PDF
               <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
+
+            {/* Draft mode: show server-saved PDF */}
+            {!isEdit && draftMarksheetPath && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">+2 Marksheet PDF saved in draft</p>
+                  <a href={`/uploads/${draftMarksheetPath}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 dark:text-emerald-400 underline hover:text-emerald-800">View saved PDF</a>
+                </div>
+                <button type="button" onClick={async () => {
+                  try { await deleteDraftFiles([draftMarksheetPath]); } catch {}
+                  setDraftMarksheetPath(null);
+                }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Remove
+                </button>
+              </div>
+            )}
 
             {/* Edit mode: show existing PDF with delete button */}
             {isEdit && currentMarksheetPdf && (
@@ -2228,6 +2329,23 @@ export default function StudentFormPage() {
               UG/PG Admission Fees Receipt PDF
               <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
             </label>
+
+            {/* Draft mode: show server-saved PDF */}
+            {!isEdit && draftFeesReceiptPath && (
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-900/20 px-4 py-3">
+                <FileText className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">Fees Receipt PDF saved in draft</p>
+                  <a href={`/uploads/${draftFeesReceiptPath}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-600 dark:text-emerald-400 underline hover:text-emerald-800">View saved PDF</a>
+                </div>
+                <button type="button" onClick={async () => {
+                  try { await deleteDraftFiles([draftFeesReceiptPath]); } catch {}
+                  setDraftFeesReceiptPath(null);
+                }} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-red-200 dark:border-red-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Remove
+                </button>
+              </div>
+            )}
 
             {isEdit && currentFeesReceiptPdf && (
               <div className="mb-3 flex items-center gap-3 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-900/20 px-4 py-3">

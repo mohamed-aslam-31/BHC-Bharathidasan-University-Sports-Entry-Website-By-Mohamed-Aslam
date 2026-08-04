@@ -17,6 +17,7 @@ if (!fs.existsSync('./uploads/aadhaar'))     fs.mkdirSync('./uploads/aadhaar');
 if (!fs.existsSync('./uploads/idcard'))      fs.mkdirSync('./uploads/idcard');
 if (!fs.existsSync('./uploads/marksheet'))    fs.mkdirSync('./uploads/marksheet');
 if (!fs.existsSync('./uploads/feesreceipt')) fs.mkdirSync('./uploads/feesreceipt');
+if (!fs.existsSync('./uploads/drafts'))      fs.mkdirSync('./uploads/drafts');
 
 // ─── MONGOOSE MODELS ──────────────────────────────────────────────────────────
 
@@ -373,6 +374,62 @@ const uploadFields = multer({
   { name: 'feesReceiptPdf', maxCount: 1 },
 ]);
 
+// ─── DRAFT FILE UPLOAD ────────────────────────────────────────────────────────
+
+const uploadDraftFields = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, './uploads/drafts/'),
+    filename:    (req, file, cb) =>
+      cb(null, `${file.fieldname.replace('Pdf', '')}_${Date.now()}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    ext === '.pdf' ? cb(null, true) : cb(new Error('Only PDF files are allowed'));
+  },
+}).fields([
+  { name: 'aadhaarPdf',     maxCount: 1 },
+  { name: 'idCardPdf',      maxCount: 1 },
+  { name: 'marksheetPdf',   maxCount: 1 },
+  { name: 'feesReceiptPdf', maxCount: 1 },
+]);
+
+// POST /api/draft-files — save PDFs to drafts folder, return relative paths
+app.post('/api/draft-files', authMiddleware, uploadDraftFields, (req, res) => {
+  const result = {};
+  if (req.files?.aadhaarPdf?.[0])     result.aadhaarPath     = `drafts/${req.files.aadhaarPdf[0].filename}`;
+  if (req.files?.idCardPdf?.[0])      result.idCardPath      = `drafts/${req.files.idCardPdf[0].filename}`;
+  if (req.files?.marksheetPdf?.[0])   result.marksheetPath   = `drafts/${req.files.marksheetPdf[0].filename}`;
+  if (req.files?.feesReceiptPdf?.[0]) result.feesReceiptPath = `drafts/${req.files.feesReceiptPdf[0].filename}`;
+  res.json(result);
+});
+
+// DELETE /api/draft-files — delete draft files by path array
+app.delete('/api/draft-files', authMiddleware, (req, res) => {
+  const { paths } = req.body || {};
+  if (!Array.isArray(paths)) return res.status(400).json({ error: 'paths must be an array' });
+  for (const p of paths) {
+    if (!p || !String(p).startsWith('drafts/')) continue; // safety: only allow paths in drafts/
+    const full = path.join(__dirname, 'uploads', p);
+    try { if (fs.existsSync(full)) fs.unlinkSync(full); } catch { /* ignore */ }
+  }
+  res.json({ ok: true });
+});
+
+// Helper: resolve the final PDF path — either move a draft file or use an uploaded file
+function resolveDraftFile(uploadedFile, draftPath, destFolder) {
+  if (uploadedFile) return `${destFolder}/${uploadedFile.filename}`;
+  if (draftPath && String(draftPath).startsWith('drafts/')) {
+    const src = path.join(__dirname, 'uploads', draftPath);
+    const fn  = path.basename(draftPath);
+    const dst = path.join(__dirname, 'uploads', destFolder, fn);
+    try {
+      if (fs.existsSync(src)) { fs.renameSync(src, dst); return `${destFolder}/${fn}`; }
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
 // ─── IMAGE PROXY ──────────────────────────────────────────────────────────────
 
 app.get('/api/proxy-image', authMiddleware, async (req, res) => {
@@ -571,10 +628,10 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
       image: imageFile?.filename || null,
-      aadhaarPdf:      aadhaarFile      ? `aadhaar/${aadhaarFile.filename}`            : null,
-      idCardPdf:       idCardFile       ? `idcard/${idCardFile.filename}`              : null,
-      marksheetPdf:    marksheetFile    ? `marksheet/${marksheetFile.filename}`        : null,
-      feesReceiptPdf:  feesReceiptFile  ? `feesreceipt/${feesReceiptFile.filename}`    : null,
+      aadhaarPdf:     resolveDraftFile(aadhaarFile,     d.aadhaarDraftPath,     'aadhaar'),
+      idCardPdf:      resolveDraftFile(idCardFile,      d.idCardDraftPath,      'idcard'),
+      marksheetPdf:   resolveDraftFile(marksheetFile,   d.marksheetDraftPath,   'marksheet'),
+      feesReceiptPdf: resolveDraftFile(feesReceiptFile, d.feesReceiptDraftPath, 'feesreceipt'),
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
       bloodGroup: d.bloodGroup,
       shift: d.shift,

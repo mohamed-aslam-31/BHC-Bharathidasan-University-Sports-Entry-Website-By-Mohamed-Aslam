@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDrafts, deleteDraft, clearAllDrafts, completionPercent, draftFileCount } from '../utils/drafts';
+import { deleteDraftFiles } from '../api';
 import { FileText, Trash2, ArrowRight, Clock, AlertTriangle, BookOpen, Paperclip } from 'lucide-react';
 
 function formatDate(iso) {
@@ -39,12 +40,23 @@ export default function DraftPage() {
   };
 
   const handleDelete = (id) => {
+    const draft = drafts.find((d) => d.id === id);
+    if (draft?.serverFiles) {
+      const paths = Object.values(draft.serverFiles).filter(Boolean);
+      if (paths.length) deleteDraftFiles(paths).catch(() => {});
+    }
     deleteDraft(id);
     setDrafts(getDrafts());
     setConfirmDelete(null);
   };
 
   const handleClearAll = () => {
+    for (const draft of drafts) {
+      if (draft.serverFiles) {
+        const paths = Object.values(draft.serverFiles).filter(Boolean);
+        if (paths.length) deleteDraftFiles(paths).catch(() => {});
+      }
+    }
     clearAllDrafts();
     setDrafts([]);
     setConfirmClearAll(false);

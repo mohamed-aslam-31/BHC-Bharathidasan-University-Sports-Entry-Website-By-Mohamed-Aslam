@@ -31,6 +31,12 @@ export const getUsers = () => axios.get('/api/admin/users');
 export const createUser = (data) => axios.post('/api/admin/users', data);
 export const deleteUser = (id) => axios.delete(`/api/admin/users/${id}`);
 
+// Draft files (server-side storage for draft PDFs)
+export const uploadDraftFiles = (formData) => axios.post('/api/draft-files', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
+export const deleteDraftFiles = (paths) => axios.delete('/api/draft-files', { data: { paths } });
+
 // Auth
 export const changePassword = (data) => axios.post('/api/auth/change-password', data);
 
