@@ -150,42 +150,48 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       <div className="mx-3 h-px bg-black/5 dark:bg-white/[0.08] flex-shrink-0" />
 
       {/* User row */}
-      <div className={`flex items-center py-3 flex-shrink-0 ${mini ? 'justify-center px-1' : 'gap-2.5 px-3'}`}>
-        <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-blue-600 flex items-center justify-center ring-2 ring-blue-500/20">
-          {user?.avatar
-            ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-            : <span className="text-white text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
-          }
-        </div>
-
-        {!mini && (
-          <>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">{user?.username}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 capitalize leading-tight">{user?.role}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </>
-        )}
-
-        {mini && (
+      {mini ? (
+        /* Collapsed: avatar on top, logout below — stacked so both are fully tappable */
+        <div className="flex flex-col items-center gap-1 py-3 px-1 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center ring-2 ring-blue-500/20 flex-shrink-0">
+            {user?.avatar
+              ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+              : <span className="text-white text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
+            }
+          </div>
           <button
             onClick={handleLogout}
-            className="group relative mt-1 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            title="Logout"
+            className="group relative w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <LogOut className="w-[18px] h-[18px]" />
             <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg z-50">
               Logout
             </span>
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Expanded: avatar + name + logout in a row */
+        <div className="flex items-center gap-2.5 px-3 py-3 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-blue-600 flex items-center justify-center ring-2 ring-blue-500/20">
+            {user?.avatar
+              ? <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+              : <span className="text-white text-xs font-bold">{user?.username?.charAt(0).toUpperCase()}</span>
+            }
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate leading-tight">{user?.username}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 capitalize leading-tight">{user?.role}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -222,25 +228,29 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       </aside>
 
       {/* ── Desktop floating sidebar ── */}
-      <aside className={`hidden lg:flex flex-col fixed left-3 top-3 bottom-3 z-40 rounded-2xl ${glass} transition-all duration-300 ease-in-out overflow-hidden print:hidden ${
+      {/* Wrapper holds both the aside and the toggle so the toggle isn't clipped by overflow-hidden */}
+      <div className={`hidden lg:block fixed left-3 top-3 bottom-3 z-40 transition-all duration-300 ease-in-out print:hidden ${
         collapsed ? 'w-[60px]' : 'w-[240px]'
       }`}>
-        {/* Collapse toggle */}
+        <aside className={`h-full rounded-2xl ${glass} flex flex-col overflow-hidden`}>
+          <SidebarContent mini={collapsed} />
+        </aside>
+
+        {/* Collapse toggle — lives outside overflow-hidden so it's never clipped */}
         <button
           onClick={() => {
             const next = !collapsed;
             setCollapsed(next);
             localStorage.setItem('bhc_sidebar', next ? 'collapsed' : 'expanded');
           }}
-          className={`absolute top-[4.25rem] -right-3 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${glass} text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
+          className={`absolute top-[4.5rem] -right-3 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${glass} text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed
             ? <ChevronRight className="w-3.5 h-3.5" />
             : <ChevronLeft  className="w-3.5 h-3.5" />}
         </button>
-
-        <SidebarContent mini={collapsed} />
-      </aside>
+      </div>
     </>
   );
 }
