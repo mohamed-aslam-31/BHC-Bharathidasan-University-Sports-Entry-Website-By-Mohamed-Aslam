@@ -371,7 +371,8 @@ export default function SelfRegFormPage() {
       case 'presentClass':msg = validateMinMax(value, 'Present class', 1, 20, true); break;
       case 'durationOfCourse': msg = validateDuration(value); break;
       case 'presentCourse':    msg = validatePresentCourse(value); break;
-      case 'university':       msg = validateMonthYear(value); break;
+      case 'university':            msg = validateMonthYear(value); break;
+      case 'nameOfThePresentClass': msg = validateMonthYear(value); break;
       case 'graduateCourse':   msg = validateNoOfYears(value); break;
       case 'pgCourse':         msg = validateNoOfYears(value); break;
       case 'previousCourse':   msg = validatePrevCourse(value); break;
@@ -415,7 +416,8 @@ export default function SelfRegFormPage() {
     const pc = validateMinMax(form.presentClass, 'Present class', 1, 20, true); if (pc) e.presentClass = pc;
     const dur = validateDuration(form.durationOfCourse);       if (dur) e.durationOfCourse = dur;
     const pco = validatePresentCourse(form.presentCourse);     if (pco) e.presentCourse  = pco;
-    const uni = validateMonthYear(form.university);            if (uni) e.university     = uni;
+    const uni = validateMonthYear(form.university);            if (uni) e.university             = uni;
+    const npc = validateMonthYear(form.nameOfThePresentClass); if (npc) e.nameOfThePresentClass = npc;
     const gc = validateNoOfYears(form.graduateCourse);         if (gc) e.graduateCourse  = gc;
     const pg = validateNoOfYears(form.pgCourse);               if (pg) e.pgCourse        = pg;
     const prev = validatePrevCourse(form.previousCourse);      if (prev) e.previousCourse = prev;
@@ -469,7 +471,8 @@ export default function SelfRegFormPage() {
       fd.append('presentClass',     form.presentClass);
       fd.append('durationOfCourse', form.durationOfCourse);
       fd.append('presentCourse',    form.presentCourse);
-      fd.append('university',       form.university);
+      fd.append('university',             form.university);
+      fd.append('nameOfThePresentClass',  form.nameOfThePresentClass);
       fd.append('graduateCourse',   form.graduateCourse);
       fd.append('pgCourse',         form.pgCourse);
       fd.append('previousCourse',   form.previousCourse || 'NIL');
@@ -822,10 +825,15 @@ export default function SelfRegFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Month & Year of First Admission to University</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Month & Year of First Admission" required error={errors.university} span2>
+                    <Field label="University ( month & Year )" required error={errors.university}>
                       <ComboBox value={form.university} onChange={v => { set('university')(v); touch('university', v); }}
-                        options={opts.monthYear || []} placeholder="Select month & year" error={errors.university} />
+                        options={opts.monthYear || []} placeholder="Select or Add new Month & Year" error={errors.university} />
                       <FieldMeta value={form.university} max={14} always error={undefined} />
+                    </Field>
+                    <Field label="Present Course ( month & Year )" required error={errors.nameOfThePresentClass}>
+                      <ComboBox value={form.nameOfThePresentClass} onChange={v => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
+                        options={opts.monthYear || []} placeholder="Select or Add new Month & Year" error={errors.nameOfThePresentClass} />
+                      <FieldMeta value={form.nameOfThePresentClass} max={14} always error={undefined} />
                     </Field>
                   </div>
                 </div>
