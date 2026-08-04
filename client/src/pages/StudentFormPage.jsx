@@ -357,12 +357,10 @@ const validateAddress = (v) =>
   !v || !v.trim() ? 'Address is required' : '';
 
 const sanitizePrevCourse = (v) =>
-  v.replace(/[^\w\s.,\-'"/()&:;]/g, '').slice(0, 100);
+  v.replace(/[^\w\s.,\-'"/()&:;]/g, '').slice(0, 500);
 
 const validatePrevCourse = (v) =>
-  !v || !v.trim()   ? 'This field is required' :
-  v.trim().length < 3 ? 'Minimum 3 characters required' :
-  v.length > 100      ? 'Maximum 100 characters allowed' : '';
+  v.length > 500 ? 'Maximum 500 characters allowed' : '';
 
 const validateAadhar = (v) =>
   !v ? 'Aadhar number is required' :
@@ -636,7 +634,7 @@ const empty = {
   nameOfExam: '', dateAndYear: '',
   presentClass: '', nameOfThePresentClass: '', durationOfCourse: '',
   university: '', presentCourse: '',
-  graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: 'NIL',
+  graduateCourse: 'NIL', pgCourse: 'NIL', previousCourse: '',
   address: '', phoneNumber: '', aadharNumber: '',
   tshirt: '', track: '',
   studentType: '', dayType: '', hostelName: '',
@@ -728,7 +726,7 @@ export default function StudentFormPage() {
           presentCourse:         s.presentCourse           || '',
           graduateCourse:        s.graduateCourse          || 'NIL',
           pgCourse:              s.pgCourse                || 'NIL',
-          previousCourse:        s.previousCourse          || 'NIL',
+          previousCourse:        (s.previousCourse === 'NIL' ? '' : s.previousCourse) || '',
           address:               s.address                 || '',
           phoneNumber:           s.phoneNumber             || '',
           aadharNumber:          s.aadharNumber            || '',
@@ -1000,7 +998,10 @@ export default function StudentFormPage() {
     setLoading(true);
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(form).forEach(([k, v]) => {
+        if (k === 'previousCourse') fd.append(k, v.trim() || 'NIL');
+        else fd.append(k, v);
+      });
       if (imageFile)        fd.append('image',          imageFile);
       if (aadhaarFile)      fd.append('aadhaarPdf',     aadhaarFile);
       if (idCardFile)       fd.append('idCardPdf',      idCardFile);
@@ -1758,7 +1759,7 @@ export default function StudentFormPage() {
               rows={3}
               placeholder="Enter your full address"
               value={form.address}
-              maxLength={200}
+              maxLength={500}
               onChange={(e) => {
                 const v = sanitizeAddress(e.target.value);
                 set('address')(v);
@@ -1766,7 +1767,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('address', form.address)}
             />
-            <FieldMeta value={form.address} max={200} always error={errors.address} />
+            <FieldMeta value={form.address} max={500} always error={errors.address} />
           </Field>
 
           {/* Aadhaar Card Upload — optional; unlocks once required fields are filled */}
@@ -2191,14 +2192,15 @@ export default function StudentFormPage() {
 
         {/* ── Change of Course / Faculty ──────────────────────────────────── */}
         <div id="field-previousCourse" className="card p-6">
-          <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span><span className="text-red-500 ml-1">*</span></h3>
+          <h3 className="section-title">Details about change of course / faculty, if any <span className="normal-case font-normal">(Details about the previous / new – course / faculty)</span></h3>
           <div className="grid grid-cols-1">
             <div className="col-span-full">
               <textarea
                 className={`input-field ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
                 rows={3}
                 placeholder=""
-                maxLength={100}
+                maxLength={500}
+                placeholder="Leave blank if not applicable"
                 value={form.previousCourse}
                 onChange={(e) => {
                   const v = sanitizePrevCourse(e.target.value);
@@ -2207,7 +2209,7 @@ export default function StudentFormPage() {
                 }}
                 onBlur={() => touch('previousCourse', form.previousCourse)}
               />
-              <FieldMeta value={form.previousCourse} max={100} always error={errors.previousCourse} />
+              <FieldMeta value={form.previousCourse} max={500} always error={errors.previousCourse} />
             </div>
           </div>
         </div>
