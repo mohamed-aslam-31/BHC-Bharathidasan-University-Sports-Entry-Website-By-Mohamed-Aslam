@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, ChevronDown, X, Clock, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { ChevronDown, X, Clock, CheckCircle, XCircle, RotateCcw, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 import { selfRegVerify, selfRegOptions, selfRegReapply } from '../api';
 
 /* ── Read-only searchable combo ─────────────────────────────────────────────── */
@@ -188,6 +189,7 @@ function RejectedScreen({ rejectionReason, form, onBack }) {
 /* ── Main page ──────────────────────────────────────────────────────────────── */
 export default function SelfRegPage() {
   const navigate = useNavigate();
+  const { dark, toggleTheme } = useTheme();
   const [form, setForm]       = useState({ rollNo: '', nameOfGame: '', year: '' });
   const [errors, setErrors]   = useState({});
   const [loading, setLoading] = useState(false);
@@ -246,6 +248,11 @@ export default function SelfRegPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-2 py-6 sm:px-4 sm:py-10">
+      {/* Theme toggle */}
+      <button onClick={toggleTheme}
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
+        {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
       {/* Header */}
       <div className="text-center mb-6 sm:mb-8">
         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 sm:mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
@@ -334,8 +341,13 @@ export default function SelfRegPage() {
 }
 
 function PageShell({ children }) {
+  const { dark, toggleTheme } = useTheme();
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-2 py-6 sm:px-4 sm:py-10">
+      <button onClick={toggleTheme}
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
+        {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
       <div className="text-center mb-5 sm:mb-8">
         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 sm:mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
           <img src="/pe-logo.png" alt="Department of Physical Education" className="w-13 h-13 sm:w-20 sm:h-20 object-contain rounded-full" />

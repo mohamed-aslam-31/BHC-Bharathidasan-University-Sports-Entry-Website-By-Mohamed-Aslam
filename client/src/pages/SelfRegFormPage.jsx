@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload, Loader2, User, Check } from 'lucide-react';
+import { ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload, Loader2, User, Check, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 import { selfRegOptions, selfRegSubmit, selfRegResubmit, fetchProxyImage } from '../api';
 import Cropper from 'react-easy-crop';
 import AadhaarUpload from '../components/AadhaarUpload';
@@ -244,6 +245,7 @@ const inputCls = (err) => `w-full px-2 py-2 sm:px-3 sm:py-2.5 rounded-xl border 
 /* ─── Main component ───────────────────────────────────────────────────────── */
 export default function SelfRegFormPage() {
   const navigate = useNavigate();
+  const { dark, toggleTheme } = useTheme();
 
   /* ── Access data from sessionStorage ── */
   const [accessData, setAccessData] = useState(null);
@@ -605,6 +607,11 @@ export default function SelfRegFormPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-1.5 py-4 sm:px-4 sm:py-8">
+      {/* Theme toggle */}
+      <button onClick={toggleTheme}
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
+        {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
       {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
         <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-2 sm:mb-3 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
