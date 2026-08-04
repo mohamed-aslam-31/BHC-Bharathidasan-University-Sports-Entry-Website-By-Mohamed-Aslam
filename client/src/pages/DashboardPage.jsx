@@ -1013,7 +1013,7 @@ export default function DashboardPage() {
       </div>{/* end #dashboard-page1-block */}
 
       {/* ── Table ── */}
-      <div id="dashboard-table-card" className="card overflow-hidden">
+      <div id="dashboard-table-card" className="card overflow-hidden mt-4">
         {loading ? (
           <div className="py-16 flex justify-center"><LoadingSpinner text="Loading students…" /></div>
         ) : combined.length === 0 ? (
