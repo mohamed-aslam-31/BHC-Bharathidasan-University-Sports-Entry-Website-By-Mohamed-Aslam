@@ -140,14 +140,6 @@ export default function DraftPage() {
                 Delete selected ({selected.size})
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setConfirmClearAll(true)}
-              className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              Clear all
-            </button>
           </div>
         )}
       </div>
