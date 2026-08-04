@@ -46,3 +46,15 @@ export const updateProfile = (formData) => axios.put('/api/auth/profile', formDa
 // Proxy
 export const fetchProxyImage = (url) =>
   axios.get('/api/proxy-image', { params: { url }, responseType: 'blob' });
+
+// Self-registration (public — no auth token needed)
+export const selfRegVerify   = (data) => axios.post('/api/self-reg/verify', data);
+export const selfRegOptions  = ()     => axios.get('/api/self-reg/options');
+export const selfRegSubmit   = (fd)   => axios.post('/api/self-reg/submit', fd, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+});
+
+// Admin: self-reg access management
+export const getSelfRegAccess    = ()     => axios.get('/api/admin/self-reg-access');
+export const createSelfRegAccess = (data) => axios.post('/api/admin/self-reg-access', data);
+export const deleteSelfRegAccess = (id)   => axios.delete(`/api/admin/self-reg-access/${id}`);

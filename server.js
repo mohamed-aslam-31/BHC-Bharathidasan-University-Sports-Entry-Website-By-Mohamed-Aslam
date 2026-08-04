@@ -73,9 +73,17 @@ const OptionListSchema = new mongoose.Schema({
   values: { type: [String], default: [] },
 }, { timestamps: true });
 
-const User       = mongoose.model('User', UserSchema);
-const Student    = mongoose.model('Student', StudentSchema);
-const OptionList = mongoose.model('OptionList', OptionListSchema);
+const SelfRegAccessSchema = new mongoose.Schema({
+  rollNo:      { type: String, required: true },
+  nameOfGame:  { type: String, required: true },
+  year:        { type: String, required: true },
+  createdBy:   { type: String, default: 'admin' },
+}, { timestamps: true });
+
+const User          = mongoose.model('User', UserSchema);
+const Student       = mongoose.model('Student', StudentSchema);
+const OptionList    = mongoose.model('OptionList', OptionListSchema);
+const SelfRegAccess = mongoose.model('SelfRegAccess', SelfRegAccessSchema);
 
 // ─── DEFAULT COMBO-BOX OPTION LISTS ────────────────────────────────────────────
 // Single source of truth, seeded into OptionList on first run. The dashboard
@@ -928,6 +936,108 @@ app.delete('/api/admin/users/:id', authMiddleware, adminOnly, async (req, res) =
     if (req.params.id === String(req.user.id)) return res.status(400).json({ error: 'Cannot delete yourself' });
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: 'User deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── SELF-REGISTRATION (PUBLIC) ───────────────────────────────────────────────
+
+// Public option lists (no auth)
+app.get('/api/self-reg/options', async (req, res) => {
+  try {
+    const lists = await OptionList.find().lean();
+    const result = {};
+    lists.forEach(l => { result[l.key] = l.values; });
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Verify access (no auth)
+app.post('/api/self-reg/verify', async (req, res) => {
+  try {
+    const { rollNo, nameOfGame, year } = req.body;
+    if (!rollNo || !nameOfGame || !year)
+      return res.status(400).json({ error: 'Roll number, game and year are required' });
+    const access = await SelfRegAccess.findOne({ rollNo, nameOfGame, year });
+    if (!access)
+      return res.status(403).json({ error: 'Access not granted for this combination. Contact your admin.' });
+    const existing = await Student.findOne({ rollNo, nameOfTheGame: nameOfGame, year });
+    if (existing)
+      return res.status(409).json({ error: 'You have already submitted a registration for this game and year.' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Self-register submit (no auth) — creates student as 'pending'
+app.post('/api/self-reg/submit', uploadFields, async (req, res) => {
+  try {
+    const d = req.body;
+    const access = await SelfRegAccess.findOne({ rollNo: d.rollNo, nameOfGame: d.nameOfTheGame, year: d.year });
+    if (!access) return res.status(403).json({ error: 'Access not granted' });
+    const existing = await Student.findOne({ rollNo: d.rollNo, nameOfTheGame: d.nameOfTheGame, year: d.year });
+    if (existing) return res.status(409).json({ error: 'Already registered for this game and year' });
+
+    const imageFile       = req.files?.image?.[0];
+    const aadhaarFile     = req.files?.aadhaarPdf?.[0];
+    const marksheetFile   = req.files?.marksheetPdf?.[0];
+    const feesReceiptFile = req.files?.feesReceiptPdf?.[0];
+
+    if (!imageFile)       return res.status(400).json({ error: 'Passport photo is required' });
+    if (!aadhaarFile)     return res.status(400).json({ error: 'Aadhaar card PDF is required' });
+    if (!marksheetFile)   return res.status(400).json({ error: '+2 Marksheet PDF is required' });
+    if (!feesReceiptFile) return res.status(400).json({ error: 'Fees receipt PDF is required' });
+
+    const savedTime = new Date().toISOString().replace(/[:.]/g, '-');
+    await Student.create({
+      savedTime,
+      rollNo: d.rollNo, nameOfTheGame: d.nameOfTheGame,
+      nameOfTheSportsperson: d.studentName, fathersName: d.fatherName,
+      motherName: d.motherName, dateOfBirth: d.dob, nameOfExam: d.nameOfExam,
+      dateAndYear: d.dateAndYear, presentClass: d.presentClass,
+      nameOfThePresentClass: d.nameOfThePresentClass, durationOfCourse: d.durationOfCourse,
+      university: d.university, presentCourse: d.presentCourse,
+      graduateCourse: d.graduateCourse || 'NIL', pgCourse: d.pgCourse || 'NIL',
+      previousCourse: d.previousCourse || 'NIL',
+      address: d.address, phoneNumber: d.phoneNumber,
+      image:          imageFile.filename,
+      aadhaarPdf:     `aadhaar/${aadhaarFile.filename}`,
+      marksheetPdf:   `marksheet/${marksheetFile.filename}`,
+      feesReceiptPdf: `feesreceipt/${feesReceiptFile.filename}`,
+      gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
+      bloodGroup: d.bloodGroup,
+      shift: d.shift,
+      studentType: d.studentType, dayType: d.dayType, hostelName: d.hostelName || '',
+      tshirt: d.tshirt || '', track: d.track || '',
+      status: 'pending',
+    });
+    res.json({ success: true, message: 'Registration submitted successfully. Awaiting admin approval.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── ADMIN: SELF-REG ACCESS MANAGEMENT ───────────────────────────────────────
+
+app.get('/api/admin/self-reg-access', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const list = await SelfRegAccess.find().sort('-createdAt').lean();
+    res.json(list);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/admin/self-reg-access', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { rollNo, nameOfGame, year } = req.body;
+    if (!rollNo || !nameOfGame || !year)
+      return res.status(400).json({ error: 'Roll number, game and year are required' });
+    const exists = await SelfRegAccess.findOne({ rollNo, nameOfGame, year });
+    if (exists) return res.status(409).json({ error: 'Access already granted for this combination' });
+    const entry = await SelfRegAccess.create({ rollNo, nameOfGame, year, createdBy: req.user.username });
+    res.json(entry);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/admin/self-reg-access/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    await SelfRegAccess.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

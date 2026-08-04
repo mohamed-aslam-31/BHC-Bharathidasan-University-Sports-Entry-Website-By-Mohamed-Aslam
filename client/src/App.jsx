@@ -13,6 +13,8 @@ import DraftPage from './pages/DraftPage';
 import SettingsPage from './pages/SettingsPage';
 import UserAccountPage from './pages/UserAccountPage';
 import LoadingSpinner from './components/LoadingSpinner';
+import SelfRegPage from './pages/SelfRegPage';
+import SelfRegFormPage from './pages/SelfRegFormPage';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
@@ -52,6 +54,9 @@ function AppLayout() {
 }
 
 const router = createBrowserRouter([
+  // Public self-registration pages — no sidebar, no auth required
+  { path: '/self-register',      element: <SelfRegPage /> },
+  { path: '/self-register/form', element: <SelfRegFormPage /> },
   {
     path: '/',
     element: <AppLayout />,
