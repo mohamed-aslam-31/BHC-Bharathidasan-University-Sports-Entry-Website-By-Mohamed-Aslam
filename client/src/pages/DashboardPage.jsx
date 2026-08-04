@@ -908,7 +908,8 @@ export default function DashboardPage() {
       {/* ── Print area: stats + table ── */}
       <div id="dashboard-print-area">
 
-      {/* ── Print-only page header ── */}
+      {/* ── Print-only page header + stats wrapper (always page 1) ── */}
+      <div id="dashboard-page1-block">
       <div id="dashboard-print-header">
         <img src="/pe-logo.png" alt="Department Logo" id="dashboard-print-logo" />
         <div id="dashboard-print-header-text">
@@ -1020,6 +1021,7 @@ export default function DashboardPage() {
           })}
         </div>
       </div>
+      </div>{/* end #dashboard-page1-block */}
 
       {/* ── Table ── */}
       <div id="dashboard-table-card" className="card overflow-hidden">
@@ -1407,8 +1409,8 @@ export default function DashboardPage() {
           /* hide icon-only elements that don't render well in print */
           #dashboard-print-area button,
           #dashboard-print-area a[href] { display: none !important; }
-          /* stats always on page 1, no splitting */
-          #dashboard-stats-section { break-inside: avoid; }
+          /* header + stats always together on page 1 */
+          #dashboard-page1-block { break-inside: avoid; }
           /* table: clean black borders */
           #dashboard-print-area table { border-collapse: collapse !important; width: 100% !important; font-size: 11px !important; border: 1px solid #000 !important; }
           #dashboard-print-area th,
