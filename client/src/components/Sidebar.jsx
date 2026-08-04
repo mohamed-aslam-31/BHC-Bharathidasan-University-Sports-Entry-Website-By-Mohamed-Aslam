@@ -242,7 +242,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             setCollapsed(next);
             localStorage.setItem('bhc_sidebar', next ? 'collapsed' : 'expanded');
           }}
-          className={`absolute top-[7.5rem] -right-4 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${glass} text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
+          className={`absolute top-1/2 -translate-y-1/2 -right-4 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${glass} text-gray-400 hover:text-blue-600 dark:hover:text-blue-400`}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed
