@@ -457,16 +457,32 @@ export default function StudentViewPage() {
             const allSubmitted = !!(student.aadhaarPdf && student.idCardPdf && student.marksheetPdf && student.feesReceiptPdf);
             const verified = student.documentsVerified;
             if (verified) return (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 text-xs font-semibold select-none">
-                <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+              <button
+                onClick={() => handleVerify(false)}
+                disabled={verifying}
+                title="Click to remove verification"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 text-xs font-semibold hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {verifying
+                  ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+                  : <span className="w-3 h-3 rounded border-2 border-green-600 bg-green-500 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2 h-2 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,6 5,9 10,3" /></svg>
+                    </span>}
                 Verified
-              </span>
+              </button>
             );
             if (allSubmitted) return (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 text-xs font-semibold select-none">
-                <span className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0" />
+              <button
+                onClick={() => handleVerify(true)}
+                disabled={verifying}
+                title="Click to mark as verified"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 text-xs font-semibold hover:bg-yellow-200 dark:hover:bg-yellow-900/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {verifying
+                  ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+                  : <span className="w-3 h-3 rounded border-2 border-yellow-500 bg-white dark:bg-transparent flex-shrink-0" />}
                 Not Verified
-              </span>
+              </button>
             );
             return (
               <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 text-xs font-semibold select-none">
