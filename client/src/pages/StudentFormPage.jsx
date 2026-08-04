@@ -748,7 +748,17 @@ export default function StudentFormPage() {
 
   /* ── Navigation guard helpers ── */
   const pct = completionPercent(form);
-  const shouldBlock = !isEdit && pct > 0 && !loading;
+
+  // True only when the user has actually changed something from the blank defaults
+  const isDirty = !isEdit && !loading && (
+    Object.keys(empty).some((k) => form[k] !== empty[k]) ||
+    imageFile != null ||
+    aadhaarFile != null || draftAadhaarPath != null ||
+    idCardFile != null  || draftIdCardPath  != null ||
+    marksheetFile != null || draftMarksheetPath != null ||
+    feesReceiptFile != null || draftFeesReceiptPath != null
+  );
+  const shouldBlock = isDirty;
 
   /* Intercept ALL React Router navigation (Link clicks, navigate(), back button) */
   const blocker = useBlocker(shouldBlock);
