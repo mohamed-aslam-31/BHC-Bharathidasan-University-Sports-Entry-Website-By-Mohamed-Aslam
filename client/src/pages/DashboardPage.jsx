@@ -1370,11 +1370,17 @@ export default function DashboardPage() {
           #dashboard-print-area th,
           #dashboard-print-area td { border: 1px solid #ccc !important; padding: 5px 8px !important; color: #000 !important; }
           #dashboard-print-area thead tr { background: #f3f4f6 !important; }
-          /* hide checkbox col and actions col */
+          /* hide checkbox, status (col 8), and actions cols */
           #dashboard-print-area th:first-child,
           #dashboard-print-area td:first-child,
+          #dashboard-print-area th:nth-child(8),
+          #dashboard-print-area td:nth-child(8),
           #dashboard-print-area th:last-child,
           #dashboard-print-area td:last-child { display: none !important; }
+          /* hide avatar image/initial, show name text only in black */
+          #dashboard-print-area td img.rounded-full,
+          #dashboard-print-area td div.rounded-full { display: none !important; }
+          #dashboard-print-area td span.font-medium { color: #000 !important; }
           /* table on new page */
           #dashboard-table-card { break-before: page; }
           /* stat cards */
