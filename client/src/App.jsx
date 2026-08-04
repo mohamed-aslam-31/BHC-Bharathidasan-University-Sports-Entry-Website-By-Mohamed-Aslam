@@ -35,7 +35,7 @@ function AppLayout() {
   // Offset for the floating sidebar: left-3 (12px) + sidebar width + gap (12px)
   const sidebarOffset = user
     ? collapsed
-      ? 'lg:pl-[92px]'   // 12 + 68 + 12
+      ? 'lg:pl-[84px]'   // 12 + 60 + 12
       : 'lg:pl-[264px]'  // 12 + 240 + 12
     : '';
 
