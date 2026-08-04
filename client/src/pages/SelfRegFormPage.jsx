@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload, Loader2, User, Check } from 'lucide-react';
-import { selfRegOptions, selfRegSubmit, fetchProxyImage } from '../api';
+import { selfRegOptions, selfRegSubmit } from '../api';
 import Cropper from 'react-easy-crop';
 import AadhaarUpload from '../components/AadhaarUpload';
 import MarksheetUpload from '../components/MarksheetUpload';
@@ -286,39 +286,26 @@ export default function SelfRegFormPage() {
   /* ── ID Card photo fetch ── */
   const [showIdCardPreview, setShowIdCardPreview] = useState(false);
   const [idCardLoading, setIdCardLoading]         = useState(false);
-  const [idCardBlobUrl, setIdCardBlobUrl]         = useState(null);
-  const [idCardBlob, setIdCardBlob]               = useState(null);
+  const [idCardImgError, setIdCardImgError]       = useState(false);
+  const [imageFromUrl, setImageFromUrl]           = useState(null); // external URL reference (no upload)
 
-  const handleOpenIdCardPreview = async () => {
-    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
-    setIdCardBlobUrl(null);
-    setIdCardBlob(null);
-    setShowIdCardPreview(true);
+  const idCardUrl = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${accessData.rollNo}.jpg`;
+
+  const handleOpenIdCardPreview = () => {
     setIdCardLoading(true);
-    try {
-      const url = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${accessData.rollNo}.jpg`;
-      const res = await fetchProxyImage(url);
-      const blob = res.data;
-      setIdCardBlob(blob);
-      setIdCardBlobUrl(URL.createObjectURL(blob));
-    } catch { /* blob stays null — modal shows "not found" state */ }
-    finally { setIdCardLoading(false); }
+    setIdCardImgError(false);
+    setShowIdCardPreview(true);
   };
 
   const handleIdCardCancel = () => {
     setShowIdCardPreview(false);
-    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
-    setIdCardBlobUrl(null);
-    setIdCardBlob(null);
   };
 
   const handleIdCardConfirm = () => {
-    if (!idCardBlob) return;
-    const file = new File([idCardBlob], `${accessData.rollNo}.jpg`, { type: 'image/jpeg' });
-    setImageFile(file);
-    setImagePreview(idCardBlobUrl);
-    setIdCardBlobUrl(null); // transferred — don't revoke
-    setIdCardBlob(null);
+    // Store the external URL directly — no download, no server upload
+    setImageFromUrl(idCardUrl);
+    setImagePreview(idCardUrl);
+    setImageFile(null);
     setShowIdCardPreview(false);
     setErrors(prev => ({ ...prev, photo: undefined }));
   };
@@ -399,7 +386,7 @@ export default function SelfRegFormPage() {
 
   const validateStep1 = () => {
     const e = {};
-    if (!imageFile) e.photo = 'Passport size photo is required';
+    if (!imageFile && !imageFromUrl) e.photo = 'Passport size photo is required';
     const sn = validatePersonName(form.studentName, 'Sportsperson name'); if (sn) e.studentName = sn;
     const fn = validatePersonName(form.fatherName, "Father's name");      if (fn) e.fatherName  = fn;
     const mn = validatePersonName(form.motherName, "Mother's name");      if (mn) e.motherName  = mn;
@@ -503,7 +490,8 @@ export default function SelfRegFormPage() {
       fd.append('tshirt',           form.tshirt);
       fd.append('track',            form.track);
       // Files
-      fd.append('image',          imageFile);
+      if (imageFile)         fd.append('image',    imageFile);
+      else if (imageFromUrl) fd.append('imageUrl', imageFromUrl);
       fd.append('aadhaarPdf',     aadhaarFile);
       fd.append('marksheetPdf',   marksheetFile);
       fd.append('feesReceiptPdf', feesReceiptFile);
@@ -1040,20 +1028,24 @@ export default function SelfRegFormPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50 min-h-[200px]">
-              {idCardLoading ? (
-                <div className="flex flex-col items-center gap-3 text-gray-400">
+            <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50 min-h-[200px] relative">
+              {idCardLoading && (
+                <div className="absolute flex flex-col items-center gap-3 text-gray-400">
                   <Loader2 className="w-8 h-8 animate-spin" />
                   <p className="text-xs">Loading photo…</p>
                 </div>
-              ) : idCardBlobUrl ? (
-                <img src={idCardBlobUrl} alt={`ID card photo for ${accessData.rollNo}`}
-                  className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow" />
-              ) : (
+              )}
+              {idCardImgError ? (
                 <div className="w-36 h-44 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-col gap-2 text-center px-3">
                   <User className="w-10 h-10 text-gray-300 dark:text-gray-600" />
                   <p className="text-xs text-gray-400 dark:text-gray-500">Photo not found for this roll number</p>
                 </div>
+              ) : (
+                <img src={idCardUrl} alt={`ID card photo for ${accessData.rollNo}`}
+                  className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow"
+                  style={{ display: idCardLoading ? 'none' : 'block' }}
+                  onLoad={() => { setIdCardLoading(false); setIdCardImgError(false); }}
+                  onError={() => { setIdCardLoading(false); setIdCardImgError(true); }} />
               )}
             </div>
             <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-800">
@@ -1062,7 +1054,7 @@ export default function SelfRegFormPage() {
                 Cancel
               </button>
               <button type="button" onClick={handleIdCardConfirm}
-                disabled={idCardLoading || !idCardBlobUrl}
+                disabled={idCardLoading || idCardImgError}
                 className="text-sm px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 <Check className="w-4 h-4" /> Use This Photo
               </button>

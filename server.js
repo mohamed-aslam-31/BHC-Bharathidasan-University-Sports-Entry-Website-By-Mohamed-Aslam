@@ -680,7 +680,7 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       university: d.university, presentCourse: d.presentCourse,
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
-      image: imageFile?.filename || null,
+      image: imageFile?.filename || d.imageUrl || null,
       aadhaarPdf:     resolveDraftFile(aadhaarFile,     d.aadhaarDraftPath,     'aadhaar'),
       idCardPdf:      resolveDraftFile(idCardFile,      d.idCardDraftPath,      'idcard'),
       marksheetPdf:   resolveDraftFile(marksheetFile,   d.marksheetDraftPath,   'marksheet'),
@@ -716,8 +716,8 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
     }
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
-    // Remove old photo if replaced
-    if (imageFile && student.image) {
+    // Remove old photo if replaced with a new upload (skip if old photo is an external URL)
+    if (imageFile && student.image && !student.image.startsWith('http')) {
       const old = path.join(__dirname, 'uploads', student.image);
       if (fs.existsSync(old)) fs.unlinkSync(old);
     }
@@ -750,7 +750,7 @@ app.put('/api/students/:id', authMiddleware, uploadFields, async (req, res) => {
       university: d.university, presentCourse: d.presentCourse,
       graduateCourse: d.graduateCourse, pgCourse: d.pgCourse, previousCourse: d.previousCourse,
       address: d.address, phoneNumber: d.phoneNumber,
-      image:         imageFile     ? imageFile.filename                      : student.image,
+      image:         imageFile     ? imageFile.filename                      : (d.imageUrl !== undefined ? (d.imageUrl || null) : student.image),
       aadhaarPdf:    aadhaarFile   ? `aadhaar/${aadhaarFile.filename}`       : student.aadhaarPdf,
       idCardPdf:     idCardFile    ? `idcard/${idCardFile.filename}`          : student.idCardPdf,
       marksheetPdf:   marksheetFile   ? `marksheet/${marksheetFile.filename}`          : student.marksheetPdf,

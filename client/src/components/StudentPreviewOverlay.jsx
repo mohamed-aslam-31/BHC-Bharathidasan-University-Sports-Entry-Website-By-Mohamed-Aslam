@@ -68,7 +68,9 @@ export default function StudentPreviewOverlay({
   onConfirm,
   onBack,
 }) {
-  const photoSrc = imagePreview || (currentImage ? `/uploads/${currentImage}` : null);
+  const photoSrc = imagePreview || (currentImage
+    ? (currentImage.startsWith('http') ? currentImage : `/uploads/${currentImage}`)
+    : null);
 
   const docCount = [
     aadhaarFile     || currentAadhaarPdf,
