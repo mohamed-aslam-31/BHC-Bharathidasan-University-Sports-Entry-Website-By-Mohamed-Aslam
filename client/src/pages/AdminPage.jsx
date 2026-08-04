@@ -9,8 +9,10 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   CheckCircle, XCircle, Eye, Clock, RefreshCw,
-  Plus, Trash2, ChevronDown, X, Link2, Pencil, Check, ChevronsUpDown,
+  Plus, Trash2, ChevronDown, X, Link2, Pencil, Check,
 } from 'lucide-react';
+
+const ROWS_OPTIONS = [10, 25, 50, 100];
 
 /* ── Tab button ─────────────────────────────────────────────────────────────── */
 function TabButton({ active, onClick, children, count }) {
@@ -29,19 +31,18 @@ function TabButton({ active, onClick, children, count }) {
   );
 }
 
-/* ── Single-select combo with add support ───────────────────────────────────── */
+/* ── Single-select combo with add support (Dashboard-style) ─────────────────── */
 function SmallCombo({ value, onChange, options, placeholder, error, onAddOption }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
   const ref  = useRef(null);
-  const sRef = useRef(null);
 
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(''); } };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
-  useEffect(() => { if (open) setTimeout(() => sRef.current?.focus(), 0); }, [open]);
+  useEffect(() => { if (open) setTimeout(() => ref.current?.querySelector('input')?.focus(), 0); }, [open]);
 
   const filtered   = search ? options.filter(o => o.toLowerCase().includes(search.toLowerCase())) : options;
   const trimmed    = search.trim();
@@ -49,67 +50,64 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
   const showAdd    = onAddOption && trimmed.length >= 1 && !exactMatch;
 
   const select = (opt) => { onChange(opt); setSearch(''); setOpen(false); };
-
-  const handleAdd = () => {
-    if (!trimmed) return;
-    onAddOption(trimmed);
-    select(trimmed);
-  };
-
+  const handleAdd = () => { if (!trimmed) return; onAddOption(trimmed); select(trimmed); };
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') { setOpen(false); setSearch(''); }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (filtered.length === 1) select(filtered[0]);
-      else if (showAdd) handleAdd();
-    }
+    if (e.key === 'Enter') { e.preventDefault(); if (filtered.length === 1) select(filtered[0]); else if (showAdd) handleAdd(); }
   };
 
   return (
     <div ref={ref} className="relative">
       <button type="button" onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-sm text-left bg-white dark:bg-gray-800 transition-colors
-          ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}
-          ${open ? 'ring-2 ring-blue-500/30 border-blue-500' : ''}`}>
-        <span className={value ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500 text-xs'}>
-          {value || placeholder}
+        className={`input-field flex items-center justify-between gap-2 text-left min-h-[38px] py-1.5
+          ${error ? '!border-red-400' : ''}
+          ${open ? '!ring-2 !ring-blue-500 !border-blue-500' : ''}`}>
+        <span className="flex-1 min-w-0">
+          {value
+            ? <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
+            : <span className="text-sm text-gray-400 dark:text-gray-500">{placeholder}</span>
+          }
         </span>
-        <span className="flex items-center gap-0.5">
+        <span className="flex items-center gap-1 flex-shrink-0">
           {value && (
-            <span onMouseDown={e => { e.stopPropagation(); onChange(''); }} className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
-              <X className="w-3 h-3" />
+            <span onMouseDown={e => { e.stopPropagation(); onChange(''); }}
+              className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <X className="w-3.5 h-3.5" />
             </span>
           )}
-          <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
 
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
-            <input ref={sRef} type="text" value={search}
+            <input autoFocus type="text" value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={onAddOption ? 'Search or type to add…' : 'Search…'}
-              className="w-full text-xs px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400" />
+              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
           </div>
-          <div className="max-h-44 overflow-y-auto">
+          <div className="max-h-44 overflow-y-auto multiselect-scroll">
             {filtered.length === 0 && !showAdd && (
               <p className="text-xs text-gray-400 text-center py-3">No options found</p>
             )}
             {filtered.map(opt => (
               <button key={opt} type="button"
                 onMouseDown={e => { e.preventDefault(); select(opt); }}
-                className={`w-full text-left px-3 py-2 text-xs transition-colors
-                  ${value === opt ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-medium' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}`}>
-                {opt}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors
+                  ${value === opt ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                <span className="w-4 flex-shrink-0 flex items-center justify-center">
+                  {value === opt && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />}
+                </span>
+                <span className={value === opt ? 'text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-gray-300'}>{opt}</span>
               </button>
             ))}
             {showAdd && (
               <button type="button"
                 onMouseDown={e => { e.preventDefault(); handleAdd(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-t border-gray-100 dark:border-gray-800 transition-colors">
-                <Plus className="w-3 h-3 flex-shrink-0" />
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-t border-gray-100 dark:border-gray-800 transition-colors">
+                <Plus className="w-3.5 h-3.5 flex-shrink-0" />
                 Add &ldquo;{trimmed}&rdquo;
               </button>
             )}
@@ -120,74 +118,78 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
   );
 }
 
-/* ── Multi-select filter combo ──────────────────────────────────────────────── */
-function MultiCombo({ values, onChange, options, placeholder }) {
+/* ── Multi-select filter combo — exact Dashboard style ──────────────────────── */
+function MultiCombo({ label, options, value, onChange, placeholder }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
   const ref  = useRef(null);
-  const sRef = useRef(null);
 
   useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(''); } };
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
-  useEffect(() => { if (open) setTimeout(() => sRef.current?.focus(), 0); }, [open]);
 
-  const filtered = search ? options.filter(o => o.toLowerCase().includes(search.toLowerCase())) : options;
-
-  const toggle = (opt) => {
-    onChange(values.includes(opt) ? values.filter(v => v !== opt) : [...values, opt]);
-  };
-
-  const label = values.length === 0
-    ? placeholder
-    : values.length === 1
-      ? values[0]
-      : `${values.length} selected`;
+  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  const toggle   = (opt) => onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt]);
+  const clear    = (e)   => { e.stopPropagation(); onChange([]); setSearch(''); };
 
   return (
-    <div ref={ref} className="relative min-w-[140px]">
+    <div ref={ref} className="relative">
+      {label && <label className="label">{label}</label>}
       <button type="button" onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-sm text-left bg-white dark:bg-gray-800 transition-colors
-          ${open ? 'ring-2 ring-blue-500/30 border-blue-500' : 'border-gray-300 dark:border-gray-600'}`}>
-        <span className={values.length ? 'text-gray-900 dark:text-white text-xs font-medium' : 'text-gray-400 dark:text-gray-500 text-xs'}>
-          {label}
+        className="input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] py-1.5">
+        <span className="flex-1 min-w-0">
+          {value.length === 0
+            ? <span className="text-sm text-gray-400 dark:text-gray-500">{placeholder || `All ${label}`}</span>
+            : <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">{value.length} selected</span>
+          }
         </span>
-        <span className="flex items-center gap-0.5">
-          {values.length > 0 && (
-            <span onMouseDown={e => { e.stopPropagation(); onChange([]); }}
-              className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
-              <X className="w-3 h-3" />
+        <span className="flex items-center gap-1 flex-shrink-0">
+          {value.length > 0 && (
+            <span onClick={clear} className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <X className="w-3.5 h-3.5" />
             </span>
           )}
-          <ChevronsUpDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[160px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full min-w-[180px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
-            <input ref={sRef} type="text" value={search}
+            <input autoFocus type="text" value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search…"
-              className="w-full text-xs px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400" />
+              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" />
           </div>
-          <div className="max-h-48 overflow-y-auto">
-            {filtered.length === 0 && <p className="text-xs text-gray-400 text-center py-3">No options</p>}
-            {filtered.map(opt => (
-              <button key={opt} type="button"
-                onMouseDown={e => { e.preventDefault(); toggle(opt); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">
-                {/* Circle checkbox */}
-                <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                  ${values.includes(opt) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600'}`}>
-                  {values.includes(opt) && <Check className="w-2.5 h-2.5 text-white" />}
-                </span>
-                {opt}
+          <div className="max-h-52 overflow-y-auto multiselect-scroll">
+            {filtered.length === 0
+              ? <p className="text-xs text-gray-400 text-center py-4">No options found</p>
+              : filtered.map(opt => {
+                  const checked = value.includes(opt);
+                  return (
+                    <button key={opt} type="button" onClick={() => toggle(opt)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                        checked ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}>
+                      <span className="w-4 flex-shrink-0 flex items-center justify-center">
+                        {checked && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />}
+                      </span>
+                      <span className={checked ? 'text-blue-700 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-gray-300'}>{opt}</span>
+                    </button>
+                  );
+                })
+            }
+          </div>
+          {value.length > 0 && (
+            <div className="p-2 border-t border-gray-100 dark:border-gray-800">
+              <button type="button" onClick={clear}
+                className="w-full text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 py-1 text-center font-medium">
+                Clear all ({value.length})
               </button>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -196,7 +198,7 @@ function MultiCombo({ values, onChange, options, placeholder }) {
 
 /* ── Inline edit row panel ──────────────────────────────────────────────────── */
 function EditPanel({ entry, gameOptions, yearOptions, onSave, onCancel, saving }) {
-  const [form, setForm] = useState({ rollNo: entry.rollNo, nameOfGame: entry.nameOfGame, year: entry.year });
+  const [form, setForm]     = useState({ rollNo: entry.rollNo, nameOfGame: entry.nameOfGame, year: entry.year });
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -209,49 +211,43 @@ function EditPanel({ entry, gameOptions, yearOptions, onSave, onCancel, saving }
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) onSave(form);
-  };
+  const handleSubmit = (e) => { e.preventDefault(); if (validate()) onSave(form); };
 
   return (
     <tr className="bg-blue-50/60 dark:bg-blue-900/10 border-b border-blue-200 dark:border-blue-800">
-      <td colSpan={7} className="px-4 py-3">
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+      <td colSpan={7} className="px-4 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Roll Number</label>
+            <label className="label">Roll Number</label>
             <div className="relative">
-              <input
-                type="text" inputMode="numeric"
+              <input type="text" inputMode="numeric"
                 value={form.rollNo}
                 onChange={e => setForm(f => ({ ...f, rollNo: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
-                className={`w-36 px-3 py-2 text-sm rounded-xl border outline-none bg-white dark:bg-gray-800 dark:text-white
-                  ${errors.rollNo ? 'border-red-400' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/40'}`}
+                className={`input-field w-40 ${errors.rollNo ? '!border-red-400' : ''}`}
               />
-              {errors.rollNo && <p className="mt-0.5 text-xs text-red-500">{errors.rollNo}</p>}
             </div>
+            {errors.rollNo && <p className="mt-0.5 text-xs text-red-500">{errors.rollNo}</p>}
           </div>
-          <div className="w-44">
-            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Name of Game</label>
+          <div className="w-48">
+            <label className="label">Name of Game</label>
             <SmallCombo value={form.nameOfGame} onChange={v => setForm(f => ({ ...f, nameOfGame: v }))}
               options={gameOptions} placeholder="Select game" error={errors.nameOfGame} />
             {errors.nameOfGame && <p className="mt-0.5 text-xs text-red-500">{errors.nameOfGame}</p>}
           </div>
-          <div className="w-40">
-            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Academic Year</label>
+          <div className="w-44">
+            <label className="label">Academic Year</label>
             <SmallCombo value={form.year} onChange={v => setForm(f => ({ ...f, year: v }))}
               options={yearOptions} placeholder="Select year" error={errors.year} />
             {errors.year && <p className="mt-0.5 text-xs text-red-500">{errors.year}</p>}
           </div>
           <div className="flex items-center gap-2 pb-0.5">
             <button type="submit" disabled={saving}
-              className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5 disabled:opacity-50">
-              {saving ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              className="btn-primary text-sm flex items-center gap-2 disabled:opacity-50 px-4 py-2">
+              {saving ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-4 h-4" />}
               Save
             </button>
-            <button type="button" onClick={onCancel}
-              className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5">
-              <X className="w-3.5 h-3.5" /> Cancel
+            <button type="button" onClick={onCancel} className="btn-secondary text-sm flex items-center gap-2 px-4 py-2">
+              <X className="w-4 h-4" /> Cancel
             </button>
           </div>
         </form>
@@ -287,12 +283,15 @@ export default function AdminPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   // Filters & sort
-  const [searchRoll, setSearchRoll]     = useState('');
-  const [filterGames, setFilterGames]   = useState([]);
-  const [filterYears, setFilterYears]   = useState([]);
-  const [sortOrder, setSortOrder]       = useState('newest'); // 'newest' | 'oldest'
+  const [searchRoll, setSearchRoll]   = useState('');
+  const [filterGames, setFilterGames] = useState([]);
+  const [filterYears, setFilterYears] = useState([]);
+  const [sortOrder, setSortOrder]     = useState('newest');
 
-  // Build the public self-register URL
+  // Pagination
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [page, setPage]               = useState(1);
+
   const selfRegUrl = `${window.location.origin}/self-register`;
 
   const fetchPending = async () => {
@@ -310,10 +309,7 @@ export default function AdminPage() {
   const fetchAccess = async () => {
     try {
       setLoadingAccess(true);
-      const [accessRes, optsRes] = await Promise.all([
-        getSelfRegAccess(),
-        getOptions(),
-      ]);
+      const [accessRes, optsRes] = await Promise.all([getSelfRegAccess(), getOptions()]);
       setAccessList(accessRes.data);
       setGameOptions(optsRes.data.game || []);
       setYearOptions(optsRes.data.year || []);
@@ -330,7 +326,10 @@ export default function AdminPage() {
   // Reset selection when list changes
   useEffect(() => { setSelected(new Set()); }, [accessList]);
 
-  /* ── Filtered & sorted list ── */
+  // Reset to page 1 when filters/sort/rowsPerPage change
+  useEffect(() => { setPage(1); }, [searchRoll, filterGames, filterYears, sortOrder, rowsPerPage]);
+
+  /* ── Filtered, sorted list ── */
   const filteredList = useMemo(() => {
     let list = [...accessList];
     if (searchRoll.trim()) list = list.filter(a => a.rollNo.includes(searchRoll.trim()));
@@ -342,6 +341,11 @@ export default function AdminPage() {
     });
     return list;
   }, [accessList, searchRoll, filterGames, filterYears, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / rowsPerPage));
+  const safePage   = Math.min(page, totalPages);
+  const pageStart  = (safePage - 1) * rowsPerPage;
+  const pageRows   = filteredList.slice(pageStart, pageStart + rowsPerPage);
 
   /* ── Pending actions ── */
   const handleApprove = async (id) => {
@@ -366,7 +370,7 @@ export default function AdminPage() {
     }
   };
 
-  /* ── Access management actions ── */
+  /* ── Access actions ── */
   const validateAccess = () => {
     const e = {};
     if (!newAccess.rollNo.trim())  e.rollNo    = 'Required';
@@ -382,11 +386,7 @@ export default function AdminPage() {
     if (!validateAccess()) return;
     setSavingAccess(true);
     try {
-      const res = await createSelfRegAccess({
-        rollNo: newAccess.rollNo,
-        nameOfGame: newAccess.nameOfGame,
-        year: newAccess.year,
-      });
+      const res = await createSelfRegAccess({ rollNo: newAccess.rollNo, nameOfGame: newAccess.nameOfGame, year: newAccess.year });
       setAccessList(prev => [res.data, ...prev]);
       setNewAccess({ rollNo: '', nameOfGame: '', year: '' });
       setAccessErrors({});
@@ -437,21 +437,19 @@ export default function AdminPage() {
     }
   };
 
-  const toggleSelect = (id) => {
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next;
+  });
+
+  const allPageSelected = pageRows.length > 0 && pageRows.every(a => selected.has(a._id));
+  const somePageSelected = pageRows.some(a => selected.has(a._id)) && !allPageSelected;
+  const toggleSelectAll = () => {
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (allPageSelected) pageRows.forEach(a => next.delete(a._id));
+      else pageRows.forEach(a => next.add(a._id));
       return next;
     });
-  };
-
-  const allFilteredSelected = filteredList.length > 0 && filteredList.every(a => selected.has(a._id));
-  const toggleSelectAll = () => {
-    if (allFilteredSelected) {
-      setSelected(prev => { const n = new Set(prev); filteredList.forEach(a => n.delete(a._id)); return n; });
-    } else {
-      setSelected(prev => { const n = new Set(prev); filteredList.forEach(a => n.add(a._id)); return n; });
-    }
   };
 
   const copyLink = () => {
@@ -468,7 +466,7 @@ export default function AdminPage() {
         </div>
         <button onClick={tab === 'pending' ? fetchPending : fetchAccess}
           className="btn-secondary flex items-center gap-2 text-sm">
-          <RefreshCw className="w-4 h-4" />Refresh
+          <RefreshCw className="w-4 h-4" /> Refresh
         </button>
       </div>
 
@@ -560,8 +558,7 @@ export default function AdminPage() {
               <code className="flex-1 text-xs bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 break-all">
                 {selfRegUrl}
               </code>
-              <button onClick={copyLink}
-                className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5 flex-shrink-0">
+              <button onClick={copyLink} className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5 flex-shrink-0">
                 Copy Link
               </button>
             </div>
@@ -572,77 +569,60 @@ export default function AdminPage() {
           <div className="card p-5">
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">Grant New Access</h3>
             <form onSubmit={handleCreateAccess}>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 {/* Roll Number */}
                 <div>
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                    Roll Number <span className="text-red-500">*</span>
-                  </label>
+                  <label className="label">Roll Number <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <input
-                      type="text" inputMode="numeric"
+                    <input type="text" inputMode="numeric"
                       value={newAccess.rollNo}
                       onChange={e => setNewAccess(a => ({ ...a, rollNo: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
                       placeholder="e.g. 225113664"
-                      className={`w-full px-3 py-2 pr-8 text-sm rounded-xl border outline-none bg-white dark:bg-gray-800 dark:text-white
-                        ${accessErrors.rollNo ? 'border-red-400' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/40'}`}
+                      className={`input-field pr-8 ${accessErrors.rollNo ? '!border-red-400' : ''}`}
                     />
                     {newAccess.rollNo && (
                       <button type="button"
                         onClick={() => setNewAccess(a => ({ ...a, rollNo: '' }))}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        title="Clear">
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
-                  {accessErrors.rollNo && <p className="mt-0.5 text-xs text-red-500">{accessErrors.rollNo}</p>}
+                  {accessErrors.rollNo && <p className="mt-1 text-xs text-red-500">{accessErrors.rollNo}</p>}
                 </div>
 
                 {/* Name of Game */}
                 <div>
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                    Name of Game <span className="text-red-500">*</span>
-                  </label>
+                  <label className="label">Name of Game <span className="text-red-500">*</span></label>
                   <SmallCombo
                     value={newAccess.nameOfGame}
                     onChange={v => setNewAccess(a => ({ ...a, nameOfGame: v }))}
-                    options={gameOptions}
-                    placeholder="Select or add game"
+                    options={gameOptions} placeholder="Select or add game"
                     error={accessErrors.nameOfGame}
                     onAddOption={async (val) => {
-                      try {
-                        await addOption({ key: 'game', value: val });
-                        setGameOptions(prev => [...prev, val]);
-                      } catch { /* already exists or error — ignore */ }
+                      try { await addOption({ key: 'game', value: val }); setGameOptions(prev => [...prev, val]); } catch {}
                     }}
                   />
-                  {accessErrors.nameOfGame && <p className="mt-0.5 text-xs text-red-500">{accessErrors.nameOfGame}</p>}
+                  {accessErrors.nameOfGame && <p className="mt-1 text-xs text-red-500">{accessErrors.nameOfGame}</p>}
                 </div>
 
                 {/* Academic Year */}
                 <div>
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                    Academic Year <span className="text-red-500">*</span>
-                  </label>
+                  <label className="label">Academic Year <span className="text-red-500">*</span></label>
                   <SmallCombo
                     value={newAccess.year}
                     onChange={v => setNewAccess(a => ({ ...a, year: v }))}
-                    options={yearOptions}
-                    placeholder="Select or add year"
+                    options={yearOptions} placeholder="Select or add year"
                     error={accessErrors.year}
                     onAddOption={async (val) => {
-                      try {
-                        await addOption({ key: 'year', value: val });
-                        setYearOptions(prev => [...prev, val]);
-                      } catch { /* already exists or error — ignore */ }
+                      try { await addOption({ key: 'year', value: val }); setYearOptions(prev => [...prev, val]); } catch {}
                     }}
                   />
-                  {accessErrors.year && <p className="mt-0.5 text-xs text-red-500">{accessErrors.year}</p>}
+                  {accessErrors.year && <p className="mt-1 text-xs text-red-500">{accessErrors.year}</p>}
                 </div>
               </div>
               <button type="submit" disabled={savingAccess}
-                className="btn-primary text-sm flex items-center gap-2 disabled:opacity-50">
+                className="btn-primary flex items-center gap-2 disabled:opacity-50">
                 {savingAccess
                   ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</>
                   : <><Plus className="w-4 h-4" /> Grant Access</>
@@ -653,7 +633,7 @@ export default function AdminPage() {
 
           {/* Access list */}
           <div className="card overflow-hidden">
-            {/* List header */}
+            {/* List header + filters */}
             <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
@@ -662,63 +642,52 @@ export default function AdminPage() {
                 </div>
                 {selected.size > 0 && (
                   <button onClick={() => setBulkDeleteOpen(true)}
-                    className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium">
-                    <Trash2 className="w-3.5 h-3.5" />
+                    className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium">
+                    <Trash2 className="w-4 h-4" />
                     Delete {selected.size} selected
                   </button>
                 )}
               </div>
 
               {/* Filters row */}
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Search by roll number */}
-                <div className="relative">
-                  <input
-                    type="text" inputMode="numeric"
-                    value={searchRoll}
-                    onChange={e => setSearchRoll(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Search by roll no…"
-                    className="pl-3 pr-7 py-2 text-xs rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300/40 w-44"
-                  />
-                  {searchRoll && (
-                    <button onClick={() => setSearchRoll('')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* Search by roll */}
+                <div>
+                  <label className="label">Roll Number</label>
+                  <div className="relative">
+                    <input type="text" inputMode="numeric"
+                      value={searchRoll}
+                      onChange={e => setSearchRoll(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Search roll no…"
+                      className="input-field pr-7"
+                    />
+                    {searchRoll && (
+                      <button onClick={() => setSearchRoll('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Game multi-select */}
-                <MultiCombo
-                  values={filterGames}
-                  onChange={setFilterGames}
-                  options={gameOptions}
-                  placeholder="All Games"
-                />
+                <MultiCombo label="Game" values={filterGames} onChange={setFilterGames}
+                  options={gameOptions} placeholder="All Games"
+                  value={filterGames} />
 
                 {/* Year multi-select */}
-                <MultiCombo
-                  values={filterYears}
-                  onChange={setFilterYears}
-                  options={yearOptions}
-                  placeholder="All Years"
-                />
+                <MultiCombo label="Year" values={filterYears} onChange={setFilterYears}
+                  options={yearOptions} placeholder="All Years"
+                  value={filterYears} />
 
                 {/* Sort */}
-                <select
-                  value={sortOrder}
-                  onChange={e => setSortOrder(e.target.value)}
-                  className="text-xs px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300/40">
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                </select>
-
-                {/* Active filter count badge */}
-                {(searchRoll || filterGames.length || filterYears.length) && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {filteredList.length} of {accessList.length} shown
-                  </span>
-                )}
+                <div>
+                  <label className="label">Sort</label>
+                  <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="input-field">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -736,72 +705,118 @@ export default function AdminPage() {
                   className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline">Clear filters</button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                      {/* Select-all circle checkbox */}
-                      <th className="pl-4 pr-2 py-3 w-10">
-                        <button type="button" onClick={toggleSelectAll}
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
-                            ${allFilteredSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'}`}>
-                          {allFilteredSelected && <Check className="w-3 h-3 text-white" />}
-                        </button>
-                      </th>
-                      {['Roll No', 'Game', 'Year', 'Granted On', 'Action'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                        {/* Select-all checkbox */}
+                        <th className="pl-4 pr-2 py-3 w-10">
+                          <button type="button" onClick={toggleSelectAll}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
+                              ${allPageSelected ? 'bg-blue-600 border-blue-600' : somePageSelected ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-400' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'}`}>
+                            {allPageSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                            {somePageSelected && !allPageSelected && <span className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400 rounded" />}
+                          </button>
+                        </th>
+                        {['Roll No', 'Game', 'Year', 'Granted On', 'Action'].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {pageRows.map(a => (
+                        <React.Fragment key={a._id}>
+                          <tr className={`transition-colors ${selected.has(a._id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'}`}>
+                            {/* Row checkbox */}
+                            <td className="pl-4 pr-2 py-3">
+                              <button type="button" onClick={() => toggleSelect(a._id)}
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
+                                  ${selected.has(a._id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'}`}>
+                                {selected.has(a._id) && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">{a.rollNo}</td>
+                            <td className="px-4 py-3">
+                              <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-medium">{a.nameOfGame}</span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{a.year}</td>
+                            <td className="px-4 py-3 text-sm text-gray-400">
+                              {new Date(a.createdAt).toLocaleDateString('en-IN')}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => setEditingId(editingId === a._id ? null : a._id)}
+                                  className={`p-1.5 rounded-lg transition-colors ${editingId === a._id ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+                                  title="Edit">
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => setDeleteAccessTarget(a._id)}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Revoke">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {editingId === a._id && (
+                            <EditPanel entry={a} gameOptions={gameOptions} yearOptions={yearOptions}
+                              onSave={handleEditSave} onCancel={() => setEditingId(null)} saving={savingEdit} />
+                          )}
+                        </React.Fragment>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {filteredList.map(a => (
-                      <React.Fragment key={a._id}>
-                        <tr className={`transition-colors ${selected.has(a._id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'}`}>
-                          {/* Row circle checkbox */}
-                          <td className="pl-4 pr-2 py-3">
-                            <button type="button" onClick={() => toggleSelect(a._id)}
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
-                                ${selected.has(a._id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'}`}>
-                              {selected.has(a._id) && <Check className="w-3 h-3 text-white" />}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">{a.rollNo}</td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-medium">{a.nameOfGame}</span>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{a.year}</td>
-                          <td className="px-4 py-3 text-sm text-gray-400">
-                            {new Date(a.createdAt).toLocaleDateString('en-IN')}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => setEditingId(editingId === a._id ? null : a._id)}
-                                className={`p-1.5 rounded-lg transition-colors ${editingId === a._id ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
-                                title="Edit">
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button onClick={() => setDeleteAccessTarget(a._id)}
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Revoke access">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                        {editingId === a._id && (
-                          <EditPanel
-                            entry={a}
-                            gameOptions={gameOptions}
-                            yearOptions={yearOptions}
-                            onSave={handleEditSave}
-                            onCancel={() => setEditingId(null)}
-                            saving={savingEdit}
-                          />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination footer — matches Dashboard exactly */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30">
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Showing{' '}
+                      <span className="font-semibold text-gray-900 dark:text-white">{pageStart + 1}</span>–
+                      <span className="font-semibold text-gray-900 dark:text-white">{Math.min(pageStart + rowsPerPage, filteredList.length)}</span>
+                      {' '}of{' '}
+                      <span className="font-semibold text-gray-900 dark:text-white">{filteredList.length}</span>
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Show:</span>
+                      <datalist id="access-rows-options">
+                        {ROWS_OPTIONS.map(n => <option key={n} value={n} />)}
+                      </datalist>
+                      <input
+                        type="number"
+                        list="access-rows-options"
+                        min={1}
+                        value={rowsPerPage}
+                        onChange={e => { const v = parseInt(e.target.value, 10); if (v > 0) setRowsPerPage(v); }}
+                        className="w-20 text-sm text-center px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setPage(1)} disabled={safePage === 1}
+                      className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 disabled:opacity-40 hover:border-blue-400 disabled:cursor-not-allowed transition-colors">«</button>
+                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 disabled:opacity-40 hover:border-blue-400 disabled:cursor-not-allowed transition-colors">‹ Prev</button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                      .reduce((acc, p, i, arr) => { if (i > 0 && p - arr[i - 1] > 1) acc.push('…'); acc.push(p); return acc; }, [])
+                      .map((p, i) =>
+                        p === '…'
+                          ? <span key={`e${i}`} className="px-1.5 text-xs text-gray-400">…</span>
+                          : <button key={p} onClick={() => setPage(p)}
+                              className={`w-8 h-7 text-xs rounded-lg border transition-colors ${safePage === p ? 'bg-blue-600 border-blue-600 text-white font-semibold' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-blue-400'}`}>{p}</button>
+                      )
+                    }
+
+                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
+                      className="px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 disabled:opacity-40 hover:border-blue-400 disabled:cursor-not-allowed transition-colors">Next ›</button>
+                    <button onClick={() => setPage(totalPages)} disabled={safePage === totalPages}
+                      className="px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 disabled:opacity-40 hover:border-blue-400 disabled:cursor-not-allowed transition-colors">»</button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -816,7 +831,6 @@ export default function AdminPage() {
         onConfirm={handleReject}
         onCancel={() => setRejectTarget(null)}
       />
-
       <ConfirmDialog
         open={!!deleteAccessTarget}
         title="Revoke Access"
@@ -826,7 +840,6 @@ export default function AdminPage() {
         onConfirm={handleDeleteAccess}
         onCancel={() => setDeleteAccessTarget(null)}
       />
-
       <ConfirmDialog
         open={bulkDeleteOpen}
         title={`Revoke ${selected.size} Access Entr${selected.size === 1 ? 'y' : 'ies'}`}
