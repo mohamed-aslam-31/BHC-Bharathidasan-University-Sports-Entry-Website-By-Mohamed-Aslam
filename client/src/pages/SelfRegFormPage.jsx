@@ -326,8 +326,16 @@ export default function SelfRegFormPage() {
   const handlePhotoChange = (e) => {
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
-    if (!['image/jpeg','image/png'].includes(f.type)) { alert('Only JPG/PNG allowed'); return; }
-    if (f.size > 2 * 1024 * 1024) { alert('Photo must be ≤ 2 MB'); return; }
+    if (!['image/jpeg','image/png'].includes(f.type)) {
+      setErrors(prev => ({ ...prev, photo: 'Only JPG/PNG files are allowed' })); return;
+    }
+    if (f.size < 100 * 1024) {
+      setErrors(prev => ({ ...prev, photo: 'Photo must be at least 100 KB' })); return;
+    }
+    if (f.size > 1 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, photo: 'Photo must be 1 MB or smaller' })); return;
+    }
+    setErrors(prev => ({ ...prev, photo: undefined }));
     const reader = new FileReader();
     reader.onloadend = () => { setCropSrc(reader.result); setCrop({ x: 0, y: 0 }); setZoom(1); setShowCrop(true); };
     reader.readAsDataURL(f);
