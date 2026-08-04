@@ -63,6 +63,7 @@ export default function StudentPreviewOverlay({
   aadhaarFile, idCardFile, marksheetFile, feesReceiptFile,
   currentAadhaarPdf, currentIdCardPdf, currentMarksheetPdf, currentFeesReceiptPdf,
   isEdit,
+  initialVerified = false,
   loading,
   onConfirm,
   onBack,
@@ -77,7 +78,7 @@ export default function StudentPreviewOverlay({
   ].filter(Boolean).length;
   const allDocsReady = docCount === 4;
 
-  const [verified, setVerified] = useState(false);
+  const [verified, setVerified] = useState(initialVerified);
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-100 dark:bg-gray-950 overflow-y-auto">

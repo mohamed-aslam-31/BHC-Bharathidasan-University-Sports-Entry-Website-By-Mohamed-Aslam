@@ -665,6 +665,7 @@ export default function StudentFormPage() {
   const [aadhaarFile, setAadhaarFile]           = useState(null);
   const [currentAadhaarPdf, setCurrentAadhaarPdf] = useState(null);   // existing PDF on edit
   const [deletingAadhaar, setDeletingAadhaar]   = useState(false);
+  const [initialVerified, setInitialVerified]   = useState(false);
   const [idCardValidated, setIdCardValidated]       = useState(false);
   const [idCardFile, setIdCardFile]                 = useState(null);
   const [currentIdCardPdf, setCurrentIdCardPdf]     = useState(null);
@@ -743,6 +744,7 @@ export default function StudentFormPage() {
         if (s.idCardPdf)     setCurrentIdCardPdf(s.idCardPdf);
         if (s.marksheetPdf)    setCurrentMarksheetPdf(s.marksheetPdf);
         if (s.feesReceiptPdf)  setCurrentFeesReceiptPdf(s.feesReceiptPdf);
+        setInitialVerified(!!s.documentsVerified);
       })
       .catch(() => { addToast('Failed to load student', 'error'); navigate('/'); })
       .finally(() => setFetching(false));
@@ -2268,6 +2270,7 @@ export default function StudentFormPage() {
           currentMarksheetPdf={currentMarksheetPdf}
           currentFeesReceiptPdf={currentFeesReceiptPdf}
           isEdit={isEdit}
+          initialVerified={initialVerified}
           loading={loading}
           onConfirm={handleConfirmSave}
           onBack={() => setShowPreview(false)}
