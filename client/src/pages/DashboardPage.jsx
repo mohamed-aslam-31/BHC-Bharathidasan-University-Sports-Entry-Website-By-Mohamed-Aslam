@@ -1151,7 +1151,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ── Pagination footer ── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30">
+            <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30">
               <div className="flex items-center gap-3">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Showing <span className="font-semibold text-gray-900 dark:text-white">{pageStart + 1}</span>–<span className="font-semibold text-gray-900 dark:text-white">{Math.min(pageStart + rowsPerPage, combined.length)}</span> of <span className="font-semibold text-gray-900 dark:text-white">{combined.length}</span>
