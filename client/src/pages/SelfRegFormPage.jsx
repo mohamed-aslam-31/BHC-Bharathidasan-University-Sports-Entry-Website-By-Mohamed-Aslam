@@ -907,16 +907,34 @@ export default function SelfRegFormPage() {
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Other — Sportsman Dress</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field label="T-Shirt Size">
-                      <input type="text" value={form.tshirt} maxLength={3}
-                        onChange={e => setForm(f => ({ ...f, tshirt: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
+                      <input type="text" inputMode="decimal" value={form.tshirt} maxLength={4}
+                        onChange={e => {
+                          let v = e.target.value.replace(/[^\d.]/g, '');
+                          const dot = v.indexOf('.');
+                          if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+                          const parts = v.split('.');
+                          if (parts[0].length > 2) parts[0] = parts[0].slice(0, 2);
+                          if (parts[1] !== undefined && parts[1].length > 1) parts[1] = parts[1].slice(0, 1);
+                          v = parts.join(dot !== -1 ? '.' : '');
+                          setForm(f => ({ ...f, tshirt: v }));
+                        }}
                         placeholder="e.g. 40" className={inputCls(false)} />
-                      <FieldMeta value={form.tshirt} max={3} always={false} error={undefined} />
+                      <FieldMeta value={form.tshirt} max={4} always={false} error={undefined} />
                     </Field>
-                    <Field label="Track Size">
-                      <input type="text" value={form.track} maxLength={3}
-                        onChange={e => setForm(f => ({ ...f, track: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
-                        placeholder="e.g. 42" className={inputCls(false)} />
-                      <FieldMeta value={form.track} max={3} always={false} error={undefined} />
+                    <Field label="Pant Size">
+                      <input type="text" inputMode="decimal" value={form.track} maxLength={4}
+                        onChange={e => {
+                          let v = e.target.value.replace(/[^\d.]/g, '');
+                          const dot = v.indexOf('.');
+                          if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+                          const parts = v.split('.');
+                          if (parts[0].length > 2) parts[0] = parts[0].slice(0, 2);
+                          if (parts[1] !== undefined && parts[1].length > 1) parts[1] = parts[1].slice(0, 1);
+                          v = parts.join(dot !== -1 ? '.' : '');
+                          setForm(f => ({ ...f, track: v }));
+                        }}
+                        placeholder="e.g. 32" className={inputCls(false)} />
+                      <FieldMeta value={form.track} max={4} always={false} error={undefined} />
                     </Field>
                   </div>
                 </div>
