@@ -158,6 +158,13 @@ function RejectedScreen({ rejectionReason, form, onBack }) {
         You may reapply to submit a new form with updated information.
       </p>
 
+      <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
+        <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-1">Note</p>
+        <p className="text-sm text-amber-800 dark:text-amber-300">
+          Before reapplying, you need to upload all 4 documents again (Aadhaar, ID Card, Marksheet, and Fees Receipt).
+        </p>
+      </div>
+
       <button
         onClick={handleReapply}
         disabled={loading}
