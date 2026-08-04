@@ -879,35 +879,32 @@ export default function StudentViewPage() {
         </button>
       </div>
 
-      {/* Print CSS */}
+      {/* Print CSS — mirrors group-view print approach */}
       <style>{`
-        @page { size: A4 portrait; margin: 3mm 10mm; }
+        @page { size: A4 portrait; margin: 10mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
           html, body { margin: 0; padding: 0; background: #fff; }
           #element-to-print {
-            padding: 4px 4px !important;
+            padding: 18px 22px !important;
             max-width: 100% !important;
             width: 100% !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
-            font-size: 13px !important;
-            min-height: 285mm !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-          #element-to-print > div:last-child {
-            margin-top: auto !important;
+            font-family: 'Times New Roman', serif !important;
+            color: #000 !important;
+            background: #fff !important;
           }
           #element-to-print table {
             width: 100% !important;
+            border-collapse: collapse !important;
             table-layout: fixed !important;
             word-break: break-word !important;
             font-size: 13px !important;
+            font-family: Arial, sans-serif !important;
           }
           #element-to-print td {
-            padding: 6px 7px !important;
+            padding: 7px 8px !important;
             font-size: 13px !important;
           }
           #element-to-print img {
