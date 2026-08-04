@@ -420,6 +420,7 @@ export default function SelfRegFormPage() {
     if (!form.dayType)     e.dayType     = 'Day/Hostel type is required';
     if (!form.shift)       e.shift       = 'Shift is required';
     if (form.dayType === 'HOSTELLER' && !form.hostelName) e.hostelName = 'Hostel name is required';
+    if (!idCardValidated)  e.idCardFile  = 'College ID card PDF is required and must pass validation';
     setErrors(e);
     return e;
   };
@@ -720,7 +721,7 @@ export default function SelfRegFormPage() {
               <div>
                 <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Personal Details</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Student Type" required error={errors.studentType}>
+                  <Field id="field-studentType" label="Student Type" required error={errors.studentType}>
                     <div className="flex gap-2 items-center">
                       {(opts.studentType || ['AIDED','SELF-FINANCE']).map(t => (
                         <button key={t} type="button" onClick={() => { set('studentType')(t); setErrors(e => ({ ...e, studentType: '' })); }}
@@ -737,7 +738,7 @@ export default function SelfRegFormPage() {
                       )}
                     </div>
                   </Field>
-                  <Field label="Shift" required error={errors.shift}>
+                  <Field id="field-shift" label="Shift" required error={errors.shift}>
                     <div className="flex gap-2 items-center">
                       {(opts.shift || ['MORNING','EVENING']).map(s => (
                         <button key={s} type="button" onClick={() => { set('shift')(s); setErrors(e => ({ ...e, shift: '' })); }}
@@ -754,7 +755,7 @@ export default function SelfRegFormPage() {
                       )}
                     </div>
                   </Field>
-                  <Field label="Day Scholar / Hosteller" required error={errors.dayType} span2>
+                  <Field id="field-dayType" label="Day Scholar / Hosteller" required error={errors.dayType} span2>
                     <div className="flex gap-2 items-center">
                       {(opts.dayType || ['DAYSCHOLAR','HOSTELLER']).map(d => (
                         <button key={d} type="button" onClick={() => { set('dayType')(d); if (d === 'DAYSCHOLAR') set('hostelName')(''); setErrors(e => ({ ...e, dayType: '' })); }}
@@ -772,7 +773,7 @@ export default function SelfRegFormPage() {
                     </div>
                   </Field>
                   {form.dayType === 'HOSTELLER' && (
-                    <Field label="Hostel Name" required error={errors.hostelName} span2>
+                    <Field id="field-hostelName" label="Hostel Name" required error={errors.hostelName} span2>
                       <ComboBox value={form.hostelName} onChange={v => { set('hostelName')(v); setErrors(e => ({ ...e, hostelName: '' })); }}
                         options={opts.hostel || []} placeholder="Select hostel" error={errors.hostelName} />
                     </Field>
@@ -786,14 +787,18 @@ export default function SelfRegFormPage() {
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Document Upload</p>
                   <div>
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      College ID Card
-                      <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+                      College ID Card <span className="text-red-500">*</span>
                     </p>
-                    <IdCardUpload
-                      locked={false}
-                      onValidationChange={setIdCardValidated}
-                      onFileChange={setIdCardFile}
-                    />
+                    <div id="field-idCardFile">
+                      <IdCardUpload
+                        locked={false}
+                        onValidationChange={setIdCardValidated}
+                        onFileChange={setIdCardFile}
+                      />
+                      {errors.idCardFile && !idCardValidated && (
+                        <p className="mt-1 text-xs text-red-500">{errors.idCardFile}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -961,7 +966,7 @@ export default function SelfRegFormPage() {
                 <div className="h-px bg-gray-100 dark:bg-gray-800" />
 
                 {/* Terms & Conditions */}
-                <div className={`rounded-xl border p-4 ${errors.terms ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/10' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'}`}>
+                <div id="field-terms" className={`rounded-xl border p-4 ${errors.terms ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/10' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'}`}>
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)}
                       className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />

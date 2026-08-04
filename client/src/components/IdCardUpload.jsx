@@ -177,7 +177,7 @@ export default function IdCardUpload({ onValidationChange, onFileChange, locked 
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => setShowViewer(true)}
+                  onClick={() => { if (blobUrl) window.open(blobUrl, '_blank'); }}
                   className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Eye className="w-3.5 h-3.5" /> View
@@ -217,33 +217,6 @@ export default function IdCardUpload({ onValidationChange, onFileChange, locked 
 
       </>}
 
-      {/* PDF viewer modal */}
-      {showViewer && blobUrl && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
-          onClick={() => setShowViewer(false)}
-        >
-          <div
-            className="relative w-full max-w-3xl h-[88vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <p className="text-sm font-semibold text-gray-800 dark:text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-500" />
-                {file?.name}
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowViewer(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <iframe src={blobUrl} className="flex-1 w-full" title="ID Card PDF Viewer" />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
