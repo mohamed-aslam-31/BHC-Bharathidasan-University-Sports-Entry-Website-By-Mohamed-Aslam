@@ -35,6 +35,11 @@
   }
 }
 
+/* Lock background scroll when group-view modal is open */
+body.group-view-open {
+  overflow: hidden;
+}
+
 @media print {
   .no-print { display: none !important; }
   .print-exclude { display: none !important; }
@@ -44,6 +49,7 @@
   body.group-view-open #root {
     display: none !important;
   }
+
 
   /* Expand the group-view modal so all selected cards print */
   .group-view-print-root {
