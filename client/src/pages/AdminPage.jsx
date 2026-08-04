@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from '../components/Toast';
-import {
-  getPendingStudents, approveStudent, rejectStudent,
-  getUsers, createUser, deleteUser
-} from '../api';
+import { getPendingStudents, approveStudent, rejectStudent } from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
-  CheckCircle, XCircle, Eye, Users, UserPlus, Trash2,
-  ShieldCheck, ShieldOff, Clock, User, RefreshCw
+  CheckCircle, XCircle, Eye, Clock, RefreshCw
 } from 'lucide-react';
 
 function TabButton({ active, onClick, children, count }) {
@@ -34,15 +30,9 @@ function TabButton({ active, onClick, children, count }) {
 
 export default function AdminPage() {
   const { addToast } = useToast();
-  const [tab, setTab] = useState('pending');
   const [pending, setPending] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rejectTarget, setRejectTarget] = useState(null);
-  const [deleteUserTarget, setDeleteUserTarget] = useState(null);
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' });
-  const [addingUser, setAddingUser] = useState(false);
-  const [showAddUser, setShowAddUser] = useState(false);
 
   const fetchPending = async () => {
     try {
@@ -56,18 +46,8 @@ export default function AdminPage() {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      const res = await getUsers();
-      setUsers(res.data);
-    } catch {
-      addToast('Failed to load users', 'error');
-    }
-  };
-
   useEffect(() => {
     fetchPending();
-    fetchUsers();
   }, []);
 
   const handleApprove = async (id) => {
@@ -92,34 +72,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleAddUser = async (e) => {
-    e.preventDefault();
-    setAddingUser(true);
-    try {
-      await createUser(newUser);
-      addToast('User created successfully');
-      setNewUser({ username: '', password: '', role: 'user' });
-      setShowAddUser(false);
-      fetchUsers();
-    } catch (err) {
-      addToast(err.response?.data?.error || 'Failed to create user', 'error');
-    } finally {
-      setAddingUser(false);
-    }
-  };
-
-  const handleDeleteUser = async () => {
-    try {
-      await deleteUser(deleteUserTarget);
-      addToast('User deleted');
-      setUsers(u => u.filter(x => x.id !== deleteUserTarget));
-      setDeleteUserTarget(null);
-    } catch (err) {
-      addToast(err.response?.data?.error || 'Failed to delete user', 'error');
-      setDeleteUserTarget(null);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -128,24 +80,14 @@ export default function AdminPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage student approvals and user accounts</p>
         </div>
-        <button onClick={() => { fetchPending(); fetchUsers(); }}
+        <button onClick={fetchPending}
           className="btn-secondary flex items-center gap-2 text-sm">
           <RefreshCw className="w-4 h-4" />Refresh
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <TabButton active={tab === 'pending'} onClick={() => setTab('pending')} count={pending.length}>
-          <Clock className="w-4 h-4" />Pending Approvals
-        </TabButton>
-        <TabButton active={tab === 'users'} onClick={() => setTab('users')} count={users.length}>
-          <Users className="w-4 h-4" />User Accounts
-        </TabButton>
-      </div>
-
-      {/* Pending Tab */}
-      {tab === 'pending' && (
+      {/* Pending Approvals */}
+      {(
         <div className="card overflow-hidden">
           {loading ? (
             <div className="py-16 flex justify-center"><LoadingSpinner text="Loading pending…" /></div>
@@ -229,104 +171,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Users Tab */}
-      {tab === 'users' && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <button
-              onClick={() => setShowAddUser(o => !o)}
-              className="btn-primary flex items-center gap-2 text-sm"
-            >
-              <UserPlus className="w-4 h-4" />Add User
-            </button>
-          </div>
-
-          {showAddUser && (
-            <div className="card p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Create New User</h3>
-              <form onSubmit={handleAddUser} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="label">Username</label>
-                  <input className="input-field" placeholder="Username" required value={newUser.username}
-                    onChange={e => setNewUser(u => ({ ...u, username: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="label">Password</label>
-                  <input className="input-field" type="password" placeholder="Password" required value={newUser.password}
-                    onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="label">Role</label>
-                  <select className="input-field" value={newUser.role}
-                    onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}>
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div className="sm:col-span-3 flex gap-3">
-                  <button type="submit" disabled={addingUser} className="btn-primary text-sm">
-                    {addingUser ? 'Creating…' : 'Create User'}
-                  </button>
-                  <button type="button" onClick={() => setShowAddUser(false)} className="btn-secondary text-sm">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          <div className="card overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                  {['#', 'Username', 'Role', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {users.map(u => (
-                  <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.id}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                            {u.username?.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">{u.username}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`flex items-center gap-1.5 w-fit text-xs font-medium px-2.5 py-1 rounded-full ${
-                        u.role === 'admin'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {u.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => setDeleteUserTarget(u.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        title="Delete user"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       <ConfirmDialog
         open={!!rejectTarget}
         title="Reject Student"
@@ -335,16 +179,6 @@ export default function AdminPage() {
         confirmClass="btn-danger"
         onConfirm={handleReject}
         onCancel={() => setRejectTarget(null)}
-      />
-
-      <ConfirmDialog
-        open={!!deleteUserTarget}
-        title="Delete User"
-        message="This user account will be permanently deleted. They will no longer be able to log in."
-        confirmLabel="Delete User"
-        confirmClass="btn-danger"
-        onConfirm={handleDeleteUser}
-        onCancel={() => setDeleteUserTarget(null)}
       />
     </div>
   );
