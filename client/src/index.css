@@ -130,3 +130,23 @@
 .glass-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(239, 68, 68, 0.45);
 }
+
+/* Horizontal glass scrollbar for dashboard table */
+.table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+.table-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+  backdrop-filter: blur(6px);
+}
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
