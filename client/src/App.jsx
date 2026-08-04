@@ -11,7 +11,6 @@ import StudentViewPage from './pages/StudentViewPage';
 import AdminPage from './pages/AdminPage';
 import DraftPage from './pages/DraftPage';
 import SettingsPage from './pages/SettingsPage';
-import AccountPage from './pages/AccountPage';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function ProtectedRoute({ children, adminOnly = false }) {
@@ -64,7 +63,6 @@ const router = createBrowserRouter([
       { path: 'admin',               element: <ProtectedRoute adminOnly><AdminPage /></ProtectedRoute> },
       { path: 'drafts',              element: <ProtectedRoute><DraftPage /></ProtectedRoute> },
       { path: 'settings',            element: <ProtectedRoute><SettingsPage /></ProtectedRoute> },
-      { path: 'account',             element: <ProtectedRoute><AccountPage /></ProtectedRoute> },
       { path: '*',                   element: <Navigate to="/" replace /> },
     ],
   },

@@ -38,8 +38,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   ];
 
   const bottomLinks = [
-    { to: '/account',  label: 'My Account', icon: User },
-    { to: '/settings', label: 'Settings',   icon: Settings },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ];
 
   const isActive = (path) =>
