@@ -214,7 +214,7 @@ function Section({ title }) {
 function Stepper({ step }) {
   const steps = ['Photo & Basic Info', 'Personal Details', 'Academic & Documents'];
   return (
-    <div className="flex items-center justify-center gap-0 mb-8 flex-wrap">
+    <div className="flex items-center justify-center gap-0 mb-5 sm:mb-8 flex-wrap">
       {steps.map((label, i) => {
         const n = i + 1;
         const active = step === n;
@@ -222,14 +222,14 @@ function Stepper({ step }) {
         return (
           <React.Fragment key={n}>
             <div className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors
+              <div className={`stepper-dot w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-colors
                 ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
-                {done ? <CheckCircle className="w-5 h-5" /> : n}
+                {done ? <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" /> : n}
               </div>
-              <span className={`text-xs mt-1 font-medium ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>{label}</span>
+              <span className={`stepper-label text-xs mt-1 font-medium max-w-[70px] sm:max-w-none text-center leading-tight ${active ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>{label}</span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`flex-1 min-w-[24px] max-w-[60px] h-0.5 mb-5 mx-1 transition-colors ${step > n ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div className={`stepper-line flex-1 min-w-[16px] max-w-[48px] sm:min-w-[24px] sm:max-w-[60px] h-0.5 mb-5 mx-0.5 sm:mx-1 transition-colors ${step > n ? 'bg-green-400' : 'bg-gray-200 dark:bg-gray-700'}`} />
             )}
           </React.Fragment>
         );
@@ -239,7 +239,7 @@ function Stepper({ step }) {
 }
 
 /* ─── Input helper ─────────────────────────────────────────────────────────── */
-const inputCls = (err) => `w-full px-3 py-2.5 rounded-xl border text-sm outline-none transition-colors bg-white dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 ${err ? 'border-red-400 focus:ring-2 focus:ring-red-300' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50'}`;
+const inputCls = (err) => `w-full px-2 py-2 sm:px-3 sm:py-2.5 rounded-xl border text-xs sm:text-sm outline-none transition-colors bg-white dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 ${err ? 'border-red-400 focus:ring-2 focus:ring-red-300' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50'}`;
 
 /* ─── Main component ───────────────────────────────────────────────────────── */
 export default function SelfRegFormPage() {
@@ -604,21 +604,21 @@ export default function SelfRegFormPage() {
   const opts = options;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-1.5 py-4 sm:px-4 sm:py-8">
       {/* Header */}
-      <div className="text-center mb-6">
-        <div className="w-20 h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
-          <img src="/pe-logo.png" alt="Department of Physical Education" className="w-16 h-16 object-contain rounded-full" />
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-2 sm:mb-3 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
+          <img src="/pe-logo.png" alt="Department of Physical Education" className="w-11 h-11 sm:w-16 sm:h-16 object-contain rounded-full" />
         </div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
+        <h1 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
         <p className="text-xs text-gray-500 dark:text-gray-400">Bharathidasan University — Student Self Registration</p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <Stepper step={step} />
 
         {/* Locked identity banner */}
-        <div className="flex flex-wrap items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 mb-6 text-sm">
+        <div className="selfreg-banner flex flex-wrap items-center gap-1.5 sm:gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-2.5 py-2 sm:px-4 sm:py-3 mb-4 sm:mb-6 text-xs sm:text-sm">
           <span className="font-semibold text-blue-700 dark:text-blue-300">Roll No:</span>
           <span className="text-gray-800 dark:text-gray-200">{accessData.rollNo}</span>
           <span className="text-gray-300 dark:text-gray-600">|</span>
@@ -630,7 +630,7 @@ export default function SelfRegFormPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 p-6 space-y-6">
+          <div className="selfreg-card bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 p-3 sm:p-6 space-y-4 sm:space-y-6">
 
             {/* ═══════════════ STEP 1 ═══════════════ */}
             {step === 1 && (
@@ -638,11 +638,11 @@ export default function SelfRegFormPage() {
                 {/* Photo */}
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-3">Passport Size Photo</p>
-                  <div className="flex items-center gap-5">
-                    <div className="relative group w-24 h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex-shrink-0 flex items-center justify-center">
+                  <div className="flex flex-col xs:flex-row items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
+                    <div className="relative group w-16 h-20 sm:w-24 sm:h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex-shrink-0 flex items-center justify-center">
                       {imagePreview
                         ? <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
-                        : <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600" />}
+                        : <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-gray-300 dark:text-gray-600" />}
                       <div onClick={() => photoRef.current?.click()}
                         className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                         <Camera className="w-5 h-5 text-white" />
@@ -1064,24 +1064,24 @@ export default function SelfRegFormPage() {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-between mt-5">
+          <div className="selfreg-nav flex justify-between mt-4 sm:mt-5 gap-2">
             {step > 1
               ? <button type="button" onClick={handleBack}
-                  className="flex items-center gap-2 px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <ArrowLeft className="w-4 h-4" /> Back
+                  className="flex items-center gap-1.5 px-3 py-2 sm:px-5 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Back
                 </button>
               : <div />}
 
             {step < 3
               ? <button type="button" onClick={handleNext}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors">
-                  Next <ArrowRight className="w-4 h-4" />
+                  className="flex items-center gap-1.5 px-3 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-medium transition-colors">
+                  Next <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               : <button type="submit" disabled={submitting}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl text-sm font-medium transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 sm:px-6 sm:py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl text-xs sm:text-sm font-medium transition-colors">
                   {submitting
-                    ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>
-                    : <><CheckCircle className="w-4 h-4" /> Submit Registration</>}
+                    ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>
+                    : <><CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Submit Registration</>}
                 </button>}
           </div>
         </form>

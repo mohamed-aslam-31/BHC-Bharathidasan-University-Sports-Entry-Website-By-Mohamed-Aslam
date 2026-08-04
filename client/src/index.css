@@ -113,6 +113,17 @@
   }
 }
 
+/* ── Ultra-narrow (≤300px) micro-adjustments ──────────────────────────────── */
+@media (max-width: 300px) {
+  .selfreg-card   { padding: 0.5rem !important; }
+  .selfreg-banner { padding: 0.375rem 0.5rem !important; font-size: 0.65rem !important; }
+  .selfreg-nav    { gap: 0.375rem !important; }
+  .selfreg-nav button { padding: 0.375rem 0.625rem !important; font-size: 0.7rem !important; }
+  .stepper-label  { display: none !important; }
+  .stepper-dot    { width: 1.5rem !important; height: 1.5rem !important; font-size: 0.65rem !important; }
+  .stepper-line   { min-width: 12px !important; max-width: 28px !important; margin: 0 2px !important; }
+}
+
 /* Glass scrollbar for textareas */
 .textarea-scroll {
   scrollbar-width: thin;
