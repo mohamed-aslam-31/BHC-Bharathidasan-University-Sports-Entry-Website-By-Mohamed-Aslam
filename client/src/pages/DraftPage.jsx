@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDrafts, deleteDraft, clearAllDrafts, completionPercent } from '../utils/drafts';
-import { FileText, Trash2, ArrowRight, Clock, AlertTriangle, BookOpen } from 'lucide-react';
+import { getDrafts, deleteDraft, clearAllDrafts, completionPercent, draftFileCount } from '../utils/drafts';
+import { FileText, Trash2, ArrowRight, Clock, AlertTriangle, BookOpen, Paperclip } from 'lucide-react';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -100,11 +100,12 @@ export default function DraftPage() {
       {drafts.length > 0 && (
         <div className="space-y-3">
           {drafts.map((draft) => {
-            const pct  = completionPercent(draft.form);
-            const name = draft.form?.studentName?.trim() || 'Untitled Student';
-            const year = draft.form?.year || '—';
-            const game = draft.form?.nameOfTheGame || '—';
-            const roll = draft.form?.rollNo || '—';
+            const pct   = completionPercent(draft.form);
+            const name  = draft.form?.studentName?.trim() || 'Untitled Student';
+            const year  = draft.form?.year || '—';
+            const game  = draft.form?.nameOfTheGame || '—';
+            const roll  = draft.form?.rollNo || '—';
+            const nDocs = draftFileCount(draft);
 
             return (
               <div
@@ -123,6 +124,12 @@ export default function DraftPage() {
                       )}
                       {roll !== '—' && (
                         <span className="text-xs text-gray-500 dark:text-gray-400">Roll: {roll}</span>
+                      )}
+                      {nDocs > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                          <Paperclip className="w-3 h-3" />
+                          {nDocs} doc{nDocs !== 1 ? 's' : ''} saved
+                        </span>
                       )}
                     </div>
                   </div>

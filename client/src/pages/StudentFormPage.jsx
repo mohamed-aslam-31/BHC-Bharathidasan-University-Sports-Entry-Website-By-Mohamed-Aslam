@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle, BookOpen, Save } from 'lucide-react';
-import { saveDraft, getDraft, deleteDraft, isDraftDuplicate, completionPercent } from '../utils/drafts';
+import { saveDraft, getDraft, deleteDraft, isDraftDuplicate, completionPercent, storableToFile } from '../utils/drafts';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
 import IdCardUpload from '../components/IdCardUpload';
@@ -716,6 +716,29 @@ export default function StudentFormPage() {
     if (!draft) return;
     setDraftId(resumeId);
     setForm((prev) => ({ ...prev, ...draft.form }));
+
+    // Restore uploaded files from serialised base64 data
+    if (draft.files) {
+      if (draft.files.imageFile) {
+        try {
+          const file = storableToFile(draft.files.imageFile);
+          setImageFile(file);
+          setImagePreview(URL.createObjectURL(file));
+        } catch { /* skip */ }
+      }
+      if (draft.files.aadhaarFile) {
+        try { setAadhaarFile(storableToFile(draft.files.aadhaarFile)); } catch { /* skip */ }
+      }
+      if (draft.files.idCardFile) {
+        try { setIdCardFile(storableToFile(draft.files.idCardFile)); } catch { /* skip */ }
+      }
+      if (draft.files.marksheetFile) {
+        try { setMarksheetFile(storableToFile(draft.files.marksheetFile)); } catch { /* skip */ }
+      }
+      if (draft.files.feesReceiptFile) {
+        try { setFeesReceiptFile(storableToFile(draft.files.feesReceiptFile)); } catch { /* skip */ }
+      }
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Navigation guard helpers ── */
@@ -1036,12 +1059,16 @@ export default function StudentFormPage() {
 
   const notifyNavbar = () => window.dispatchEvent(new Event('bhc_drafts_changed'));
 
-  const handleMoveToDraft = (thenNavigate = false) => {
+  const handleMoveToDraft = async (thenNavigate = false) => {
     const id = draftId || `draft_${Date.now()}`;
     setDraftId(id);
-    saveDraft(id, form);
+    try {
+      await saveDraft(id, form, { imageFile, aadhaarFile, idCardFile, marksheetFile, feesReceiptFile });
+      addToast('Saved to drafts');
+    } catch (err) {
+      addToast(err.message || 'Saved to drafts (documents could not be stored)', 'warning');
+    }
     notifyNavbar();
-    addToast('Saved to drafts');
     setShowLeaveModal(false);
     const dest = pendingNavRef.current;
     pendingNavRef.current = null;

@@ -14,16 +14,79 @@ export function getDraft(id) {
   return getDrafts().find((d) => d.id === id) || null;
 }
 
-export function saveDraft(id, form) {
+/**
+ * Convert a File or Blob to a storable { dataUrl, name, type } object.
+ * Uses FileReader so it works in all browsers without needing arrayBuffer support.
+ */
+export function fileToStorable(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve({ dataUrl: reader.result, name: file.name, type: file.type });
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Reconstruct a File from a stored { dataUrl, name, type } object.
+ */
+export function storableToFile({ dataUrl, name, type }) {
+  const [, b64] = dataUrl.split(',');
+  const bytes   = atob(b64);
+  const arr     = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new File([arr], name, { type });
+}
+
+/**
+ * Save a draft. Accepts an optional `files` map of { key: File }.
+ * Files are serialised to base64 data-URLs so they survive page refreshes.
+ * If the combined payload exceeds the localStorage quota the function throws
+ * with a user-readable message.
+ */
+export async function saveDraft(id, form, files = {}) {
   const drafts = getDrafts();
-  const now = new Date().toISOString();
-  const idx = drafts.findIndex((d) => d.id === id);
-  if (idx >= 0) {
-    drafts[idx] = { ...drafts[idx], form, updatedAt: now };
-  } else {
-    drafts.unshift({ id, form, createdAt: now, updatedAt: now });
+  const now    = new Date().toISOString();
+
+  // Serialise every File that was passed
+  const serialisedFiles = {};
+  for (const [key, file] of Object.entries(files)) {
+    if (file instanceof File || file instanceof Blob) {
+      try {
+        serialisedFiles[key] = await fileToStorable(file);
+      } catch {
+        // skip files that can't be read (e.g. revoked blob URLs used as File)
+      }
+    }
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
+
+  const idx   = drafts.findIndex((d) => d.id === id);
+  const entry = {
+    id,
+    form,
+    files: serialisedFiles,
+    createdAt: idx >= 0 ? drafts[idx].createdAt : now,
+    updatedAt: now,
+  };
+
+  if (idx >= 0) {
+    drafts[idx] = entry;
+  } else {
+    drafts.unshift(entry);
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts));
+  } catch {
+    // Quota exceeded — retry storing without file data so text fields are at least preserved
+    const stripped = drafts.map((d) => ({ ...d, files: {} }));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
+    } catch {
+      /* nothing we can do */
+    }
+    throw new Error('Documents are too large to save in the draft. Text fields were saved successfully.');
+  }
 }
 
 export function deleteDraft(id) {
@@ -62,4 +125,10 @@ export function completionPercent(form) {
   ];
   const filled = required.filter((k) => form[k] && String(form[k]).trim()).length;
   return Math.round((filled / required.length) * 100);
+}
+
+/** Count how many document files are stored in a draft */
+export function draftFileCount(draft) {
+  if (!draft?.files) return 0;
+  return Object.keys(draft.files).length;
 }
