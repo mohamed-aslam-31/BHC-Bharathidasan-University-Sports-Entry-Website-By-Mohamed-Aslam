@@ -1153,7 +1153,7 @@ export default function SelfRegFormPage() {
         </div>
       )}
 
-      <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">© {new Date().getFullYear()} Bharathidasan University · Sports Division</p>
+      <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">© 2026 · Bishop Heber College · Department of Physical Education</p>
     </div>
   );
 }

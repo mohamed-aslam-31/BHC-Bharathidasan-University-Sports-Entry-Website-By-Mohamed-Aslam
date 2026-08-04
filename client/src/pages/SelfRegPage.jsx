@@ -328,7 +328,7 @@ export default function SelfRegPage() {
         </form>
       </div>
 
-      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© {new Date().getFullYear()} Bharathidasan University · Sports Division</p>
+      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© 2026 · Bishop Heber College · Department of Physical Education</p>
     </div>
   );
 }
@@ -344,7 +344,7 @@ function PageShell({ children }) {
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Bharathidasan University — Student Self Registration</p>
       </div>
       {children}
-      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© {new Date().getFullYear()} Bharathidasan University · Sports Division</p>
+      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© 2026 · Bishop Heber College · Department of Physical Education</p>
     </div>
   );
 }

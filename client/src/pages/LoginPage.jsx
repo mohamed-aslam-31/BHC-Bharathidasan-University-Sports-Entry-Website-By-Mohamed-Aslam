@@ -110,7 +110,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
-          © {new Date().getFullYear()} Bharathidasan University · Sports Division
+          © 2026 · Bishop Heber College · Department of Physical Education
         </p>
       </div>
     </div>
