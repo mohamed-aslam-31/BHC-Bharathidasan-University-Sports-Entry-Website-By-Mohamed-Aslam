@@ -561,6 +561,7 @@ export default function DashboardPage() {
   const [hostels, setHostels]           = useState([]);
   const [shifts, setShifts]             = useState([]);
   const [bloodGroups, setBloodGroups]   = useState([]);
+  const [docStatuses, setDocStatuses]   = useState([]);
 
   /* sort + pagination */
   const [sortBy, setSortBy]       = useState(['new-to-old']);
@@ -593,7 +594,7 @@ export default function DashboardPage() {
   /* reset to page 1 whenever a filter/sort/rows changes */
   useEffect(() => { setPage(1); }, [
     rollNo, name, games, genders, departments, years,
-    studentTypes, dayTypes, hostels, shifts, bloodGroups, sortBy, rowsPerPage
+    studentTypes, dayTypes, hostels, shifts, bloodGroups, docStatuses, sortBy, rowsPerPage
   ]);
   useEffect(() => {
     if (!dayTypes.includes('HOSTELLER') && hostels.length > 0) setHostels([]);
@@ -612,6 +613,13 @@ export default function DashboardPage() {
     return dateCmp !== 0 ? dateCmp : nameCmp;
   };
 
+  const getDocStatus = (s) => {
+    const uploaded = [s.aadhaarPdf, s.idCardPdf, s.marksheetPdf, s.feesReceiptPdf].filter(Boolean).length;
+    if (s.documentsVerified) return 'verified';
+    if (uploaded === 4) return 'not-verified';
+    return 'docs-missing';
+  };
+
   const matchesFilter = (s) => {
     if (rollNo && !s.rollNo?.toLowerCase().includes(rollNo.toLowerCase())) return false;
     if (name && !s.nameOfTheSportsperson?.toLowerCase().includes(name.toLowerCase())) return false;
@@ -624,6 +632,7 @@ export default function DashboardPage() {
     if (hostels.length && !hostels.includes(s.hostelName)) return false;
     if (shifts.length && !shifts.includes(s.shift)) return false;
     if (bloodGroups.length && !bloodGroups.includes(s.bloodGroup)) return false;
+    if (docStatuses.length && !docStatuses.includes(getDocStatus(s))) return false;
     return true;
   };
 
@@ -634,13 +643,13 @@ export default function DashboardPage() {
     return { pinnedRows: pinned, filteredRows: rest, totalVisible: pinned.length + rest.length };
   }, [
     allStudents, selected, rollNo, name, games, genders, departments, years,
-    studentTypes, dayTypes, hostels, shifts, bloodGroups, sortBy
+    studentTypes, dayTypes, hostels, shifts, bloodGroups, docStatuses, sortBy
   ]);
 
   const combined = [...pinnedRows, ...filteredRows];
 
   const filteredStats = useMemo(() => {
-    const all = allStudents.filter(matchesFilter);
+    const all = allStudents.filter(s => matchesFilter(s));
     return {
       total:      all.length,
       sportsList: [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].sort(),
@@ -657,7 +666,7 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     allStudents, rollNo, name, games, genders, departments, years,
-    studentTypes, dayTypes, hostels, shifts, bloodGroups
+    studentTypes, dayTypes, hostels, shifts, bloodGroups, docStatuses
   ]);
   const totalPages = Math.max(1, Math.ceil(combined.length / rowsPerPage));
   const safePage = Math.min(page, totalPages);
@@ -717,6 +726,7 @@ export default function DashboardPage() {
     rollNo, name,
     ...games, ...genders, ...departments, ...years,
     ...studentTypes, ...dayTypes, ...hostels, ...shifts, ...bloodGroups,
+    ...docStatuses,
     ...nonDefaultSort
   ].filter(Boolean).length;
 
@@ -724,6 +734,7 @@ export default function DashboardPage() {
     setRollNo(''); setName('');
     setGames([]); setGenders([]); setDepts([]); setYears([]);
     setStudentTypes([]); setDayTypes([]); setHostels([]); setShifts([]); setBloodGroups([]);
+    setDocStatuses([]);
     setSortBy(['new-to-old']);
   };
 
@@ -802,6 +813,14 @@ export default function DashboardPage() {
           )}
           <MultiSelect label="Shift"           options={shiftOptions} value={shifts} onChange={setShifts} placeholder="All Shifts" />
           <MultiSelect label="Blood Group"     options={bloodGroupOptions} value={bloodGroups} onChange={setBloodGroups} placeholder="All Blood Groups" />
+          <MultiSelect
+            label="Doc Status"
+            options={['Docs Missing', 'Not Verified', 'Verified']}
+            value={docStatuses.map(v => ({ 'docs-missing': 'Docs Missing', 'not-verified': 'Not Verified', 'verified': 'Verified' }[v] || v))}
+            onChange={labels => setDocStatuses(labels.map(l => ({ 'Docs Missing': 'docs-missing', 'Not Verified': 'not-verified', 'Verified': 'verified' }[l] || l)))}
+            placeholder="All Statuses"
+            noSearch
+          />
           <MultiSelect
             label="Sort by"
             options={['New to Old', 'Old to New', 'A to Z', 'Z to A']}
