@@ -442,7 +442,7 @@ function resolveDraftFile(uploadedFile, draftPath, destFolder) {
 
 // ─── IMAGE PROXY ──────────────────────────────────────────────────────────────
 
-app.get('/api/proxy-image', authMiddleware, async (req, res) => {
+app.get('/api/proxy-image', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'url query param required' });
   try {

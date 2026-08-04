@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link, useLocation, useBlocker } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent, uploadDraftFiles, deleteDraftFiles } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent, uploadDraftFiles, deleteDraftFiles } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle, BookOpen, Save, Clock } from 'lucide-react';
 import { saveDraft, getDraft, deleteDraft, isDraftDuplicate, completionPercent, storableToFile } from '../utils/drafts';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -706,7 +706,7 @@ export default function StudentFormPage() {
   /* ── ID card photo state ── */
   const [showIdCardPreview, setShowIdCardPreview] = useState(false);
   const [idCardLoading, setIdCardLoading]         = useState(false);
-  const [idCardImgError, setIdCardImgError]       = useState(false);
+  const [idCardBlobUrl, setIdCardBlobUrl]         = useState(null);
   const [imageFromUrl, setImageFromUrl]           = useState(null); // external URL reference (no upload)
 
   useEffect(() => {
@@ -967,24 +967,40 @@ export default function StudentFormPage() {
 
   const idCardUrl = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${form.rollNo}.jpg`;
 
-  const handleOpenIdCardPreview = () => {
+  const handleOpenIdCardPreview = async () => {
     if (!form.rollNo) {
       addToast('Please enter the roll number first', 'error');
       return;
     }
-    setIdCardLoading(true);
-    setIdCardImgError(false);
+    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
+    setIdCardBlobUrl(null);
     setShowIdCardPreview(true);
+    setIdCardLoading(true);
+    try {
+      const res = await fetchProxyImage(idCardUrl);
+      setIdCardBlobUrl(URL.createObjectURL(res.data));
+    } catch {
+      // null stays — modal will show "not found"
+    } finally {
+      setIdCardLoading(false);
+    }
   };
 
   const handleIdCardCancel = () => {
     setShowIdCardPreview(false);
+    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
+    setIdCardBlobUrl(null);
   };
 
   const handleIdCardConfirm = () => {
-    // Store the external URL directly — no download, no server upload
+    if (!idCardBlobUrl) {
+      addToast('Photo could not be loaded — check the roll number', 'error');
+      return;
+    }
+    // Use the blob as the in-session preview; store the external URL so no file is uploaded
     setImageFromUrl(idCardUrl);
-    setImagePreview(idCardUrl);
+    setImagePreview(idCardBlobUrl); // transferred — don't revoke
+    setIdCardBlobUrl(null);
     setImageFile(null);
     setCurrentImage(null);
     setShowIdCardPreview(false);
@@ -1269,7 +1285,7 @@ export default function StudentFormPage() {
   );
 
   const photoSrc = imagePreview || (currentImage
-    ? (currentImage.startsWith('http') ? currentImage : `/uploads/${currentImage}`)
+    ? (currentImage.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(currentImage)}` : `/uploads/${currentImage}`)
     : null);
 
   /* ─────────────────────────── Render ──────────────────────────────────── */
@@ -1558,26 +1574,22 @@ export default function StudentFormPage() {
 
               {/* Photo preview */}
               <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50 min-h-[200px]">
-                {idCardLoading && (
-                  <div className="absolute flex flex-col items-center gap-3 text-gray-400">
+                {idCardLoading ? (
+                  <div className="flex flex-col items-center gap-3 text-gray-400">
                     <Loader2 className="w-8 h-8 animate-spin" />
                     <p className="text-xs">Loading photo…</p>
                   </div>
-                )}
-                {idCardImgError ? (
+                ) : idCardBlobUrl ? (
+                  <img
+                    src={idCardBlobUrl}
+                    alt={`ID card photo for ${form.rollNo}`}
+                    className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow"
+                  />
+                ) : (
                   <div className="w-36 h-44 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-col gap-2 text-center px-3">
                     <User className="w-10 h-10 text-gray-300 dark:text-gray-600" />
                     <p className="text-xs text-gray-400 dark:text-gray-500">Photo not found for this roll number</p>
                   </div>
-                ) : (
-                  <img
-                    src={idCardUrl}
-                    alt={`ID card photo for ${form.rollNo}`}
-                    className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow"
-                    style={{ display: idCardLoading ? 'none' : 'block' }}
-                    onLoad={() => { setIdCardLoading(false); setIdCardImgError(false); }}
-                    onError={() => { setIdCardLoading(false); setIdCardImgError(true); }}
-                  />
                 )}
               </div>
 
@@ -1593,7 +1605,7 @@ export default function StudentFormPage() {
                 <button
                   type="button"
                   onClick={handleIdCardConfirm}
-                  disabled={idCardLoading || idCardImgError}
+                  disabled={idCardLoading || !idCardBlobUrl}
                   className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50"
                 >
                   <Check className="w-4 h-4" />

@@ -69,7 +69,7 @@ export default function StudentPreviewOverlay({
   onBack,
 }) {
   const photoSrc = imagePreview || (currentImage
-    ? (currentImage.startsWith('http') ? currentImage : `/uploads/${currentImage}`)
+    ? (currentImage.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(currentImage)}` : `/uploads/${currentImage}`)
     : null);
 
   const docCount = [

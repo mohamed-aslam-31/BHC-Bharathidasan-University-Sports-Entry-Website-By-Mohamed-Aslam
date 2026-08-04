@@ -264,7 +264,7 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
           <div style={{ width: '125px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
             <div style={{ border: '1px solid #000', width: '115px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {s.image
-                ? <img src={s.image.startsWith('http') ? s.image : `/uploads/${s.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <img src={s.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(s.image)}` : `/uploads/${s.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <span style={{ fontSize: '12px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
               }
             </div>
@@ -1060,7 +1060,7 @@ export default function DashboardPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {s.image ? (
-                              <img src={s.image.startsWith('http') ? s.image : `/uploads/${s.image}`} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-100 dark:border-blue-900" />
+                              <img src={s.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(s.image)}` : `/uploads/${s.image}`} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-blue-100 dark:border-blue-900" />
                             ) : (
                               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                                 <span className="text-xs font-bold text-blue-600 dark:text-blue-400">{s.nameOfTheSportsperson?.charAt(0)}</span>
