@@ -224,7 +224,6 @@ function PrintModal({ student, onClose }) {
   };
 
   const [selected, setSelected] = useState(() => ({
-    proforma:    true,
     aadhaar:     !!student.aadhaarPdf,
     idcard:      !!student.idCardPdf,
     marksheet:   !!student.marksheetPdf,
@@ -241,7 +240,7 @@ function PrintModal({ student, onClose }) {
     if (pdfUrl) { URL.revokeObjectURL(pdfUrl); setPdfUrl(null); }
   };
 
-  const anySelected = selected.proforma || DOC_KEYS.some((k) => selected[k] && pdfMap[k]);
+  const anySelected = DOC_KEYS.some((k) => selected[k] && pdfMap[k]);
 
   const handlePrintProforma = () => {
     onClose();
@@ -253,7 +252,7 @@ function PrintModal({ student, onClose }) {
     setStatus('generating');
     try {
       const paths = DOC_KEYS.filter((k) => selected[k] && pdfMap[k]).map((k) => pdfMap[k]);
-      const bytes = await buildMergedPdf(paths, selected.proforma);
+      const bytes = await buildMergedPdf(paths, false);
       const blob  = new Blob([bytes], { type: 'application/pdf' });
       setPdfUrl(URL.createObjectURL(blob));
       setStatus('ready');
@@ -284,7 +283,6 @@ function PrintModal({ student, onClose }) {
   ];
 
   const ALL_ITEMS = [
-    { key: 'proforma',    label: 'Eligibility Proforma', alwaysAvailable: true },
     { key: 'aadhaar',     label: 'Aadhaar Card' },
     { key: 'idcard',      label: 'ID Card' },
     { key: 'marksheet',   label: '12th Marksheet' },
@@ -362,11 +360,6 @@ function PrintModal({ student, onClose }) {
           </div>
         )}
 
-        {/* Proforma-only print shortcut */}
-        <button onClick={handlePrintProforma}
-          className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors py-1">
-          <Printer className="w-3.5 h-3.5" /> Print proforma only (browser print dialog)
-        </button>
       </div>
     </div>
   );
