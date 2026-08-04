@@ -1411,6 +1411,31 @@ export default function DashboardPage() {
           #dashboard-print-area a[href] { display: none !important; }
           /* header + stats always together on page 1 */
           #dashboard-page1-block { break-inside: avoid; }
+          /* shrink stat cards to fit on one page */
+          #dashboard-stats-section { margin-top: 6px !important; }
+          #dashboard-stats-section .grid { gap: 4px !important; }
+          #dashboard-stats-section .card {
+            padding: 4px 6px !important;
+            border: 1px solid #000 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: #fff !important;
+          }
+          /* count cards: icon + number row */
+          #dashboard-stats-section .card .w-9 { display: none !important; }
+          #dashboard-stats-section .card p.text-lg { font-size: 11px !important; font-weight: bold; line-height: 1.2 !important; color: #000 !important; }
+          #dashboard-stats-section .card p.text-xs { font-size: 9px !important; color: #000 !important; margin-top: 1px !important; }
+          /* list cards: header row */
+          #dashboard-stats-section .card .w-8 { display: none !important; }
+          #dashboard-stats-section .card span.text-sm { font-size: 9px !important; font-weight: bold !important; color: #000 !important; }
+          #dashboard-stats-section .card span.text-xs.font-medium { font-size: 9px !important; color: #000 !important; }
+          /* list items */
+          #dashboard-stats-section .card ul { margin-top: 2px !important; }
+          #dashboard-stats-section .card li { font-size: 8px !important; color: #000 !important; line-height: 1.3 !important; }
+          #dashboard-stats-section .card li span.w-1\\.5 { width: 4px !important; height: 4px !important; }
+          #dashboard-stats-section .card p.text-xs.italic { font-size: 8px !important; color: #666 !important; }
+          /* use 4-col grid for list cards to compress horizontally */
+          #dashboard-stats-section .grid.sm\\:grid-cols-2 { grid-template-columns: repeat(4, 1fr) !important; }
           /* table: clean black borders */
           #dashboard-print-area table { border-collapse: collapse !important; width: 100% !important; font-size: 11px !important; border: 1px solid #000 !important; }
           #dashboard-print-area th,
