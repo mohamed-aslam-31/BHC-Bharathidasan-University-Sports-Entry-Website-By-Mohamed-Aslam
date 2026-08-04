@@ -393,6 +393,7 @@ export default function SelfRegFormPage() {
     const ph = validatePhone(form.phoneNumber);         if (ph) e.phoneNumber  = ph;
     const ad = validateAadhar(form.aadharNumber);       if (ad) e.aadharNumber = ad;
     const addr = validateAddress(form.address);         if (addr) e.address    = addr;
+    if (!aadhaarValidated) e.aadhaarFile = 'Aadhaar card PDF is required and must pass validation';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -418,7 +419,6 @@ export default function SelfRegFormPage() {
     const gc = validateNoOfYears(form.graduateCourse);         if (gc) e.graduateCourse  = gc;
     const pg = validateNoOfYears(form.pgCourse);               if (pg) e.pgCourse        = pg;
     const prev = validatePrevCourse(form.previousCourse);      if (prev) e.previousCourse = prev;
-    if (!aadhaarValidated)     e.aadhaarFile    = 'Aadhaar card PDF is required and must pass validation';
     if (!marksheetValidated)   e.marksheetFile  = '+2 Marksheet PDF is required and must pass validation';
     if (!feesReceiptValidated) e.feesReceiptFile = 'Fees receipt PDF is required and must pass validation';
     if (!termsAccepted)        e.terms          = 'You must accept the terms and conditions';
@@ -607,13 +607,21 @@ export default function SelfRegFormPage() {
                       <FieldMeta value={form.motherName} max={50} always error={errors.motherName} />
                     </Field>
                     <Field label="Date of Birth" required error={errors.dob}>
-                      <input type="date" value={form.dob}
-                        onChange={e => { set('dob')(e.target.value); touch('dob', e.target.value); }}
-                        onBlur={() => touch('dob', form.dob)}
-                        className={inputCls(errors.dob)} />
+                      <div className="relative flex items-center">
+                        <input type="date" value={form.dob}
+                          onChange={e => { set('dob')(e.target.value); touch('dob', e.target.value); }}
+                          onBlur={() => touch('dob', form.dob)}
+                          className={inputCls(errors.dob) + ' w-full pr-8'} />
+                        {form.dob && (
+                          <button type="button" onClick={() => { set('dob')(''); setErrors(e => ({ ...e, dob: '' })); }}
+                            className="absolute right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </Field>
                     <Field label="Gender" required error={errors.gender}>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         {['MALE','FEMALE','OTHER'].map(g => (
                           <button key={g} type="button" onClick={() => { set('gender')(g); setErrors(e => ({ ...e, gender: '' })); }}
                             className={`flex-1 py-2 rounded-xl border text-sm font-medium transition-colors
@@ -621,6 +629,12 @@ export default function SelfRegFormPage() {
                             {g.charAt(0) + g.slice(1).toLowerCase()}
                           </button>
                         ))}
+                        {form.gender && (
+                          <button type="button" onClick={() => { set('gender')(''); setErrors(e => ({ ...e, gender: '' })); }}
+                            className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </Field>
                     <Field label="Blood Group" required error={errors.bloodGroup}>
@@ -650,6 +664,26 @@ export default function SelfRegFormPage() {
                     </Field>
                   </div>
                 </div>
+
+                <div className="h-px bg-gray-100 dark:bg-gray-800" />
+
+                {/* Aadhaar Upload — Step 1 */}
+                <div>
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Document Upload</p>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Aadhaar Card <span className="text-red-500">*</span>
+                    </p>
+                    <AadhaarUpload
+                      locked={false}
+                      onValidationChange={setAadhaarValidated}
+                      onFileChange={setAadhaarFile}
+                    />
+                    {errors.aadhaarFile && !aadhaarValidated && (
+                      <p className="mt-1 text-xs text-red-500">{errors.aadhaarFile}</p>
+                    )}
+                  </div>
+                </div>
               </>
             )}
 
@@ -659,7 +693,7 @@ export default function SelfRegFormPage() {
                 <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Personal Details</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Student Type" required error={errors.studentType}>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       {(opts.studentType || ['AIDED','SELF-FINANCE']).map(t => (
                         <button key={t} type="button" onClick={() => { set('studentType')(t); setErrors(e => ({ ...e, studentType: '' })); }}
                           className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors
@@ -667,10 +701,16 @@ export default function SelfRegFormPage() {
                           {t}
                         </button>
                       ))}
+                      {form.studentType && (
+                        <button type="button" onClick={() => { set('studentType')(''); setErrors(e => ({ ...e, studentType: '' })); }}
+                          className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </Field>
                   <Field label="Shift" required error={errors.shift}>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       {(opts.shift || ['MORNING','EVENING']).map(s => (
                         <button key={s} type="button" onClick={() => { set('shift')(s); setErrors(e => ({ ...e, shift: '' })); }}
                           className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors
@@ -678,10 +718,16 @@ export default function SelfRegFormPage() {
                           {s.charAt(0) + s.slice(1).toLowerCase()}
                         </button>
                       ))}
+                      {form.shift && (
+                        <button type="button" onClick={() => { set('shift')(''); setErrors(e => ({ ...e, shift: '' })); }}
+                          className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </Field>
                   <Field label="Day Scholar / Hosteller" required error={errors.dayType} span2>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       {(opts.dayType || ['DAYSCHOLAR','HOSTELLER']).map(d => (
                         <button key={d} type="button" onClick={() => { set('dayType')(d); if (d === 'DAYSCHOLAR') set('hostelName')(''); setErrors(e => ({ ...e, dayType: '' })); }}
                           className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-colors
@@ -689,6 +735,12 @@ export default function SelfRegFormPage() {
                           {d === 'DAYSCHOLAR' ? 'Day Scholar' : 'Hosteller'}
                         </button>
                       ))}
+                      {form.dayType && (
+                        <button type="button" onClick={() => { set('dayType')(''); set('hostelName')(''); setErrors(e => ({ ...e, dayType: '', hostelName: '' })); }}
+                          className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Clear">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </Field>
                   {form.dayType === 'HOSTELLER' && (
@@ -697,6 +749,24 @@ export default function SelfRegFormPage() {
                         options={opts.hostel || []} placeholder="Select hostel" error={errors.hostelName} />
                     </Field>
                   )}
+                </div>
+
+                <div className="h-px bg-gray-100 dark:bg-gray-800 mt-4" />
+
+                {/* ID Card Upload — Step 2 */}
+                <div className="mt-4">
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Document Upload</p>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      College ID Card
+                      <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+                    </p>
+                    <IdCardUpload
+                      locked={false}
+                      onValidationChange={setIdCardValidated}
+                      onFileChange={setIdCardFile}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -820,21 +890,6 @@ export default function SelfRegFormPage() {
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Document Uploads</p>
                   <div className="space-y-6">
 
-                    {/* Aadhaar — required */}
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Aadhaar Card <span className="text-red-500">*</span>
-                      </p>
-                      <AadhaarUpload
-                        locked={false}
-                        onValidationChange={setAadhaarValidated}
-                        onFileChange={setAadhaarFile}
-                      />
-                      {errors.aadhaarFile && !aadhaarValidated && (
-                        <p className="mt-1 text-xs text-red-500">{errors.aadhaarFile}</p>
-                      )}
-                    </div>
-
                     {/* +2 Marksheet — required */}
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -861,19 +916,6 @@ export default function SelfRegFormPage() {
                       {errors.feesReceiptFile && !feesReceiptValidated && (
                         <p className="mt-1 text-xs text-red-500">{errors.feesReceiptFile}</p>
                       )}
-                    </div>
-
-                    {/* ID Card — optional */}
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        College ID Card
-                        <span className="ml-1.5 text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
-                      </p>
-                      <IdCardUpload
-                        locked={false}
-                        onValidationChange={setIdCardValidated}
-                        onFileChange={setIdCardFile}
-                      />
                     </div>
 
                   </div>
