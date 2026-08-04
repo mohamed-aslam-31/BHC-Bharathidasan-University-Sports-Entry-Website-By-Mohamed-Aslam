@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload } from 'lucide-react';
-import { selfRegOptions, selfRegSubmit } from '../api';
+import { Trophy, ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload, Loader2, User, Check } from 'lucide-react';
+import { selfRegOptions, selfRegSubmit, fetchProxyImage } from '../api';
 import Cropper from 'react-easy-crop';
 import AadhaarUpload from '../components/AadhaarUpload';
 import MarksheetUpload from '../components/MarksheetUpload';
@@ -283,6 +283,46 @@ export default function SelfRegFormPage() {
   const [croppedPx, setCroppedPx]       = useState(null);
   const photoRef = useRef(null);
 
+  /* ── ID Card photo fetch ── */
+  const [showIdCardPreview, setShowIdCardPreview] = useState(false);
+  const [idCardLoading, setIdCardLoading]         = useState(false);
+  const [idCardBlobUrl, setIdCardBlobUrl]         = useState(null);
+  const [idCardBlob, setIdCardBlob]               = useState(null);
+
+  const handleOpenIdCardPreview = async () => {
+    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
+    setIdCardBlobUrl(null);
+    setIdCardBlob(null);
+    setShowIdCardPreview(true);
+    setIdCardLoading(true);
+    try {
+      const url = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${accessData.rollNo}.jpg`;
+      const res = await fetchProxyImage(url);
+      const blob = res.data;
+      setIdCardBlob(blob);
+      setIdCardBlobUrl(URL.createObjectURL(blob));
+    } catch { /* blob stays null — modal shows "not found" state */ }
+    finally { setIdCardLoading(false); }
+  };
+
+  const handleIdCardCancel = () => {
+    setShowIdCardPreview(false);
+    if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
+    setIdCardBlobUrl(null);
+    setIdCardBlob(null);
+  };
+
+  const handleIdCardConfirm = () => {
+    if (!idCardBlob) return;
+    const file = new File([idCardBlob], `${accessData.rollNo}.jpg`, { type: 'image/jpeg' });
+    setImageFile(file);
+    setImagePreview(idCardBlobUrl);
+    setIdCardBlobUrl(null); // transferred — don't revoke
+    setIdCardBlob(null);
+    setShowIdCardPreview(false);
+    setErrors(prev => ({ ...prev, photo: undefined }));
+  };
+
   const handlePhotoChange = (e) => {
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
@@ -523,11 +563,16 @@ export default function SelfRegFormPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Passport size photo <span className="text-red-500">*</span></p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">JPG or PNG · Max 2 MB · Will be cropped</p>
-                      <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">💡 You can use your college ID card photo</p>
-                      <button type="button" onClick={() => photoRef.current?.click()}
-                        className="mt-2 text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
-                        <Upload className="w-3 h-3" />{imagePreview ? 'Change Photo' : 'Upload Photo'}
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <button type="button" onClick={() => photoRef.current?.click()}
+                          className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
+                          <Upload className="w-3 h-3" />{imagePreview ? 'Change Photo' : 'Upload Photo'}
+                        </button>
+                        <button type="button" onClick={handleOpenIdCardPreview}
+                          className="text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors flex items-center gap-1.5 border border-gray-300 dark:border-gray-600">
+                          <User className="w-3 h-3" /> Use ID Card Photo
+                        </button>
+                      </div>
                       {errors.photo && <p className="mt-1 text-xs text-red-500">{errors.photo}</p>}
                     </div>
                     <input ref={photoRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoChange} />
@@ -878,6 +923,51 @@ export default function SelfRegFormPage() {
           </div>
         </form>
       </div>
+
+      {/* ID Card Photo Preview Modal */}
+      {showIdCardPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">ID Card Photo</h2>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Roll No: {accessData.rollNo}</p>
+              </div>
+              <button type="button" onClick={handleIdCardCancel}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50 min-h-[200px]">
+              {idCardLoading ? (
+                <div className="flex flex-col items-center gap-3 text-gray-400">
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                  <p className="text-xs">Loading photo…</p>
+                </div>
+              ) : idCardBlobUrl ? (
+                <img src={idCardBlobUrl} alt={`ID card photo for ${accessData.rollNo}`}
+                  className="w-36 h-44 object-cover rounded-lg border-2 border-blue-200 dark:border-blue-700 shadow" />
+              ) : (
+                <div className="w-36 h-44 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-col gap-2 text-center px-3">
+                  <User className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Photo not found for this roll number</p>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+              <button type="button" onClick={handleIdCardCancel}
+                className="text-sm px-5 py-2 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                Cancel
+              </button>
+              <button type="button" onClick={handleIdCardConfirm}
+                disabled={idCardLoading || !idCardBlobUrl}
+                className="text-sm px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <Check className="w-4 h-4" /> Use This Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Crop modal */}
       {showCrop && (
