@@ -3,13 +3,13 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { getStudents, getStudentMeta, getOptions, deleteStudent, bulkDeleteStudents } from '../api';
+import { getStudents, getStudentMeta, getOptions, deleteStudent, bulkDeleteStudents, verifyStudent } from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
   Plus, Eye, Pencil, Trash2, X,
   Users, Trophy, AlertTriangle, Check,
-  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding, User
+  ChevronDown, GraduationCap, CalendarDays, User2, PersonStanding, User, Loader2
 } from 'lucide-react';
 
 /* ─── Circular checkbox ───────────────────────────────────────────────────── */
@@ -542,6 +542,20 @@ export default function DashboardPage() {
 
   /* single delete */
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [verifyingId, setVerifyingId] = useState(null);
+
+  const handleVerify = async (studentId, verified) => {
+    setVerifyingId(studentId);
+    try {
+      await verifyStudent(studentId, verified);
+      setAllStudents((prev) => prev.map((s) => s._id === studentId ? { ...s, documentsVerified: verified } : s));
+      addToast(verified ? 'Documents marked as verified' : 'Verification removed');
+    } catch {
+      addToast('Failed to update verification', 'error');
+    } finally {
+      setVerifyingId(null);
+    }
+  };
 
   /* bulk */
   const [selected, setSelected] = useState(new Set());
@@ -1021,20 +1035,31 @@ export default function DashboardPage() {
                         <td className="px-4 py-3">
                           {(() => {
                             const uploaded = [s.aadhaarPdf, s.idCardPdf, s.marksheetPdf, s.feesReceiptPdf].filter(Boolean).length;
+                            const isBusy = verifyingId === s._id;
                             if (s.documentsVerified) {
                               return (
-                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 whitespace-nowrap">
-                                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block flex-shrink-0" />
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleVerify(s._id, false); }}
+                                  disabled={isBusy}
+                                  title="Click to remove verification"
+                                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 whitespace-nowrap hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                  {isBusy ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" /> : <span className="w-2 h-2 rounded-full bg-green-500 inline-block flex-shrink-0" />}
                                   Verified
-                                </span>
+                                </button>
                               );
                             }
                             if (uploaded === 4) {
                               return (
-                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 whitespace-nowrap">
-                                  <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block flex-shrink-0" />
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleVerify(s._id, true); }}
+                                  disabled={isBusy}
+                                  title="Click to mark as verified"
+                                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 whitespace-nowrap hover:bg-yellow-200 dark:hover:bg-yellow-900/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                  {isBusy ? <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" /> : <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block flex-shrink-0" />}
                                   Not Verified
-                                </span>
+                                </button>
                               );
                             }
                             return (
