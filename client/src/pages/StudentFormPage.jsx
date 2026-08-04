@@ -945,6 +945,7 @@ export default function StudentFormPage() {
       const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
       setImageFile(file);
       setImagePreview(URL.createObjectURL(blob));
+      setImageFromUrl(null); // switching to manual upload — clear URL reference
       setShowCrop(false);
       setCropSrc(null);
     } catch {

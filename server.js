@@ -982,7 +982,7 @@ app.post('/api/self-reg/submit', uploadFields, async (req, res) => {
     const marksheetFile   = req.files?.marksheetPdf?.[0];
     const feesReceiptFile = req.files?.feesReceiptPdf?.[0];
 
-    if (!imageFile)       return res.status(400).json({ error: 'Passport photo is required' });
+    if (!imageFile && !d.imageUrl) return res.status(400).json({ error: 'Passport photo is required' });
     if (!aadhaarFile)     return res.status(400).json({ error: 'Aadhaar card PDF is required' });
     if (!idCardFile)      return res.status(400).json({ error: 'College ID card PDF is required' });
     if (!marksheetFile)   return res.status(400).json({ error: '+2 Marksheet PDF is required' });
@@ -1000,7 +1000,7 @@ app.post('/api/self-reg/submit', uploadFields, async (req, res) => {
       graduateCourse: d.graduateCourse || 'NIL', pgCourse: d.pgCourse || 'NIL',
       previousCourse: d.previousCourse || 'NIL',
       address: d.address, phoneNumber: d.phoneNumber,
-      image:          imageFile.filename,
+      image:          imageFile ? imageFile.filename : d.imageUrl,
       aadhaarPdf:     `aadhaar/${aadhaarFile.filename}`,
       idCardPdf:      `idcard/${idCardFile.filename}`,
       marksheetPdf:   `marksheet/${marksheetFile.filename}`,
