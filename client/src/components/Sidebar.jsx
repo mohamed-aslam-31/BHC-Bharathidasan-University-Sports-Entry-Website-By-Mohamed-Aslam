@@ -149,8 +149,48 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
       <div className="mx-3 h-px bg-black/5 dark:bg-white/[0.08] flex-shrink-0" />
 
-      {/* Logout */}
-      <div className={`py-3 flex-shrink-0 ${mini ? 'flex justify-center px-1' : 'px-2'}`}>
+      {/* User profile + Logout */}
+      <div className={`py-3 flex-shrink-0 ${mini ? 'flex flex-col items-center gap-2 px-1' : 'px-3 space-y-2'}`}>
+        {/* Avatar + info */}
+        <Link
+          to="/settings"
+          title={mini ? user?.username : undefined}
+          className={`group relative flex items-center rounded-xl transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/[0.08]
+            ${mini ? 'justify-center w-10 h-10' : 'gap-3 px-2 py-2 w-full'}`}
+        >
+          {/* Avatar */}
+          <div className="w-8 h-8 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+            {user?.avatar ? (
+              <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white text-sm font-bold leading-none">
+                {user?.username?.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Name + role */}
+          {!mini && (
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate leading-tight">
+                {user?.username}
+              </p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 capitalize leading-tight">
+                {user?.role}
+              </p>
+            </div>
+          )}
+
+          {/* Tooltip in mini mode */}
+          {mini && (
+            <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-gray-900/90 dark:bg-gray-700/90 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-lg z-50">
+              {user?.username}
+              <span className="ml-1 text-gray-400 capitalize">· {user?.role}</span>
+            </span>
+          )}
+        </Link>
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
           className={`group relative flex items-center rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200
