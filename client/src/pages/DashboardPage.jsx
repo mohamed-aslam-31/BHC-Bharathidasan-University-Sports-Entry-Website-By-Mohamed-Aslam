@@ -255,10 +255,10 @@ function StudentCard({ s, checked, onToggle, onEdit, onDelete }) {
             <img src="/university-logo.gif" alt="BU Logo" style={{ width: '115px', height: '115px', objectFit: 'contain', display: 'block' }} />
           </div>
           <div style={{ flex: 1, textAlign: 'center', lineHeight: 1.4, paddingTop: '6px', paddingBottom: '6px' }}>
-            <div style={{ fontSize: '22px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
-            <div style={{ fontSize: '14px' }}>TIRUCHIRAPPALLI - 620 024</div>
-            <div style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '3px' }}>Eligibility Proforma of Players</div>
-            <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}>Division: <em>Trichy / Thanjavur*</em></div>
+            <div style={{ fontSize: '28px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bharathidasan University</div>
+            <div style={{ fontSize: '15px' }}>TIRUCHIRAPPALLI - 620 024</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '4px' }}>Eligibility Proforma of Players</div>
+            <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '3px' }}>Division: <em>Trichy / Thanjavur*</em></div>
             <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}><em>{s.year || ''}</em></div>
           </div>
           <div style={{ width: '125px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
