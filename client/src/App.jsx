@@ -32,8 +32,8 @@ function AppLayout() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/students/new" element={<ProtectedRoute><StudentFormPage /></ProtectedRoute>} />
-          <Route path="/students/:id/edit" element={<ProtectedRoute><StudentFormPage /></ProtectedRoute>} />
+          <Route path="/students/new" element={<ProtectedRoute><StudentFormPage key="new" /></ProtectedRoute>} />
+          <Route path="/students/:id/edit" element={<ProtectedRoute><StudentFormPage key="edit" /></ProtectedRoute>} />
           <Route path="/students/:id/view" element={<ProtectedRoute><StudentViewPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
