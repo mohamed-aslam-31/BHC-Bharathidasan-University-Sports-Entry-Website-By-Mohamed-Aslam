@@ -706,6 +706,9 @@ export default function DashboardPage() {
 
   const filteredStats = useMemo(() => {
     const all = allStudents.filter(s => matchesFilter(s));
+    const countBy = (fn) => all.reduce((acc, s) => {
+      const v = fn(s); if (v) acc[v] = (acc[v] || 0) + 1; return acc;
+    }, {});
     return {
       total:      all.length,
       sportsList: [...new Set(all.map(s => s.nameOfTheGame).filter(Boolean))].sort(),
@@ -718,6 +721,14 @@ export default function DashboardPage() {
       hostelList: [...new Set(all.map(s => s.hostelName).filter(Boolean))].sort(),
       male:       all.filter(s => s.gender === 'MALE').length,
       female:     all.filter(s => s.gender === 'FEMALE').length,
+      sportsCount:      countBy(s => s.nameOfTheGame),
+      deptCount:        countBy(s => s.presentCourse),
+      yearCount:        countBy(s => s.year),
+      bloodGroupCount:  countBy(s => s.bloodGroup),
+      studentTypeCount: countBy(s => s.studentType),
+      shiftCount:       countBy(s => s.shift),
+      dayTypeCount:     countBy(s => s.dayType),
+      hostelCount:      countBy(s => s.hostelName),
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -950,42 +961,17 @@ export default function DashboardPage() {
         {/* Row 2: list cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
-            { icon: Trophy,        label: 'Sports',          list: filteredStats.sportsList, color: 'purple' },
-            { icon: GraduationCap, label: 'Departments',     list: filteredStats.deptList,   color: 'indigo' },
-            { icon: CalendarDays,  label: 'Academic Year',   list: filteredStats.yearList,   color: 'yellow' },
-            {
-              icon: User,
-              label: 'Blood Group',
-              list: bloodGroups.length ? bloodGroups : filteredStats.bloodGroupList,
-              color: 'red',
-            },
-            {
-              icon: GraduationCap,
-              label: 'Student Type',
-              list: studentTypes.length ? studentTypes : filteredStats.studentTypeList,
-              color: 'blue',
-            },
-            {
-              icon: CalendarDays,
-              label: 'Shift',
-              list: shifts.length ? shifts : filteredStats.shiftList,
-              color: 'purple',
-            },
-            {
-              icon: User2,
-              label: 'Day / Hosteller',
-              list: dayTypes.length ? dayTypes : filteredStats.dayTypeList,
-              color: 'green',
-            },
+            { icon: Trophy,        label: 'Sports',          list: filteredStats.sportsList,      countMap: filteredStats.sportsCount,      color: 'purple' },
+            { icon: GraduationCap, label: 'Departments',     list: filteredStats.deptList,        countMap: filteredStats.deptCount,        color: 'indigo' },
+            { icon: CalendarDays,  label: 'Academic Year',   list: filteredStats.yearList,        countMap: filteredStats.yearCount,        color: 'yellow' },
+            { icon: User,          label: 'Blood Group',     list: bloodGroups.length ? bloodGroups : filteredStats.bloodGroupList,         countMap: filteredStats.bloodGroupCount,  color: 'red'    },
+            { icon: GraduationCap, label: 'Student Type',    list: studentTypes.length ? studentTypes : filteredStats.studentTypeList,      countMap: filteredStats.studentTypeCount, color: 'blue'   },
+            { icon: CalendarDays,  label: 'Shift',           list: shifts.length ? shifts : filteredStats.shiftList,                        countMap: filteredStats.shiftCount,       color: 'purple' },
+            { icon: User2,         label: 'Day / Hosteller', list: dayTypes.length ? dayTypes : filteredStats.dayTypeList,                  countMap: filteredStats.dayTypeCount,     color: 'green'  },
             ...((hostels.length > 0 || filteredStats.hostelList.length > 0)
-              ? [{
-                  icon: GraduationCap,
-                  label: 'Hostel Name',
-                  list: hostels.length ? hostels : filteredStats.hostelList,
-                  color: 'orange',
-                }]
+              ? [{ icon: GraduationCap, label: 'Hostel Name', list: hostels.length ? hostels : filteredStats.hostelList, countMap: filteredStats.hostelCount, color: 'orange' }]
               : []),
-          ].map(({ icon: Icon, label, list, color }) => {
+          ].map(({ icon: Icon, label, list, countMap, color }) => {
             const colors = {
               purple: { bg: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400', dot: 'bg-purple-400 dark:bg-purple-500' },
               indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-400 dark:bg-indigo-500' },
@@ -1011,7 +997,10 @@ export default function DashboardPage() {
                     {list.map(item => (
                       <li key={item} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                         <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors[color].dot}`} />
-                        {item}
+                        <span className="flex-1">{item}</span>
+                        {countMap?.[item] !== undefined && (
+                          <span className="ml-auto font-semibold text-gray-700 dark:text-gray-300">{countMap[item]}</span>
+                        )}
                       </li>
                     ))}
                   </ul>
