@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useToast } from '../components/Toast';
 import {
   getPendingStudents, approveStudent, rejectStudent,
-  getSelfRegAccess, createSelfRegAccess, deleteSelfRegAccess, selfRegOptions,
+  getSelfRegAccess, createSelfRegAccess, deleteSelfRegAccess, getOptions,
 } from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -125,7 +125,7 @@ export default function AdminPage() {
       setLoadingAccess(true);
       const [accessRes, optsRes] = await Promise.all([
         getSelfRegAccess(),
-        selfRegOptions(),
+        getOptions(),
       ]);
       setAccessList(accessRes.data);
       setGameOptions(optsRes.data.game || []);
