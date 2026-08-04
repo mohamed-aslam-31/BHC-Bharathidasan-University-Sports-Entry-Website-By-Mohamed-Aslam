@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/Toast';
@@ -30,29 +30,35 @@ function AppLayout() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {user && <Navbar />}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/students/new" element={<ProtectedRoute><StudentFormPage key="new" /></ProtectedRoute>} />
-          <Route path="/students/:id/edit" element={<ProtectedRoute><StudentFormPage key="edit" /></ProtectedRoute>} />
-          <Route path="/students/:id/view" element={<ProtectedRoute><StudentViewPage /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
-          <Route path="/drafts" element={<ProtectedRoute><DraftPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
   );
 }
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      { path: 'login',               element: <LoginPage /> },
+      { index: true,                 element: <ProtectedRoute><DashboardPage /></ProtectedRoute> },
+      { path: 'students/new',        element: <ProtectedRoute><StudentFormPage key="new" /></ProtectedRoute> },
+      { path: 'students/:id/edit',   element: <ProtectedRoute><StudentFormPage key="edit" /></ProtectedRoute> },
+      { path: 'students/:id/view',   element: <ProtectedRoute><StudentViewPage /></ProtectedRoute> },
+      { path: 'admin',               element: <ProtectedRoute adminOnly><AdminPage /></ProtectedRoute> },
+      { path: 'drafts',              element: <ProtectedRoute><DraftPage /></ProtectedRoute> },
+      { path: '*',                   element: <Navigate to="/" replace /> },
+    ],
+  },
+]);
 
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-          <BrowserRouter>
-            <AppLayout />
-          </BrowserRouter>
+          <RouterProvider router={router} />
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

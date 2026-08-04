@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation, useBlocker } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent, uploadDraftFiles, deleteDraftFiles } from '../api';
@@ -748,22 +748,24 @@ export default function StudentFormPage() {
 
   /* ── Navigation guard helpers ── */
   const pct = completionPercent(form);
-  const shouldBlock = !isEdit && pct >= 50 && !loading;
+  const shouldBlock = !isEdit && pct > 0 && !loading;
 
-  /**
-   * Call this instead of navigate(path) whenever leaving the new-student form.
-   * If the form is ≥50% filled it shows the leave modal first; otherwise just navigates.
-   */
-  const guardedNavigate = useCallback((path) => {
-    if (shouldBlock) {
-      pendingNavRef.current = path;
+  /* Intercept ALL React Router navigation (Link clicks, navigate(), back button) */
+  const blocker = useBlocker(shouldBlock);
+
+  /* Show the leave modal whenever the blocker fires */
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
       setShowLeaveModal(true);
-    } else {
-      navigate(path);
     }
-  }, [shouldBlock, navigate]);
+  }, [blocker.state]);
 
-  /* ── Warn on browser refresh / tab close when ≥50% filled ── */
+  /* guardedNavigate kept for back-arrow / cancel buttons; blocker catches the navigate() */
+  const guardedNavigate = useCallback((path) => {
+    navigate(path);
+  }, [navigate]);
+
+  /* ── Warn on browser refresh / tab close when form is dirty ── */
   useEffect(() => {
     if (!shouldBlock) return;
     const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
@@ -1105,10 +1107,11 @@ export default function StudentFormPage() {
     }
     notifyNavbar();
     setShowLeaveModal(false);
-    const dest = pendingNavRef.current;
-    pendingNavRef.current = null;
-    if (dest) navigate(dest);
-    else if (thenNavigate) navigate('/drafts');
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+    } else if (thenNavigate) {
+      navigate('/drafts');
+    }
   };
 
   const handleClearAndLeave = () => {
@@ -1117,14 +1120,18 @@ export default function StudentFormPage() {
     const allDraftPaths = [draftAadhaarPath, draftIdCardPath, draftMarksheetPath, draftFeesReceiptPath].filter(Boolean);
     if (allDraftPaths.length) deleteDraftFiles(allDraftPaths).catch(() => {});
     setShowLeaveModal(false);
-    const dest = pendingNavRef.current || '/';
-    pendingNavRef.current = null;
-    navigate(dest);
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+    } else {
+      navigate('/');
+    }
   };
 
   const handleStay = () => {
-    pendingNavRef.current = null;
     setShowLeaveModal(false);
+    if (blocker.state === 'blocked') {
+      blocker.reset();
+    }
   };
 
   // Delete student (edit mode only)
