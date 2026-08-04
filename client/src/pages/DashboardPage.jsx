@@ -908,6 +908,16 @@ export default function DashboardPage() {
       {/* ── Print area: stats + table ── */}
       <div id="dashboard-print-area">
 
+      {/* ── Print-only page header ── */}
+      <div id="dashboard-print-header">
+        <img src="/pe-logo.png" alt="Department Logo" id="dashboard-print-logo" />
+        <div id="dashboard-print-header-text">
+          <div className="dept-name">Department of Physical Education</div>
+          <div className="college-name">Bishop Heber College, Trichy</div>
+          <div className="dept-meta">Director : palraj &nbsp;&nbsp; Contact : 00000 00000</div>
+        </div>
+      </div>
+
       {/* ── Live filter summary ── */}
       <div className="space-y-3">
         {/* Row 1: count cards */}
@@ -1352,9 +1362,41 @@ export default function DashboardPage() {
 
       {/* Dashboard print CSS */}
       <style>{`
+        #dashboard-print-header { display: none; }
         @media print {
           @page { size: A4 landscape; }
           html, body, main, main > div { margin: 0 !important; padding: 0 !important; }
+          #dashboard-print-header {
+            display: flex !important;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #000;
+          }
+          #dashboard-print-logo {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+          }
+          #dashboard-print-header-text .dept-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+            font-family: Arial, sans-serif;
+          }
+          #dashboard-print-header-text .college-name {
+            font-size: 13px;
+            color: #000;
+            font-family: Arial, sans-serif;
+            margin-top: 2px;
+          }
+          #dashboard-print-header-text .dept-meta {
+            font-size: 12px;
+            color: #333;
+            font-family: Arial, sans-serif;
+            margin-top: 4px;
+          }
           body * { visibility: hidden; }
           #dashboard-print-area, #dashboard-print-area * { visibility: visible; }
           #dashboard-print-area {
