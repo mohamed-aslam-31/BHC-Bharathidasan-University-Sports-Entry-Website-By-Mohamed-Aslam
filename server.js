@@ -978,11 +978,13 @@ app.post('/api/self-reg/submit', uploadFields, async (req, res) => {
 
     const imageFile       = req.files?.image?.[0];
     const aadhaarFile     = req.files?.aadhaarPdf?.[0];
+    const idCardFile      = req.files?.idCardPdf?.[0];
     const marksheetFile   = req.files?.marksheetPdf?.[0];
     const feesReceiptFile = req.files?.feesReceiptPdf?.[0];
 
     if (!imageFile)       return res.status(400).json({ error: 'Passport photo is required' });
     if (!aadhaarFile)     return res.status(400).json({ error: 'Aadhaar card PDF is required' });
+    if (!idCardFile)      return res.status(400).json({ error: 'College ID card PDF is required' });
     if (!marksheetFile)   return res.status(400).json({ error: '+2 Marksheet PDF is required' });
     if (!feesReceiptFile) return res.status(400).json({ error: 'Fees receipt PDF is required' });
 
@@ -1000,6 +1002,7 @@ app.post('/api/self-reg/submit', uploadFields, async (req, res) => {
       address: d.address, phoneNumber: d.phoneNumber,
       image:          imageFile.filename,
       aadhaarPdf:     `aadhaar/${aadhaarFile.filename}`,
+      idCardPdf:      `idcard/${idCardFile.filename}`,
       marksheetPdf:   `marksheet/${marksheetFile.filename}`,
       feesReceiptPdf: `feesreceipt/${feesReceiptFile.filename}`,
       gender: d.gender, year: d.year, aadharNumber: d.aadharNumber,
