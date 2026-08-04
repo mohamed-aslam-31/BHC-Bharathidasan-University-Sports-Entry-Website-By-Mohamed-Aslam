@@ -242,7 +242,7 @@ const sanitizePresentCourse = (v) => {
   // 5. Only one ")" — keep the first, strip the rest
   const cl = v.indexOf(')');
   if (cl !== -1) v = v.slice(0, cl + 1) + v.slice(cl + 1).replace(/\)/g, '');
-  return v.slice(0, 30);
+  return v.slice(0, 40);
 };
 
 /** Blood group: letters + +/- only, uppercase */
@@ -302,7 +302,7 @@ const validateHostelName = (v, dayType) =>
 const validatePresentCourse = (v) =>
   !v ? 'Name of Present Course is required' :
   v.trim().length < 2 ? 'Must be at least 2 characters' :
-  v.length > 30 ? 'Maximum 30 characters allowed' :
+  v.length > 40 ? 'Maximum 40 characters allowed' :
   /[0-9]/.test(v) ? 'Numbers are not allowed' :
   /[^a-zA-Z .,()&-]/.test(v) ? 'Only letters and . , ( ) - & are allowed' :
   (v.match(/\(/g) || []).length > 1 ? 'Only one "(" allowed' :
@@ -2313,13 +2313,13 @@ export default function StudentFormPage() {
               required
               error={errors.presentCourse}
               sanitizer={sanitizePresentCourse}
-              maxLength={30}
+              maxLength={40}
               minCreate={2}
               onEditOption={mkEdit('course', courseOptions, 'presentCourse')}
               onAddOption={mkAdd('course', courseOptions)}
               deleteWarning={deleteWarning} onDeleteOption={mkDel('course', courseOptions, 'presentCourse')}
             />
-            <FieldMeta value={form.presentCourse} max={30} always error={errors.presentCourse} />
+            <FieldMeta value={form.presentCourse} max={40} always error={errors.presentCourse} />
           </Field>
 
           {/* Duration of Course */}
