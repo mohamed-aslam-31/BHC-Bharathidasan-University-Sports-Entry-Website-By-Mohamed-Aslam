@@ -557,6 +557,28 @@ export default function DashboardPage() {
     }
   };
 
+  const [bulkVerifying, setBulkVerifying] = useState(false);
+  const handleBulkVerify = async () => {
+    const toVerify = allStudents.filter(s =>
+      selected.has(s._id) &&
+      !s.documentsVerified &&
+      s.aadhaarPdf && s.idCardPdf && s.marksheetPdf && s.feesReceiptPdf
+    );
+    if (!toVerify.length) return;
+    setBulkVerifying(true);
+    try {
+      await Promise.all(toVerify.map(s => verifyStudent(s._id, true)));
+      setAllStudents((prev) => prev.map(s =>
+        toVerify.some(v => v._id === s._id) ? { ...s, documentsVerified: true } : s
+      ));
+      addToast(`${toVerify.length} student${toVerify.length > 1 ? 's' : ''} marked as verified`);
+    } catch {
+      addToast('Failed to verify some students', 'error');
+    } finally {
+      setBulkVerifying(false);
+    }
+  };
+
   /* bulk */
   const [selected, setSelected] = useState(new Set());
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
@@ -1194,6 +1216,38 @@ export default function DashboardPage() {
               <Eye className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Verify Selected — only shown when at least one selected student has all docs but isn't verified yet */}
+          {allStudents.some(s =>
+            selected.has(s._id) && !s.documentsVerified &&
+            s.aadhaarPdf && s.idCardPdf && s.marksheetPdf && s.feesReceiptPdf
+          ) && (
+            <div className="group flex items-center gap-3">
+              <span className="opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 pointer-events-none
+                text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-xl shadow-lg
+                text-green-700 dark:text-white
+                bg-green-50/90 dark:bg-white/10 backdrop-blur-md
+                border border-green-200 dark:border-white/20">
+                Mark Verified
+              </span>
+              <button
+                onClick={handleBulkVerify}
+                disabled={bulkVerifying}
+                className="w-14 h-14 rounded-full flex items-center justify-center
+                  bg-green-600 hover:bg-green-700 dark:bg-green-500/40 dark:hover:bg-green-500/60
+                  backdrop-blur-md
+                  border border-green-500 dark:border-green-400/50 dark:hover:border-green-300/70
+                  text-white
+                  shadow-lg hover:shadow-green-500/40
+                  transition-all duration-200 hover:scale-110
+                  disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {bulkVerifying
+                  ? <Loader2 className="w-5 h-5 animate-spin" />
+                  : <Check className="w-5 h-5" />}
+              </button>
+            </div>
+          )}
 
           {/* Delete Selected */}
           <div className="group flex items-center gap-3">
