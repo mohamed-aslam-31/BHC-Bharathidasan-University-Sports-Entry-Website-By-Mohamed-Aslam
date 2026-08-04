@@ -55,6 +55,7 @@ export const selfRegSubmit   = (fd)   => axios.post('/api/self-reg/submit', fd, 
 });
 
 // Admin: self-reg access management
-export const getSelfRegAccess    = ()     => axios.get('/api/admin/self-reg-access');
-export const createSelfRegAccess = (data) => axios.post('/api/admin/self-reg-access', data);
-export const deleteSelfRegAccess = (id)   => axios.delete(`/api/admin/self-reg-access/${id}`);
+export const getSelfRegAccess    = ()         => axios.get('/api/admin/self-reg-access');
+export const createSelfRegAccess = (data)     => axios.post('/api/admin/self-reg-access', data);
+export const updateSelfRegAccess = (id, data) => axios.put(`/api/admin/self-reg-access/${id}`, data);
+export const deleteSelfRegAccess = (id)       => axios.delete(`/api/admin/self-reg-access/${id}`);

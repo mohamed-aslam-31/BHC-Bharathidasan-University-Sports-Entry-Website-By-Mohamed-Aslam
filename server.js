@@ -1034,6 +1034,21 @@ app.post('/api/admin/self-reg-access', authMiddleware, adminOnly, async (req, re
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.put('/api/admin/self-reg-access/:id', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const { rollNo, nameOfGame, year } = req.body;
+    if (!rollNo || !nameOfGame || !year)
+      return res.status(400).json({ error: 'rollNo, nameOfGame, and year are required' });
+    const duplicate = await SelfRegAccess.findOne({ rollNo, nameOfGame, year, _id: { $ne: req.params.id } });
+    if (duplicate) return res.status(409).json({ error: 'Access already granted for this combination' });
+    const updated = await SelfRegAccess.findByIdAndUpdate(
+      req.params.id, { rollNo, nameOfGame, year }, { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Entry not found' });
+    res.json(updated);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.delete('/api/admin/self-reg-access/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     await SelfRegAccess.findByIdAndDelete(req.params.id);
