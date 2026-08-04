@@ -4,6 +4,8 @@ import axios from 'axios';
 export const getStudents = (params) => axios.get('/api/students', { params });
 export const getStudentMeta = () => axios.get('/api/students/meta');
 export const getStudent = (id) => axios.get(`/api/students/${id}`);
+export const getOptions = () => axios.get('/api/options');
+export const addOption = (data) => axios.post('/api/options/add', data);
 export const renameOption = (data) => axios.post('/api/options/rename', data);
 export const deleteOption = (data) => axios.post('/api/options/delete', data);
 export const createStudent = (formData) => axios.post('/api/students', formData, {

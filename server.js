@@ -64,8 +64,83 @@ const StudentSchema = new mongoose.Schema({
   status:                { type: String, default: 'approved', enum: ['pending', 'approved'] }
 }, { timestamps: true });
 
-const User    = mongoose.model('User', UserSchema);
-const Student = mongoose.model('Student', StudentSchema);
+const OptionListSchema = new mongoose.Schema({
+  key:    { type: String, unique: true, required: true },
+  values: { type: [String], default: [] },
+}, { timestamps: true });
+
+const User       = mongoose.model('User', UserSchema);
+const Student    = mongoose.model('Student', StudentSchema);
+const OptionList = mongoose.model('OptionList', OptionListSchema);
+
+// ─── DEFAULT COMBO-BOX OPTION LISTS ────────────────────────────────────────────
+// Single source of truth, seeded into OptionList on first run. The dashboard
+// filters and the add/edit student forms all read from OptionList via
+// GET /api/options, so renaming or deleting an option anywhere updates it
+// everywhere.
+const DEFAULT_OPTION_LISTS = {
+  year: (() => {
+    const list = [];
+    for (let y = 2020; y <= 2039; y++) list.push(`${y}-${y + 1}`);
+    return list;
+  })(),
+  game: [
+    'CRICKET','FOOTBALL','CHESS','BASKETBALL','VOLLEYBALL','HOCKEY',
+    'TABLE TENNIS','BADMINTON','CROSS COUNTRY','FENCING & CYCLE','SWIMMING',
+    'ARCHERY','TENNIS','KABADDI','ATHLETICS','KHO - KHO','BEST PHYSIQUE',
+    'NETBALL','HANDBALL','BOXING','BALL BADMINTON','YOGASANA','TAEKWONDO','KARATE',
+  ],
+  dept: [],
+  university: [
+    'Bharathidasan University','University of Madras','Anna University',
+    'Madurai Kamaraj University','Bharathiar University','Annamalai University',
+    'Manonmaniam Sundaranar University','Periyar University',
+    'Mother Teresa Women\'s University','Tamil Nadu Open University',
+  ],
+  class: [
+    'I B.A','II B.A','III B.A','I B.Sc','II B.Sc','III B.Sc',
+    'I B.Com','II B.Com','III B.Com','I B.C.A','II B.C.A','III B.C.A',
+    'I B.B.A','II B.B.A','III B.B.A','I B.COM(CA)','II B.COM(CA)','III B.COM(CA)',
+    'I B.Ed','II B.Ed','I B.P.Ed','II B.P.Ed','I M.A','II M.A','I M.Sc','II M.Sc',
+    'I M.Com','II M.Com','I M.B.A','II M.B.A','I M.C.A','II M.C.A','I M.Ed','II M.Ed',
+    'I M.P.Ed','II M.P.Ed','I Ph.D','II Ph.D','III Ph.D',
+  ],
+  duration: ['1 Year','2 Years','3 Years','4 Years','5 Years'],
+  iut: ['NIL','1 Year','2 Years','3 Years','4 Years','5 Years'],
+  course: [
+    'B.A English','B.A Tamil','B.A History','B.A Economics','B.A Sociology',
+    'B.Sc Mathematics','B.Sc Physics','B.Sc Chemistry','B.Sc Biology',
+    'B.Sc Computer Science','B.Sc Statistics','B.Sc Biochemistry',
+    'B.Com','B.Com (CA)','B.Com (CS)','BBA','BCA','B.Ed','B.P.Ed',
+    'M.A English','M.A Tamil','M.A History','M.A Economics',
+    'M.Sc Mathematics','M.Sc Physics','M.Sc Chemistry','M.Sc Computer Science',
+    'M.Com','MBA','MCA','M.Ed','M.P.Ed','Ph.D',
+  ],
+  exam: [
+    'SSLC','Matriculation (10th)','CBSE (10th)','ICSE (10th)','State Board (10th)','NIOS (10th)',
+    'HSC','Higher Secondary','CBSE (12th)','ISC (12th)','State Board (12th)','NIOS (12th)',
+    'JEE Main','JEE Advanced','MHT-CET','TS EAMCET','AP EAMCET','KCET','UGET','SRMJEEE','VITEEE',
+    'NEET','JIPMER','AIIMS','CAT','MAT','GMAT','CMAT','TANCET (MBA)','KMAT',
+    'CLAT','GATE','CUET','TNPG','TANCET (ME/MTech)',
+  ],
+  monthYear: (() => {
+    const months = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December',
+    ];
+    const list = [];
+    for (let y = 2015; y <= 2030; y++) for (const m of months) list.push(`${m}-${y}`);
+    return list;
+  })(),
+  hostel: [
+    'Mens Hostel','Womens Hostel','Boys Hostel No.1','Boys Hostel No.2',
+    'Girls Hostel No.1','Girls Hostel No.2','Research Scholars Hostel',
+  ],
+  bloodGroup: ['A+','A-','B+','B-','AB+','AB-','O+','O-','GOLDEN'],
+  studentType: ['AIDED','SELF-FINANCE'],
+  dayType: ['DAYSCHOLAR','HOSTELLER'],
+  shift: ['MORNING','EVENING'],
+};
 
 // ─── SAMPLE DATA ──────────────────────────────────────────────────────────────
 
@@ -196,6 +271,14 @@ async function connectDB() {
       const hashed = bcrypt.hashSync('admin123', 10);
       await User.create({ username: 'admin', password: hashed, role: 'admin' });
       console.log('🔑  Default admin created — admin / admin123');
+    }
+
+    // Seed shared combo-box option lists (only fields that don't already have one)
+    const existingKeys = new Set((await OptionList.find({}, 'key').lean()).map((o) => o.key));
+    const missing = Object.keys(DEFAULT_OPTION_LISTS).filter((k) => !existingKeys.has(k));
+    if (missing.length) {
+      await OptionList.insertMany(missing.map((key) => ({ key, values: DEFAULT_OPTION_LISTS[key] })));
+      console.log(`🧩  Seeded ${missing.length} shared option list(s)`);
     }
 
     // Seed sample students
@@ -371,14 +454,42 @@ app.get('/api/students/meta', authMiddleware, async (req, res) => {
 });
 
 // ─── SHARED OPTION MANAGEMENT ────────────────────────────────────────────────
+// These option lists are the single source of truth for every combo box in the
+// app (dashboard filters, add-student form, edit-student form). Renaming or
+// deleting an option here updates the OptionList collection, so every page
+// reflects the change as soon as it re-fetches GET /api/options.
 const OPTION_FIELDS = {
   year: ['year'], game: ['nameOfTheGame'], dept: ['presentCourse'],
   university: ['university'], class: ['presentClass'],
   duration: ['durationOfCourse'], course: ['presentCourse'],
   exam: ['nameOfExam'], monthYear: ['dateAndYear', 'university', 'nameOfThePresentClass'],
   iut: ['graduateCourse', 'pgCourse'], hostel: ['hostelName'],
-  bloodGroup: ['bloodGroup'],
+  bloodGroup: ['bloodGroup'], studentType: ['studentType'],
+  dayType: ['dayType'], shift: ['shift'],
 };
+
+app.get('/api/options', authMiddleware, async (req, res) => {
+  try {
+    const lists = await OptionList.find().lean();
+    const out = {};
+    for (const key of Object.keys(DEFAULT_OPTION_LISTS)) out[key] = [];
+    for (const l of lists) out[l.key] = l.values;
+    res.json(out);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/options/add', authMiddleware, async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!OPTION_FIELDS[key] && !DEFAULT_OPTION_LISTS[key]) return res.status(400).json({ error: 'Invalid option key' });
+    const trimmed = (value || '').trim();
+    if (!trimmed) return res.status(400).json({ error: 'Value required' });
+    const doc = await OptionList.findOneAndUpdate(
+      { key }, { $addToSet: { values: trimmed } }, { upsert: true, new: true }
+    );
+    res.json({ message: 'Option added', values: doc.values });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 app.post('/api/options/rename', authMiddleware, async (req, res) => {
   try {
@@ -388,6 +499,10 @@ app.post('/api/options/rename', authMiddleware, async (req, res) => {
     const result = await Promise.all(fields.map((field) =>
       Student.updateMany({ [field]: oldValue }, { $set: { [field]: newValue } })
     ));
+    // Keep the shared option list (used by every page's combo box) in sync.
+    const renamed = await OptionList.updateOne({ key, values: oldValue }, { $set: { 'values.$': newValue } });
+    if (!renamed.matchedCount) await OptionList.updateOne({ key }, { $addToSet: { values: newValue } }, { upsert: true });
+    else await OptionList.updateOne({ key }, { $addToSet: { values: newValue } });
     res.json({ message: 'Option updated across student records', updated: result.reduce((n, r) => n + r.modifiedCount, 0) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -405,6 +520,8 @@ app.post('/api/options/delete', authMiddleware, async (req, res) => {
     const result = await Promise.all(fields.map((field) =>
       Student.updateMany({ [field]: value }, { $set: { [field]: 'Unknown' } })
     ));
+    // Remove from the shared option list so it disappears from every page.
+    await OptionList.updateOne({ key }, { $pull: { values: value } });
     res.json({ message: 'Option deleted and matching student fields set to Unknown', used, updated: result.reduce((n, r) => n + r.modifiedCount, 0) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

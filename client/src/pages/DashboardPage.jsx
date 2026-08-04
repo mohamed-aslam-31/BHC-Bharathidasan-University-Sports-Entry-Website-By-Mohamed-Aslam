@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { getStudents, getStudentMeta, deleteStudent, bulkDeleteStudents } from '../api';
+import { getStudents, getStudentMeta, getOptions, deleteStudent, bulkDeleteStudents } from '../api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
@@ -537,6 +537,7 @@ export default function DashboardPage() {
   /* raw data */
   const [allStudents, setAllStudents] = useState([]);
   const [meta, setMeta] = useState({ departments: [], years: [], games: [] });
+  const [optionLists, setOptionLists] = useState({});
   const [loading, setLoading] = useState(true);
 
   /* single delete */
@@ -584,6 +585,9 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAll();
     getStudentMeta().then(r => setMeta(r.data)).catch(() => {});
+    // Shared combo-box option lists — same source the add/edit forms manage,
+    // so renaming/deleting an option there updates these filters too.
+    getOptions().then(r => setOptionLists(r.data)).catch(() => {});
   }, []);
 
   /* reset to page 1 whenever a filter/sort/rows changes */
@@ -723,16 +727,19 @@ export default function DashboardPage() {
     setSortBy(['new-to-old']);
   };
 
-  /* ── department & year options ── */
-  const deptOptions  = meta.departments.length ? meta.departments : [...new Set(allStudents.map(s => s.presentCourse).filter(Boolean))];
-  const yearOptions  = meta.years.length ? meta.years : [...new Set(allStudents.map(s => s.year).filter(Boolean))];
-  const gameOptions  = GAMES;
+  /* ── department & year options ──
+     Sourced from the shared OptionList collection (GET /api/options) — the
+     same data the add/edit student forms manage — so an option renamed or
+     deleted on either form updates here without a page reload. */
+  const deptOptions  = [...new Set([...(optionLists.dept || []), ...meta.departments, ...allStudents.map(s => s.presentCourse).filter(Boolean)])];
+  const yearOptions  = [...new Set([...(optionLists.year || []), ...meta.years, ...allStudents.map(s => s.year).filter(Boolean)])];
+  const gameOptions  = [...new Set([...(optionLists.game || GAMES), ...meta.games, ...allStudents.map(s => s.nameOfTheGame).filter(Boolean)])];
   const genderOptions = ['MALE', 'FEMALE'];
-  const studentTypeOptions = [...new Set([...STUDENT_TYPES, ...allStudents.map(s => s.studentType).filter(Boolean)])];
-  const dayTypeOptions = [...new Set([...DAY_TYPES, ...allStudents.map(s => s.dayType).filter(Boolean)])];
-  const shiftOptions = [...new Set([...SHIFTS, ...allStudents.map(s => s.shift).filter(Boolean)])];
-  const bloodGroupOptions = [...new Set([...BLOOD_GROUPS, ...allStudents.map(s => s.bloodGroup).filter(Boolean)])];
-  const hostelOptions = [...new Set([...HOSTELS, ...allStudents.map(s => s.hostelName).filter(Boolean)])];
+  const studentTypeOptions = [...new Set([...(optionLists.studentType || STUDENT_TYPES), ...allStudents.map(s => s.studentType).filter(Boolean)])];
+  const dayTypeOptions = [...new Set([...(optionLists.dayType || DAY_TYPES), ...allStudents.map(s => s.dayType).filter(Boolean)])];
+  const shiftOptions = [...new Set([...(optionLists.shift || SHIFTS), ...allStudents.map(s => s.shift).filter(Boolean)])];
+  const bloodGroupOptions = [...new Set([...(optionLists.bloodGroup || BLOOD_GROUPS), ...allStudents.map(s => s.bloodGroup).filter(Boolean)])];
+  const hostelOptions = [...new Set([...(optionLists.hostel || HOSTELS), ...allStudents.map(s => s.hostelName).filter(Boolean)])];
 
   return (
     <div className="space-y-6">

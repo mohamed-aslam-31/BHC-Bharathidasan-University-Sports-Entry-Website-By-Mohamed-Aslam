@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
@@ -654,7 +654,7 @@ export default function StudentFormPage() {
   const [loading, setLoading]   = useState(false);
   const [fetching, setFetching] = useState(isEdit);
   const [meta, setMeta]         = useState({ departments: [], years: [], games: [] });
-  const [managedOpts, setManagedOpts] = useState({});
+  const [optionLists, setOptionLists] = useState({});
   const [deleteWarning, setDeleteWarning] = useState('');
   const [pendingDelete, setPendingDelete] = useState(null);
   const [aadhaarValidated, setAadhaarValidated] = useState(false);
@@ -692,6 +692,9 @@ export default function StudentFormPage() {
 
   useEffect(() => {
     getStudentMeta().then((r) => setMeta(r.data)).catch(() => {});
+    // Shared combo-box option lists — same source the dashboard filters read,
+    // so renaming/deleting an option here shows up there too (and vice versa).
+    getOptions().then((r) => setOptionLists(r.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1015,26 +1018,34 @@ export default function StudentFormPage() {
 
   /* ── option lists ── */
 
-  const yearOptions       = managedOpts.year      ?? [...new Set([...DEFAULT_YEARS, ...(meta.years || [])])].sort();
-  const gameOptions       = managedOpts.game      ?? [...new Set([...DEFAULT_GAMES, ...(meta.games || [])])];
-  const deptOptions       = managedOpts.dept      ?? [...new Set([...(meta.departments || [])])];
-  const universityOptions = managedOpts.university?? [...new Set([...DEFAULT_UNIVERSITIES, ...(meta.universities || [])])];
-  const classOptions      = managedOpts.class     ?? DEFAULT_CLASSES;
-  const durationOptions   = managedOpts.duration  ?? DEFAULT_DURATIONS;
-  const iutOptions        = managedOpts.iut       ?? ['NIL', ...DEFAULT_DURATIONS];
-  const courseOptions     = managedOpts.course    ?? [...new Set([...DEFAULT_COURSES, ...(meta.courses || [])])];
-  const examOptions       = managedOpts.exam      ?? DEFAULT_EXAMS;
-  const monthYearOptions  = managedOpts.monthYear ?? DEFAULT_MONTH_YEARS;
-  const hostelOptions     = managedOpts.hostel    ?? [...new Set([...DEFAULT_HOSTELS, ...(meta.hostels || [])])];
-  const bloodGroupOptions = managedOpts.bloodGroup ?? DEFAULT_BLOOD_GROUPS;
+  // All lists below are sourced from the shared OptionList collection
+  // (GET /api/options) — the same data the dashboard filters read — so
+  // renaming or deleting an option on this page, the edit page, or the
+  // dashboard is reflected everywhere else.
+  const yearOptions       = [...new Set([...(optionLists.year || DEFAULT_YEARS), ...(meta.years || [])])].sort();
+  const gameOptions       = [...new Set([...(optionLists.game || DEFAULT_GAMES), ...(meta.games || [])])];
+  const deptOptions       = [...new Set([...(optionLists.dept || []), ...(meta.departments || [])])];
+  const universityOptions = optionLists.university ?? DEFAULT_UNIVERSITIES;
+  const classOptions      = optionLists.class     ?? DEFAULT_CLASSES;
+  const durationOptions   = optionLists.duration  ?? DEFAULT_DURATIONS;
+  const iutOptions        = optionLists.iut       ?? ['NIL', ...DEFAULT_DURATIONS];
+  const courseOptions     = optionLists.course    ?? DEFAULT_COURSES;
+  const examOptions       = optionLists.exam      ?? DEFAULT_EXAMS;
+  const monthYearOptions  = optionLists.monthYear ?? DEFAULT_MONTH_YEARS;
+  const hostelOptions     = optionLists.hostel    ?? DEFAULT_HOSTELS;
+  const bloodGroupOptions = optionLists.bloodGroup ?? DEFAULT_BLOOD_GROUPS;
 
-  /* ── Managed-options helpers ── */
+  /* ── Managed-options helpers ──
+     These mutate the shared OptionList on the server, then update local
+     state optimistically so this page reflects the change immediately.
+     Any other page (dashboard filters, the other add/edit form) picks up
+     the change the next time it fetches GET /api/options. */
   const mkEdit = (key, curOpts, ...fks) => async (old, nv) => {
-    setManagedOpts((p) => ({ ...p, [key]: curOpts.map((o) => (o === old ? nv : o)) }));
+    setOptionLists((p) => ({ ...p, [key]: (p[key] ?? curOpts).map((o) => (o === old ? nv : o)) }));
     fks.forEach((fk) => { if (form[fk] === old) set(fk)(nv); });
     try {
       await renameOption({ key, oldValue: old, newValue: nv });
-      addToast('Option updated in all student records');
+      addToast('Option updated everywhere — dashboard, add, and edit pages');
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to update option', 'error');
     }
@@ -1052,9 +1063,9 @@ export default function StudentFormPage() {
       }
       setPendingDelete(null);
       setDeleteWarning('');
-      setManagedOpts((p) => ({ ...p, [key]: curOpts.filter((o) => o !== opt) }));
+      setOptionLists((p) => ({ ...p, [key]: (p[key] ?? curOpts).filter((o) => o !== opt) }));
       fks.forEach((fk) => { if (form[fk] === opt) set(fk)('Unknown'); });
-      addToast('Option deleted; affected records set to Unknown');
+      addToast('Option deleted everywhere — dashboard, add, and edit pages');
       return true;
     } catch (err) {
       addToast(err.response?.data?.error || 'Failed to delete option', 'error');
