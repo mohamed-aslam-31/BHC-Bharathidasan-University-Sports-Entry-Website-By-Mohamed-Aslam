@@ -919,7 +919,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Live filter summary ── */}
-      <div className="space-y-3">
+      <div id="dashboard-stats-section" className="space-y-3">
         {/* Row 1: count cards */}
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -1407,10 +1407,12 @@ export default function DashboardPage() {
           /* hide icon-only elements that don't render well in print */
           #dashboard-print-area button,
           #dashboard-print-area a[href] { display: none !important; }
-          /* table: clean borders */
-          #dashboard-print-area table { border-collapse: collapse !important; width: 100% !important; font-size: 11px !important; }
+          /* stats always on page 1, no splitting */
+          #dashboard-stats-section { break-inside: avoid; }
+          /* table: clean black borders */
+          #dashboard-print-area table { border-collapse: collapse !important; width: 100% !important; font-size: 11px !important; border: 1px solid #000 !important; }
           #dashboard-print-area th,
-          #dashboard-print-area td { border: 1px solid #ccc !important; padding: 5px 8px !important; color: #000 !important; }
+          #dashboard-print-area td { border: 1px solid #000 !important; padding: 5px 8px !important; color: #000 !important; }
           #dashboard-print-area thead tr { background: #f3f4f6 !important; }
           /* hide checkbox, status (col 8), and actions cols */
           #dashboard-print-area th:first-child,
