@@ -1,42 +1,40 @@
 # BHC Sports Entry
 
-**Bharathidasan University — Sports Management System**
-
-A full-stack web app for managing student sports registrations, document uploads, and admin approvals.
+Student sports data management system for Bharathidasan University — Sports Division.
 
 ## Stack
 
-- **Frontend:** React 18 + Vite (port 5000) — `client/`
-- **Backend:** Express.js (port 3001) — `server.js`
-- **Database:** MongoDB via Mongoose; uses `mongodb-memory-server` (in-memory) by default — data resets on server restart
+- **Frontend:** React 18 + Vite + Tailwind CSS (port 5000)
+- **Backend:** Node.js + Express (port 3001)
+- **Database:** MongoDB via Mongoose (defaults to in-memory; set `MONGODB_URI` secret to persist data)
+- **Auth:** JWT (secret read from `SESSION_SECRET` env var)
 
-## Running the app
+## How to run
 
 ```
 npm run dev
 ```
 
-This starts both the backend (`node server.js` on port 3001) and the frontend (`vite --port 5000`) concurrently. The Vite dev server proxies `/api` and `/uploads` requests to the backend.
+This starts both the Express API (port 3001) and the Vite dev server (port 5000) concurrently. The Vite server proxies `/api` and `/uploads` requests to the backend.
 
 ## Default credentials
 
-On first start, a default admin account is seeded automatically:
-- **Username:** `admin`
-- **Password:** `admin123`
+| Username | Password  | Role  |
+|----------|-----------|-------|
+| admin    | admin123  | admin |
 
-10 sample student records are also seeded.
+The server seeds this account and 10 sample students on first boot.
 
-## Persisting data
+## Data persistence
 
-By default the app uses an in-memory MongoDB instance (data is lost on restart). To persist data across restarts, add a `MONGODB_URI` secret pointing to a MongoDB Atlas cluster.
+By default the server uses an **in-memory MongoDB** instance — all data resets on restart. To persist data across restarts, add a `MONGODB_URI` Replit Secret pointing to a MongoDB Atlas (or other hosted) cluster.
 
-## Secrets
+## Key directories
 
-| Secret | Purpose |
-|--------|---------|
-| `SESSION_SECRET` | JWT signing key (already set) |
-| `MONGODB_URI` | (Optional) MongoDB Atlas connection string for persistent storage |
+- `client/src/` — React app source
+- `client/src/pages/` — route-level page components
+- `client/src/components/` — shared UI components
+- `server.js` — Express API, Mongoose models, all route handlers
+- `uploads/` — user-uploaded files (Aadhaar PDFs, ID cards, marksheets, fee receipts, avatars)
 
 ## User preferences
-
-<!-- Add user preferences here -->
