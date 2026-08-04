@@ -682,11 +682,20 @@ export default function AdminPage() {
 
                 {/* Sort */}
                 <div>
-                  <label className="label">Sort</label>
-                  <select value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="input-field">
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                  </select>
+                  <label className="label">Sort By</label>
+                  <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden h-[38px]">
+                    {[{ value: 'newest', label: 'Newest' }, { value: 'oldest', label: 'Oldest' }].map(opt => (
+                      <button key={opt.value} type="button"
+                        onClick={() => setSortOrder(opt.value)}
+                        className={`flex-1 text-sm font-medium transition-colors
+                          ${sortOrder === opt.value
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -710,13 +719,13 @@ export default function AdminPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                        {/* Select-all checkbox */}
+                        {/* Select-all circle checkbox */}
                         <th className="pl-4 pr-2 py-3 w-10">
                           <button type="button" onClick={toggleSelectAll}
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
                               ${allPageSelected ? 'bg-blue-600 border-blue-600' : somePageSelected ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-400' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'}`}>
                             {allPageSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
-                            {somePageSelected && !allPageSelected && <span className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400 rounded" />}
+                            {somePageSelected && !allPageSelected && <span className="w-2 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full" />}
                           </button>
                         </th>
                         {['Roll No', 'Game', 'Year', 'Granted On', 'Action'].map(h => (
@@ -728,10 +737,10 @@ export default function AdminPage() {
                       {pageRows.map(a => (
                         <React.Fragment key={a._id}>
                           <tr className={`transition-colors ${selected.has(a._id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/30'}`}>
-                            {/* Row checkbox */}
+                            {/* Row circle checkbox */}
                             <td className="pl-4 pr-2 py-3">
                               <button type="button" onClick={() => toggleSelect(a._id)}
-                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors
                                   ${selected.has(a._id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'}`}>
                                 {selected.has(a._id) && <Check className="w-3 h-3 text-white stroke-[3]" />}
                               </button>
