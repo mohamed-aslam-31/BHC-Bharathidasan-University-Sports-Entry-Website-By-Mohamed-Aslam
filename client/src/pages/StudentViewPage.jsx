@@ -577,11 +577,18 @@ export default function StudentViewPage() {
               <div style={{ fontSize: '14px', fontStyle: 'italic', marginTop: '2px' }}><em>{student.year || ''}</em></div>
             </div>
             <div style={{ width: '125px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-              <div style={{ border: '1px solid #000', width: '115px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {student.image
-                  ? <img src={student.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(student.image)}` : `/uploads/${student.image}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '12px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
-                }
+              <div style={{ border: '1px solid #000', width: '115px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+                <span style={{ fontSize: '12px', color: '#666', textAlign: 'center', fontFamily: 'Arial, sans-serif', padding: '4px' }}>Photo</span>
+                {(student.image || student.rollNo) && (
+                  <img
+                    src={student.image
+                      ? (student.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(student.image)}` : `/uploads/${student.image}`)
+                      : `/api/proxy-image?url=${encodeURIComponent(`http://115.245.30.252:10108/photoUpdation/view/stu_pics/${student.rollNo}.jpg`)}`}
+                    alt="Photo"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => e.currentTarget.remove()}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -725,10 +732,18 @@ export default function StudentViewPage() {
         <div className="no-print print:hidden space-y-3">
           {/* Photo + name banner */}
           <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/40 mb-4">
-            <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-white dark:border-gray-700 shadow-sm flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              {student.image
-                ? <img src={student.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(student.image)}` : `/uploads/${student.image}`} alt="Photo" className="w-full h-full object-cover" />
-                : <User className="w-8 h-8 text-gray-400" />}
+            <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-white dark:border-gray-700 shadow-sm flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <User className="w-8 h-8 text-gray-400" />
+              {(student.image || student.rollNo) && (
+                <img
+                  src={student.image
+                    ? (student.image.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(student.image)}` : `/uploads/${student.image}`)
+                    : `/api/proxy-image?url=${encodeURIComponent(`http://115.245.30.252:10108/photoUpdation/view/stu_pics/${student.rollNo}.jpg`)}`}
+                  alt="Photo"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => e.currentTarget.remove()}
+                />
+              )}
             </div>
             <div>
               <p className="text-lg font-bold text-gray-900 dark:text-white">{student.nameOfTheSportsperson || '—'}</p>
