@@ -881,18 +881,24 @@ export default function StudentViewPage() {
 
       {/* Print CSS */}
       <style>{`
-        @page { size: A4 portrait; margin: 10mm 10mm; }
+        @page { size: A4 portrait; margin: 3mm 10mm; }
         @media print {
           .print\\:hidden, .no-print { display: none !important; }
           html, body { margin: 0; padding: 0; background: #fff; }
           #element-to-print {
-            padding: 6px 4px !important;
+            padding: 4px 4px !important;
             max-width: 100% !important;
             width: 100% !important;
             margin: 0 !important;
             box-sizing: border-box !important;
             overflow: hidden !important;
             font-size: 13px !important;
+            min-height: 285mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          #element-to-print > div:last-child {
+            margin-top: auto !important;
           }
           #element-to-print table {
             width: 100% !important;
