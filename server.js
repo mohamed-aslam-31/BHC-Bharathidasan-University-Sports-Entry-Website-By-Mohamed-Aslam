@@ -18,13 +18,15 @@ if (!fs.existsSync('./uploads/idcard'))      fs.mkdirSync('./uploads/idcard');
 if (!fs.existsSync('./uploads/marksheet'))    fs.mkdirSync('./uploads/marksheet');
 if (!fs.existsSync('./uploads/feesreceipt')) fs.mkdirSync('./uploads/feesreceipt');
 if (!fs.existsSync('./uploads/drafts'))      fs.mkdirSync('./uploads/drafts');
+if (!fs.existsSync('./uploads/avatars'))     fs.mkdirSync('./uploads/avatars');
 
 // ─── MONGOOSE MODELS ──────────────────────────────────────────────────────────
 
 const UserSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  role:     { type: String, default: 'user' }
+  role:     { type: String, default: 'user' },
+  avatar:   { type: String, default: null }
 }, { timestamps: true });
 
 const StudentSchema = new mongoose.Schema({
@@ -458,10 +460,10 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'No user found' });
     if (!bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: 'Invalid password' });
     const token = jwt.sign(
-      { id: user._id, username: user.username, role: user.role },
+      { id: user._id, username: user.username, role: user.role, avatar: user.avatar || null },
       JWT_SECRET, { expiresIn: '8h' }
     );
-    res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
+    res.json({ token, user: { id: user._id, username: user.username, role: user.role, avatar: user.avatar || null } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -474,6 +476,48 @@ app.post('/api/auth/change-password', authMiddleware, async (req, res) => {
     user.password = bcrypt.hashSync(newPassword, 10);
     await user.save();
     res.json({ message: 'Password changed successfully' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+const uploadAvatar = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, './uploads/avatars/'),
+    filename:    (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`),
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) return cb(new Error('Only images allowed'));
+    cb(null, true);
+  },
+});
+
+app.put('/api/auth/profile', authMiddleware, uploadAvatar.single('avatar'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (req.body.username && req.body.username !== user.username) {
+      const exists = await User.findOne({ username: req.body.username });
+      if (exists) return res.status(400).json({ error: 'Username already taken' });
+      user.username = req.body.username;
+    }
+
+    if (req.file) {
+      // Remove old avatar file if present
+      if (user.avatar) {
+        const old = path.join(__dirname, 'uploads', 'avatars', path.basename(user.avatar));
+        if (fs.existsSync(old)) fs.unlinkSync(old);
+      }
+      user.avatar = `/uploads/avatars/${req.file.filename}`;
+    }
+
+    await user.save();
+
+    const token = jwt.sign(
+      { id: user._id, username: user.username, role: user.role, avatar: user.avatar },
+      JWT_SECRET, { expiresIn: '8h' }
+    );
+    res.json({ token, user: { id: user._id, username: user.username, role: user.role, avatar: user.avatar } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

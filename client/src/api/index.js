@@ -39,6 +39,9 @@ export const deleteDraftFiles = (paths) => axios.delete('/api/draft-files', { da
 
 // Auth
 export const changePassword = (data) => axios.post('/api/auth/change-password', data);
+export const updateProfile = (formData) => axios.put('/api/auth/profile', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 // Proxy
 export const fetchProxyImage = (url) =>
