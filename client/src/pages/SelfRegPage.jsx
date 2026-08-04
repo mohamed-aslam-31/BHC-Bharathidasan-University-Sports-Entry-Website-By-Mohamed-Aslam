@@ -109,13 +109,10 @@ function ApprovedScreen({ onBack }) {
 
 function RejectedScreen({ rejectionReason, form, onBack }) {
   const navigate = useNavigate();
-  const [showReapply, setShowReapply] = useState(false);
-  const [reapplyReason, setReapplyReason] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
 
   const handleReapply = async () => {
-    if (!reapplyReason.trim()) { setError('Please provide a reason for reapplying.'); return; }
     setError('');
     setLoading(true);
     try {
@@ -123,14 +120,14 @@ function RejectedScreen({ rejectionReason, form, onBack }) {
         rollNo: form.rollNo,
         nameOfGame: form.nameOfGame,
         year: form.year,
-        reapplyReason: reapplyReason.trim(),
+        reapplyReason: '',
       });
       // Store access data + existing student data for the form
       sessionStorage.setItem('bhc_self_reg', JSON.stringify(form));
       sessionStorage.setItem('bhc_self_reg_reapply', JSON.stringify({
         studentId: res.data.studentId,
         studentData: res.data.studentData,
-        reapplyReason: reapplyReason.trim(),
+        reapplyReason: '',
       }));
       navigate('/self-register/form');
     } catch (err) {
@@ -161,43 +158,16 @@ function RejectedScreen({ rejectionReason, form, onBack }) {
         You may reapply to submit a new form with updated information.
       </p>
 
-      {!showReapply ? (
-        <button
-          onClick={() => setShowReapply(true)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" /> Reapply
-        </button>
-      ) : (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Why do you want to reapply? <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={reapplyReason}
-              onChange={e => { setReapplyReason(e.target.value); setError(''); }}
-              rows={3}
-              placeholder="Briefly explain the reason for your reapplication…"
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-sm outline-none transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50 resize-none"
-            />
-            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-          </div>
-          <button
-            onClick={handleReapply}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-medium text-sm transition-colors"
-          >
-            {loading
-              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>
-              : <><RotateCcw className="w-4 h-4" /> Submit Reapply Request</>}
-          </button>
-          <button onClick={() => { setShowReapply(false); setError(''); setReapplyReason(''); }}
-            className="w-full text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors py-1">
-            Cancel
-          </button>
-        </div>
-      )}
+      <button
+        onClick={handleReapply}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-medium text-sm transition-colors"
+      >
+        {loading
+          ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>
+          : <><RotateCcw className="w-4 h-4" /> Reapply</>}
+      </button>
+      {error && <p className="mt-2 text-xs text-red-500 text-center">{error}</p>}
 
       <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
         <p className="text-xs text-gray-400 dark:text-gray-500">Need help? Contact:</p>
