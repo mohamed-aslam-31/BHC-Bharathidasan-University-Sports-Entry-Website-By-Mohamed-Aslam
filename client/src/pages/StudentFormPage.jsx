@@ -538,8 +538,11 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
                         : <span className="w-3.5 flex-shrink-0" />}
                       {opt}
                     </button>
-                    {/* Edit / Delete icons — visible on hover */}
-                    {canManage && (
+                    {/* Edit / Delete icons — visible on hover.
+                        Hidden while this option's delete confirmation is open: otherwise
+                        their `top-1/2` centers on the now-taller button+panel block and
+                        they visually land on top of the Delete/Cancel buttons below. */}
+                    {canManage && confirmDeleteOpt !== opt && (
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         {onEditOption && (
                           <button type="button" title="Edit"
@@ -559,15 +562,15 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
                     )}
                     {/* Delete confirmation panel */}
                     {confirmDeleteOpt === opt && (
-                      <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
-                         <p className="text-xs text-red-600 dark:text-red-400 mb-2">
+                      <div className="relative z-10 px-3 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
+                         <p className="text-xs text-red-600 dark:text-red-400 mb-2 break-words">
                            {deleteWarning || <>Delete <span className="font-semibold">"{opt}"</span>?</>}
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); confirmDelete(); }}
-                            className="flex-1 text-xs px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Delete</button>
+                            className="flex-1 min-w-[70px] text-xs px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Delete</button>
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); cancelDelete(); }}
-                            className="flex-1 text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
+                            className="flex-1 min-w-[70px] text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">Cancel</button>
                         </div>
                       </div>
                     )}
