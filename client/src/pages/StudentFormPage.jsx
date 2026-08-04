@@ -1857,6 +1857,7 @@ export default function StudentFormPage() {
             <IdCardUpload
               onValidationChange={setIdCardValidated}
               onFileChange={setIdCardFile}
+              initialFile={idCardFile}
               locked={!(
                 form.year &&
                 form.rollNo.trim() &&
@@ -2054,6 +2055,7 @@ export default function StudentFormPage() {
             <AadhaarUpload
               onValidationChange={setAadhaarValidated}
               onFileChange={setAadhaarFile}
+              initialFile={aadhaarFile}
               locked={!(
                 form.studentName.trim() &&
                 form.fatherName.trim() &&
@@ -2155,6 +2157,7 @@ export default function StudentFormPage() {
             <MarksheetUpload
               onValidationChange={setMarksheetValidated}
               onFileChange={setMarksheetFile}
+              initialFile={marksheetFile}
             />
           </div>
 
@@ -2269,6 +2272,7 @@ export default function StudentFormPage() {
             <FeesReceiptUpload
               onValidationChange={setFeesReceiptValidated}
               onFileChange={setFeesReceiptFile}
+              initialFile={feesReceiptFile}
             />
           </div>
 

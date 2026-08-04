@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { Upload, X, Eye, AlertCircle, CheckCircle, FileText, Loader2 } from 'lucide-react';
@@ -14,7 +14,7 @@ async function getPdfPageCount(file) {
   return pdf.numPages;
 }
 
-export default function FeesReceiptUpload({ onValidationChange, onFileChange }) {
+export default function FeesReceiptUpload({ onValidationChange, onFileChange, initialFile = null }) {
   const [file, setFile]             = useState(null);
   const [blobUrl, setBlobUrl]       = useState(null);
   const [checking, setChecking]     = useState(false);
@@ -22,6 +22,14 @@ export default function FeesReceiptUpload({ onValidationChange, onFileChange }) 
   const [pageCount, setPageCount]   = useState(null);
   const [showViewer, setShowViewer] = useState(false);
   const fileRef = useRef(null);
+
+  // Restore file from a saved draft on first render
+  useEffect(() => {
+    if (initialFile instanceof File || initialFile instanceof Blob) {
+      handleFile(initialFile);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const reset = () => {
     if (blobUrl) URL.revokeObjectURL(blobUrl);
