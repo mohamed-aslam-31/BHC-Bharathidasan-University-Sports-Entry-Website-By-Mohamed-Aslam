@@ -770,14 +770,28 @@ app.delete('/api/students/:id/marksheet', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+function deleteStudentFiles(student) {
+  const files = [
+    student.image,
+    student.aadhaarPdf,
+    student.idCardPdf,
+    student.marksheetPdf,
+    student.feesReceiptPdf,
+  ];
+  for (const f of files) {
+    if (!f) continue;
+    try {
+      const fp = path.join(__dirname, 'uploads', f);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+    } catch { /* ignore */ }
+  }
+}
+
 app.delete('/api/students/:id', authMiddleware, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
-    if (student.image) {
-      const imgPath = path.join(__dirname, 'uploads', student.image);
-      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-    }
+    deleteStudentFiles(student);
     await student.deleteOne();
     res.json({ message: 'Student deleted successfully' });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -790,10 +804,7 @@ app.post('/api/students/bulk-delete', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'No IDs provided' });
     const students = await Student.find({ _id: { $in: ids } });
     for (const s of students) {
-      if (s.image) {
-        const imgPath = path.join(__dirname, 'uploads', s.image);
-        if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-      }
+      deleteStudentFiles(s);
       await s.deleteOne();
     }
     res.json({ message: `${students.length} student(s) deleted` });
@@ -830,11 +841,10 @@ app.post('/api/admin/approve/:id', authMiddleware, adminOnly, async (req, res) =
 app.post('/api/admin/reject/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
-    if (student?.image) {
-      const imgPath = path.join(__dirname, 'uploads', student.image);
-      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+    if (student) {
+      deleteStudentFiles(student);
+      await student.deleteOne();
     }
-    await student?.deleteOne();
     res.json({ message: 'Student rejected and removed' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
