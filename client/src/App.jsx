@@ -32,10 +32,17 @@ function AppLayout() {
     () => localStorage.getItem('bhc_sidebar') === 'collapsed'
   );
 
+  // Offset for the floating sidebar: left-3 (12px) + sidebar width + gap (12px)
+  const sidebarOffset = user
+    ? collapsed
+      ? 'lg:pl-[92px]'   // 12 + 68 + 12
+      : 'lg:pl-[264px]'  // 12 + 240 + 12
+    : '';
+
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
       {user && <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${user ? 'lg:pt-0 pt-16' : ''}`}>
+      <main className={`transition-[padding] duration-300 ease-in-out ${sidebarOffset} ${user ? 'pt-16 lg:pt-0' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Outlet />
         </div>
