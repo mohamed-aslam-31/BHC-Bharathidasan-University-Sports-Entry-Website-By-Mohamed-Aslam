@@ -584,7 +584,7 @@ app.post('/api/students', authMiddleware, uploadFields, async (req, res) => {
       documentsVerified: d.documentsVerified === 'true',
     });
     const msg = student.status === 'approved' ? 'Student created successfully' : 'Student submitted for approval';
-    res.json({ message: msg, savedTime });
+    res.json({ message: msg, savedTime, id: student._id });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

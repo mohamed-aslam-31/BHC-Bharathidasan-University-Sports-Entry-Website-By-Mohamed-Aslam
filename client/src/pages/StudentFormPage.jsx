@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
-import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption } from '../api';
+import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent } from '../api';
 import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
@@ -1004,7 +1004,6 @@ export default function StudentFormPage() {
         if (k === 'previousCourse') fd.append(k, v.trim() || 'NIL');
         else fd.append(k, v);
       });
-      fd.append('documentsVerified', String(verified));
       if (imageFile)        fd.append('image',          imageFile);
       if (aadhaarFile)      fd.append('aadhaarPdf',     aadhaarFile);
       if (idCardFile)       fd.append('idCardPdf',      idCardFile);
@@ -1012,9 +1011,13 @@ export default function StudentFormPage() {
       if (feesReceiptFile)  fd.append('feesReceiptPdf', feesReceiptFile);
       if (isEdit) {
         await updateStudent(id, fd);
+        await verifyStudent(id, verified);
         addToast('Student updated successfully');
       } else {
         const res = await createStudent(fd);
+        if (verified && res.data.id) {
+          await verifyStudent(res.data.id, true);
+        }
         addToast(res.data.message);
       }
       navigate('/');
