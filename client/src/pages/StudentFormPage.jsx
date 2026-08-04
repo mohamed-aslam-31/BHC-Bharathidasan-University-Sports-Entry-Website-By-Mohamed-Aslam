@@ -1759,7 +1759,7 @@ export default function StudentFormPage() {
               rows={3}
               placeholder="Enter your full address"
               value={form.address}
-              maxLength={500}
+              maxLength={100}
               onChange={(e) => {
                 const v = sanitizeAddress(e.target.value);
                 set('address')(v);
@@ -1767,7 +1767,7 @@ export default function StudentFormPage() {
               }}
               onBlur={() => touch('address', form.address)}
             />
-            <FieldMeta value={form.address} max={500} always error={errors.address} />
+            <FieldMeta value={form.address} max={100} always error={errors.address} />
           </Field>
 
           {/* Aadhaar Card Upload — optional; unlocks once required fields are filled */}
