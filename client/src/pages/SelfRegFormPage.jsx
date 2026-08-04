@@ -523,6 +523,7 @@ export default function SelfRegFormPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Passport size photo <span className="text-red-500">*</span></p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">JPG or PNG · Max 2 MB · Will be cropped</p>
+                      <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">💡 You can use your college ID card photo</p>
                       <button type="button" onClick={() => photoRef.current?.click()}
                         className="mt-2 text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
                         <Upload className="w-3 h-3" />{imagePreview ? 'Change Photo' : 'Upload Photo'}
