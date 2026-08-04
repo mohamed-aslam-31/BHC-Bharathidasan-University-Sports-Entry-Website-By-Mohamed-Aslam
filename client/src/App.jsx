@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import StudentFormPage from './pages/StudentFormPage';
 import StudentViewPage from './pages/StudentViewPage';
 import AdminPage from './pages/AdminPage';
+import DraftPage from './pages/DraftPage';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function ProtectedRoute({ children, adminOnly = false }) {
@@ -36,6 +37,7 @@ function AppLayout() {
           <Route path="/students/:id/edit" element={<ProtectedRoute><StudentFormPage key="edit" /></ProtectedRoute>} />
           <Route path="/students/:id/view" element={<ProtectedRoute><StudentViewPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
+          <Route path="/drafts" element={<ProtectedRoute><DraftPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

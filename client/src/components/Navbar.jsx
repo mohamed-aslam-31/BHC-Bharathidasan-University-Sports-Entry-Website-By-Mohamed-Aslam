@@ -4,8 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   Trophy, Sun, Moon, LogOut, Menu, X,
-  Home, Plus, ShieldCheck, Users, ChevronDown
+  Home, Plus, ShieldCheck, BookOpen, ChevronDown
 } from 'lucide-react';
+import { getDrafts } from '../utils/drafts';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -14,6 +15,15 @@ export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [draftCount, setDraftCount] = useState(0);
+
+  // Refresh draft count whenever the navbar renders (cheap localStorage read)
+  React.useEffect(() => {
+    const refresh = () => setDraftCount(getDrafts().length);
+    refresh();
+    window.addEventListener('bhc_drafts_changed', refresh);
+    return () => window.removeEventListener('bhc_drafts_changed', refresh);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -23,6 +33,7 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: 'Dashboard', icon: Home },
     { to: '/students/new', label: 'Add Student', icon: Plus },
+    { to: '/drafts', label: 'Drafts', icon: BookOpen, badge: draftCount || null },
     ...(user?.role === 'admin' ? [
       { to: '/admin', label: 'Admin', icon: ShieldCheck },
     ] : []),
@@ -47,11 +58,11 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ to, label, icon: Icon }) => (
+            {navLinks.map(({ to, label, icon: Icon, badge }) => (
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
                   isActive(to)
                     ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'
@@ -59,6 +70,11 @@ export default function Navbar() {
               >
                 <Icon className="w-4 h-4" />
                 {label}
+                {badge > 0 && (
+                  <span className="ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px] font-bold px-1 leading-none">
+                    {badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -116,7 +132,7 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
-          {navLinks.map(({ to, label, icon: Icon }) => (
+          {navLinks.map(({ to, label, icon: Icon, badge }) => (
             <Link
               key={to}
               to={to}
@@ -129,6 +145,11 @@ export default function Navbar() {
             >
               <Icon className="w-4 h-4" />
               {label}
+              {badge > 0 && (
+                <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px] font-bold px-1 leading-none">
+                  {badge}
+                </span>
+              )}
             </Link>
           ))}
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">

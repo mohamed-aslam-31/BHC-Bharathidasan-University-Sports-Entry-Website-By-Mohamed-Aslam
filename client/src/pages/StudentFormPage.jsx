@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
 import { createStudent, updateStudent, getStudent, getStudentMeta, getOptions, addOption, fetchProxyImage, deleteStudentAadhaar, deleteStudentIdCard, deleteStudentMarksheet, deleteStudentFeesReceipt, deleteStudent, renameOption, deleteOption, verifyStudent } from '../api';
-import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, User, ChevronDown, X, Check, Plus, Trash2, Pencil, CropIcon, ZoomIn, ZoomOut, FileText, AlertTriangle, BookOpen, Save } from 'lucide-react';
+import { saveDraft, getDraft, deleteDraft, isDraftDuplicate, completionPercent } from '../utils/drafts';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AadhaarUpload from '../components/AadhaarUpload';
 import IdCardUpload from '../components/IdCardUpload';
@@ -643,15 +644,21 @@ const empty = {
 /* ─── Main component ───────────────────────────────────────────────────────── */
 
 export default function StudentFormPage() {
-  const { id }   = useParams();
-  const isEdit   = !!id;
-  const { user } = useAuth();
+  const { id }       = useParams();
+  const isEdit       = !!id;
+  const { user }     = useAuth();
   const { addToast } = useToast();
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
+  const location     = useLocation();
 
   const [form, setForm]       = useState(empty);
   const [errors, setErrors]   = useState({});
   const [showPreview, setShowPreview] = useState(false);
+
+  /* ── Draft state ── */
+  const [draftId, setDraftId]             = useState(null);  // id of the draft being edited
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const pendingNavRef                      = useRef(null);    // path to navigate after modal action
   const [imageFile, setImageFile]       = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [currentImage, setCurrentImage] = useState(null);
@@ -697,10 +704,44 @@ export default function StudentFormPage() {
 
   useEffect(() => {
     getStudentMeta().then((r) => setMeta(r.data)).catch(() => {});
-    // Shared combo-box option lists — same source the dashboard filters read,
-    // so renaming/deleting an option here shows up there too (and vice versa).
     getOptions().then((r) => setOptionLists(r.data)).catch(() => {});
   }, []);
+
+  /* ── Load draft if we arrived via /drafts → Resume ── */
+  useEffect(() => {
+    if (isEdit) return;
+    const resumeId = location.state?.draftId;
+    if (!resumeId) return;
+    const draft = getDraft(resumeId);
+    if (!draft) return;
+    setDraftId(resumeId);
+    setForm((prev) => ({ ...prev, ...draft.form }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Navigation guard helpers ── */
+  const pct = completionPercent(form);
+  const shouldBlock = !isEdit && pct >= 50 && !loading;
+
+  /**
+   * Call this instead of navigate(path) whenever leaving the new-student form.
+   * If the form is ≥50% filled it shows the leave modal first; otherwise just navigates.
+   */
+  const guardedNavigate = useCallback((path) => {
+    if (shouldBlock) {
+      pendingNavRef.current = path;
+      setShowLeaveModal(true);
+    } else {
+      navigate(path);
+    }
+  }, [shouldBlock, navigate]);
+
+  /* ── Warn on browser refresh / tab close when ≥50% filled ── */
+  useEffect(() => {
+    if (!shouldBlock) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [shouldBlock]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -956,7 +997,6 @@ export default function StudentFormPage() {
     const hasErrors = Object.values(next).some(Boolean);
     if (hasErrors) {
       addToast('Please fix the errors before submitting', 'error');
-      // Scroll to the first field with an error (in visual top-to-bottom order)
       const fieldOrder = [
         'year','rollNo','nameOfTheGame','bloodGroup','gender','shift',
         'studentType','dayType','hostelName',
@@ -976,8 +1016,50 @@ export default function StudentFormPage() {
       }
       return;
     }
+    // Check for duplicate draft (same rollNo + year + game) — warn if found
+    if (!isEdit) {
+      const dupDraft = isDraftDuplicate(form.rollNo, form.year, form.nameOfTheGame, draftId);
+      if (dupDraft) {
+        const draftName = dupDraft.form?.studentName?.trim() || 'another draft';
+        addToast(
+          `Duplicate: a draft for ${form.rollNo} · ${form.nameOfTheGame} · ${form.year} already exists (${draftName}). Edit or delete it first.`,
+          'error',
+        );
+        return;
+      }
+    }
     setShowPreview(true);
     window.scrollTo({ top: 0 });
+  };
+
+  /* ── Draft helpers ── */
+
+  const notifyNavbar = () => window.dispatchEvent(new Event('bhc_drafts_changed'));
+
+  const handleMoveToDraft = (thenNavigate = false) => {
+    const id = draftId || `draft_${Date.now()}`;
+    setDraftId(id);
+    saveDraft(id, form);
+    notifyNavbar();
+    addToast('Saved to drafts');
+    setShowLeaveModal(false);
+    const dest = pendingNavRef.current;
+    pendingNavRef.current = null;
+    if (dest) navigate(dest);
+    else if (thenNavigate) navigate('/drafts');
+  };
+
+  const handleClearAndLeave = () => {
+    if (draftId) { deleteDraft(draftId); notifyNavbar(); }
+    setShowLeaveModal(false);
+    const dest = pendingNavRef.current || '/';
+    pendingNavRef.current = null;
+    navigate(dest);
+  };
+
+  const handleStay = () => {
+    pendingNavRef.current = null;
+    setShowLeaveModal(false);
   };
 
   // Delete student (edit mode only)
@@ -1019,6 +1101,8 @@ export default function StudentFormPage() {
           await verifyStudent(res.data.id, true);
         }
         addToast(res.data.message);
+        // Clean up the draft now that it's been submitted
+        if (draftId) { deleteDraft(draftId); notifyNavbar(); }
       }
       navigate('/');
     } catch (err) {
@@ -1107,30 +1191,95 @@ export default function StudentFormPage() {
   return (
     <div className="space-y-6 w-full">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-4 min-w-0">
-          <Link to="/" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => guardedNavigate('/')}
+            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+          >
             <ArrowLeft className="w-5 h-5" />
-          </Link>
+          </button>
           <div className="min-w-0">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               {isEdit ? 'Edit Student' : 'Add New Student'}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {isEdit ? 'Update the student information below' : 'Fill in the details to register a new sportsperson'}
+              {isEdit
+                ? 'Update the student information below'
+                : draftId
+                  ? 'Resuming saved draft — continue filling in details'
+                  : 'Fill in the details to register a new sportsperson'}
             </p>
           </div>
         </div>
-        {isEdit && (
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="flex-shrink-0 flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />Delete
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {!isEdit && (
+            <button
+              type="button"
+              onClick={() => handleMoveToDraft(true)}
+              className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-700 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              title="Save current progress as a draft"
+            >
+              <Save className="w-4 h-4" />
+              {draftId ? 'Update Draft' : 'Move to Draft'}
+            </button>
+          )}
+          {isEdit && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />Delete
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Leave-page modal (navigation blocker) */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Unsaved progress</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  You've filled in {pct}% of this form. What would you like to do before leaving?
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => handleMoveToDraft(false)}
+                className="w-full flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                Save as Draft &amp; Leave
+              </button>
+              <button
+                type="button"
+                onClick={() => handleClearAndLeave()}
+                className="w-full flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear All &amp; Leave
+              </button>
+              <button
+                type="button"
+                onClick={handleStay}
+                className="w-full flex items-center justify-center gap-2 text-sm px-5 py-2.5 rounded-lg btn-secondary"
+              >
+                Stay on this page
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm modal — edit mode */}
       {isEdit && showDeleteConfirm && (
@@ -2193,7 +2342,6 @@ export default function StudentFormPage() {
               <textarea
                 className={`input-field textarea-scroll ${errors.previousCourse ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
                 rows={3}
-                placeholder=""
                 maxLength={100}
                 placeholder="Leave blank if not applicable"
                 value={form.previousCourse}
@@ -2255,7 +2403,7 @@ export default function StudentFormPage() {
             className="btn-primary flex items-center gap-2 px-8 py-2.5">
             {isEdit ? 'Preview & Update' : 'Preview & Submit'}
           </button>
-          <Link to="/" className="btn-secondary text-sm">Cancel</Link>
+          <button type="button" onClick={() => guardedNavigate('/')} className="btn-secondary text-sm">Cancel</button>
         </div>
 
       </form>
