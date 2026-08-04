@@ -193,9 +193,9 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
 }
 
 /* ─── Field wrapper ────────────────────────────────────────────────────────── */
-function Field({ label, required, error, children, span2 }) {
+function Field({ label, required, error, children, span2, id }) {
   return (
-    <div className={span2 ? 'sm:col-span-2' : ''}>
+    <div id={id} className={span2 ? 'sm:col-span-2' : ''}>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -390,6 +390,13 @@ export default function SelfRegFormPage() {
     return !msg;
   };
 
+  const scrollToFirstError = (errorObj) => {
+    const firstKey = Object.keys(errorObj).find(k => errorObj[k]);
+    if (!firstKey) return;
+    const el = document.getElementById('field-' + firstKey);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const validateStep1 = () => {
     const e = {};
     if (!imageFile) e.photo = 'Passport size photo is required';
@@ -404,7 +411,7 @@ export default function SelfRegFormPage() {
     const addr = validateAddress(form.address);         if (addr) e.address    = addr;
     if (!aadhaarValidated) e.aadhaarFile = 'Aadhaar card PDF is required and must pass validation';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    return e;
   };
 
   const validateStep2 = () => {
@@ -414,7 +421,7 @@ export default function SelfRegFormPage() {
     if (!form.shift)       e.shift       = 'Shift is required';
     if (form.dayType === 'HOSTELLER' && !form.hostelName) e.hostelName = 'Hostel name is required';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    return e;
   };
 
   const validateStep3 = () => {
@@ -433,12 +440,19 @@ export default function SelfRegFormPage() {
     if (!feesReceiptValidated) e.feesReceiptFile = 'Fees receipt PDF is required and must pass validation';
     if (!termsAccepted)        e.terms          = 'You must accept the terms and conditions';
     setErrors(e);
-    return Object.keys(e).length === 0;
+    return e;
   };
 
   const handleNext = () => {
-    if (step === 1 && validateStep1()) setStep(2);
-    if (step === 2 && validateStep2()) setStep(3);
+    if (step === 1) {
+      const e = validateStep1();
+      if (Object.keys(e).length > 0) { scrollToFirstError(e); return; }
+      setStep(2);
+    } else if (step === 2) {
+      const e = validateStep2();
+      if (Object.keys(e).length > 0) { scrollToFirstError(e); return; }
+      setStep(3);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const handleBack = () => { setStep(s => s - 1); window.scrollTo({ top: 0 }); };
@@ -450,7 +464,8 @@ export default function SelfRegFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep3()) return;
+    const step3Errors = validateStep3();
+    if (Object.keys(step3Errors).length > 0) { scrollToFirstError(step3Errors); return; }
     setSubmitting(true); setSubmitError('');
     try {
       const fd = new FormData();
@@ -571,9 +586,9 @@ export default function SelfRegFormPage() {
                         <Camera className="w-5 h-5 text-white" />
                       </div>
                     </div>
-                    <div>
+                    <div id="field-photo">
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Passport size photo <span className="text-red-500">*</span></p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">JPG or PNG · Max 2 MB · Will be cropped</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">JPG or PNG · 100 KB – 1 MB · Will be cropped</p>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <button type="button" onClick={() => photoRef.current?.click()}
                           className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
@@ -596,28 +611,28 @@ export default function SelfRegFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Basic Information</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Name of the Sportsperson" required error={errors.studentName} span2>
+                    <Field id="field-studentName" label="Name of the Sportsperson" required error={errors.studentName} span2>
                       <input type="text" value={form.studentName} maxLength={50}
                         onChange={e => { const v = sanitizeName(e.target.value); set('studentName')(v); touch('studentName', v); }}
                         onBlur={() => touch('studentName', form.studentName)}
                         placeholder="Full name as per Aadhaar" className={inputCls(errors.studentName)} />
                       <FieldMeta value={form.studentName} max={50} always error={errors.studentName} />
                     </Field>
-                    <Field label="Father's Name" required error={errors.fatherName}>
+                    <Field id="field-fatherName" label="Father's Name" required error={errors.fatherName}>
                       <input type="text" value={form.fatherName} maxLength={50}
                         onChange={e => { const v = sanitizeName(e.target.value); set('fatherName')(v); touch('fatherName', v); }}
                         onBlur={() => touch('fatherName', form.fatherName)}
                         placeholder="Father's full name" className={inputCls(errors.fatherName)} />
                       <FieldMeta value={form.fatherName} max={50} always error={errors.fatherName} />
                     </Field>
-                    <Field label="Mother's Name" required error={errors.motherName}>
+                    <Field id="field-motherName" label="Mother's Name" required error={errors.motherName}>
                       <input type="text" value={form.motherName} maxLength={50}
                         onChange={e => { const v = sanitizeName(e.target.value); set('motherName')(v); touch('motherName', v); }}
                         onBlur={() => touch('motherName', form.motherName)}
                         placeholder="Mother's full name" className={inputCls(errors.motherName)} />
                       <FieldMeta value={form.motherName} max={50} always error={errors.motherName} />
                     </Field>
-                    <Field label="Date of Birth" required error={errors.dob}>
+                    <Field id="field-dob" label="Date of Birth" required error={errors.dob}>
                       <div className="relative flex items-center">
                         <input type="date" value={form.dob}
                           onChange={e => { set('dob')(e.target.value); touch('dob', e.target.value); }}
@@ -631,7 +646,7 @@ export default function SelfRegFormPage() {
                         )}
                       </div>
                     </Field>
-                    <Field label="Gender" required error={errors.gender}>
+                    <Field id="field-gender" label="Gender" required error={errors.gender}>
                       <div className="flex gap-2 items-center">
                         {['MALE','FEMALE','OTHER'].map(g => (
                           <button key={g} type="button" onClick={() => { set('gender')(g); setErrors(e => ({ ...e, gender: '' })); }}
@@ -648,25 +663,25 @@ export default function SelfRegFormPage() {
                         )}
                       </div>
                     </Field>
-                    <Field label="Blood Group" required error={errors.bloodGroup}>
+                    <Field id="field-bloodGroup" label="Blood Group" required error={errors.bloodGroup}>
                       <ComboBox value={form.bloodGroup} onChange={v => { set('bloodGroup')(v); setErrors(e => ({ ...e, bloodGroup: '' })); }}
                         options={opts.bloodGroup || []} placeholder="Select blood group" error={errors.bloodGroup} />
                     </Field>
-                    <Field label="Phone Number" required error={errors.phoneNumber}>
+                    <Field id="field-phoneNumber" label="Phone Number (Student)" required error={errors.phoneNumber}>
                       <input type="text" inputMode="numeric" value={form.phoneNumber} maxLength={10}
                         onChange={e => { const v = sanitizeDigits(e.target.value, 10); set('phoneNumber')(v); touch('phoneNumber', v); }}
                         onBlur={() => touch('phoneNumber', form.phoneNumber)}
                         placeholder="10-digit mobile number" className={inputCls(errors.phoneNumber)} />
                       <FieldMeta value={form.phoneNumber} max={10} always error={errors.phoneNumber} />
                     </Field>
-                    <Field label="Aadhaar Number" required error={errors.aadharNumber}>
+                    <Field id="field-aadharNumber" label="Aadhaar Number" required error={errors.aadharNumber}>
                       <input type="text" inputMode="numeric" value={form.aadharNumber} maxLength={12}
                         onChange={e => { const v = sanitizeDigits(e.target.value, 12); set('aadharNumber')(v); touch('aadharNumber', v); }}
                         onBlur={() => touch('aadharNumber', form.aadharNumber)}
                         placeholder="12-digit Aadhaar number" className={inputCls(errors.aadharNumber)} />
                       <FieldMeta value={form.aadharNumber} max={12} always error={errors.aadharNumber} />
                     </Field>
-                    <Field label="Address" required error={errors.address} span2>
+                    <Field id="field-address" label="Address" required error={errors.address} span2>
                       <textarea rows={3} value={form.address} maxLength={100}
                         onChange={e => { const v = sanitizeAddress(e.target.value); set('address')(v); touch('address', v); }}
                         onBlur={() => touch('address', form.address)}
@@ -685,6 +700,7 @@ export default function SelfRegFormPage() {
                     <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Aadhaar Card <span className="text-red-500">*</span>
                     </p>
+                    <div id="field-aadhaarFile">
                     <AadhaarUpload
                       locked={false}
                       onValidationChange={setAadhaarValidated}
@@ -693,6 +709,7 @@ export default function SelfRegFormPage() {
                     {errors.aadhaarFile && !aadhaarValidated && (
                       <p className="mt-1 text-xs text-red-500">{errors.aadhaarFile}</p>
                     )}
+                    </div>
                   </div>
                 </div>
               </>
@@ -790,12 +807,12 @@ export default function SelfRegFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Examination for First Admission to a College or University</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Name of Exam" required error={errors.nameOfExam}>
+                    <Field id="field-nameOfExam" label="Name of Exam" required error={errors.nameOfExam}>
                       <ComboBox value={form.nameOfExam} onChange={v => { set('nameOfExam')(v); touch('nameOfExam', v); }}
                         options={opts.exam || []} placeholder="Select exam" error={errors.nameOfExam} />
                       <FieldMeta value={form.nameOfExam} max={40} always error={undefined} />
                     </Field>
-                    <Field label="Month & Year of Passing" required error={errors.dateAndYear}>
+                    <Field id="field-dateAndYear" label="Month & Year of Passing" required error={errors.dateAndYear}>
                       <ComboBox value={form.dateAndYear} onChange={v => { set('dateAndYear')(v); touch('dateAndYear', v); }}
                         options={opts.monthYear || []} placeholder="Select month & year" error={errors.dateAndYear} />
                       <FieldMeta value={form.dateAndYear} max={14} always error={undefined} />
@@ -809,17 +826,17 @@ export default function SelfRegFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Academic Details (Currently)</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Present Class" required error={errors.presentClass}>
+                    <Field id="field-presentClass" label="Present Class" required error={errors.presentClass}>
                       <ComboBox value={form.presentClass} onChange={v => { set('presentClass')(v); touch('presentClass', v); }}
                         options={opts.class || []} placeholder="e.g. I B.Sc" error={errors.presentClass} />
                       <FieldMeta value={form.presentClass} max={20} always error={undefined} />
                     </Field>
-                    <Field label="Duration of Course" required error={errors.durationOfCourse}>
+                    <Field id="field-durationOfCourse" label="Duration of Course" required error={errors.durationOfCourse}>
                       <ComboBox value={form.durationOfCourse} onChange={v => { set('durationOfCourse')(v); touch('durationOfCourse', v); }}
                         options={opts.duration || []} placeholder="e.g. 3 Years" error={errors.durationOfCourse} />
                       <FieldMeta value={form.durationOfCourse} max={7} always error={undefined} />
                     </Field>
-                    <Field label="Name of Present Course" required error={errors.presentCourse} span2>
+                    <Field id="field-presentCourse" label="Name of Present Course" required error={errors.presentCourse} span2>
                       <ComboBox value={form.presentCourse} onChange={v => { set('presentCourse')(v); touch('presentCourse', v); }}
                         options={opts.course || []} placeholder="Select course" error={errors.presentCourse} />
                       <FieldMeta value={form.presentCourse} max={40} always error={undefined} />
@@ -833,12 +850,12 @@ export default function SelfRegFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Month & Year of First Admission to University</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="University ( month & Year )" required error={errors.university}>
+                    <Field id="field-university" label="University ( month & Year )" required error={errors.university}>
                       <ComboBox value={form.university} onChange={v => { set('university')(v); touch('university', v); }}
                         options={opts.monthYear || []} placeholder="Select or Add new Month & Year" error={errors.university} />
                       <FieldMeta value={form.university} max={14} always error={undefined} />
                     </Field>
-                    <Field label="Present Course ( month & Year )" required error={errors.nameOfThePresentClass}>
+                    <Field id="field-nameOfThePresentClass" label="Present Course ( month & Year )" required error={errors.nameOfThePresentClass}>
                       <ComboBox value={form.nameOfThePresentClass} onChange={v => { set('nameOfThePresentClass')(v); touch('nameOfThePresentClass', v); }}
                         options={opts.monthYear || []} placeholder="Select or Add new Month & Year" error={errors.nameOfThePresentClass} />
                       <FieldMeta value={form.nameOfThePresentClass} max={14} always error={undefined} />
@@ -852,11 +869,11 @@ export default function SelfRegFormPage() {
                 <div>
                   <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-4">Previous IUT Participation (While Pursuing)</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Graduate Course — No. of Years" required error={errors.graduateCourse}>
+                    <Field id="field-graduateCourse" label="Graduate Course — No. of Years" required error={errors.graduateCourse}>
                       <ComboBox value={form.graduateCourse} onChange={v => { set('graduateCourse')(v); touch('graduateCourse', v); }}
                         options={opts.iut || ['NIL','1 Year','2 Years','3 Years','4 Years','5 Years']} placeholder="Select" error={errors.graduateCourse} />
                     </Field>
-                    <Field label="PG Course — No. of Years" required error={errors.pgCourse}>
+                    <Field id="field-pgCourse" label="PG Course — No. of Years" required error={errors.pgCourse}>
                       <ComboBox value={form.pgCourse} onChange={v => { set('pgCourse')(v); touch('pgCourse', v); }}
                         options={opts.iut || ['NIL','1 Year','2 Years','3 Years','4 Years','5 Years']} placeholder="Select" error={errors.pgCourse} />
                     </Field>
@@ -911,13 +928,15 @@ export default function SelfRegFormPage() {
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         +2 Marksheet <span className="text-red-500">*</span>
                       </p>
-                      <MarksheetUpload
-                        onValidationChange={setMarksheetValidated}
-                        onFileChange={setMarksheetFile}
-                      />
-                      {errors.marksheetFile && !marksheetValidated && (
-                        <p className="mt-1 text-xs text-red-500">{errors.marksheetFile}</p>
-                      )}
+                      <div id="field-marksheetFile">
+                        <MarksheetUpload
+                          onValidationChange={setMarksheetValidated}
+                          onFileChange={setMarksheetFile}
+                        />
+                        {errors.marksheetFile && !marksheetValidated && (
+                          <p className="mt-1 text-xs text-red-500">{errors.marksheetFile}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Fees Receipt — required */}
@@ -925,13 +944,15 @@ export default function SelfRegFormPage() {
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         UG/PG Admission Fees Receipt <span className="text-red-500">*</span>
                       </p>
-                      <FeesReceiptUpload
-                        onValidationChange={setFeesReceiptValidated}
-                        onFileChange={setFeesReceiptFile}
-                      />
-                      {errors.feesReceiptFile && !feesReceiptValidated && (
-                        <p className="mt-1 text-xs text-red-500">{errors.feesReceiptFile}</p>
-                      )}
+                      <div id="field-feesReceiptFile">
+                        <FeesReceiptUpload
+                          onValidationChange={setFeesReceiptValidated}
+                          onFileChange={setFeesReceiptFile}
+                        />
+                        {errors.feesReceiptFile && !feesReceiptValidated && (
+                          <p className="mt-1 text-xs text-red-500">{errors.feesReceiptFile}</p>
+                        )}
+                      </div>
                     </div>
 
                   </div>
