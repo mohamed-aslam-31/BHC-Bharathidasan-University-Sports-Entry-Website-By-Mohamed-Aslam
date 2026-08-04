@@ -1735,7 +1735,7 @@ export default function StudentFormPage() {
           </Field>
 
           {/* Phone Number */}
-          <Field label="Phone Number" required id="field-phoneNumber">
+          <Field label="Phone Number (Student)" required id="field-phoneNumber">
             <input
               className={`input-field ${errors.phoneNumber ? 'border-red-400 dark:border-red-500 focus:ring-red-400' : ''}`}
               placeholder="Enter your 10-digit mobile number"
