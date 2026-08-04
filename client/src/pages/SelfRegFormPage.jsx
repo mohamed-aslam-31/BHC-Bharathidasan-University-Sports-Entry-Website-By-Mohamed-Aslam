@@ -289,7 +289,7 @@ export default function SelfRegFormPage() {
   const [idCardBlobUrl, setIdCardBlobUrl]         = useState(null);
   const [imageFromUrl, setImageFromUrl]           = useState(null); // external URL reference (no upload)
 
-  const idCardUrl = `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${accessData.rollNo}.jpg`;
+  const idCardUrl = accessData ? `http://115.245.30.252:10108/photoUpdation/view/stu_pics/${accessData.rollNo}.jpg` : '';
 
   const handleOpenIdCardPreview = async () => {
     if (idCardBlobUrl) URL.revokeObjectURL(idCardBlobUrl);
