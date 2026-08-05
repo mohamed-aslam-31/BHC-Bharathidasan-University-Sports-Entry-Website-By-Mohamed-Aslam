@@ -106,7 +106,7 @@
     @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
   }
   .card {
-    @apply bg-slate-50 dark:bg-gray-900 rounded-xl shadow-sm border border-slate-200 dark:border-gray-700;
+    @apply rounded-xl border border-white/80 dark:border-gray-700 backdrop-blur-md;
   }
   .section-title {
     @apply text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-4 pb-2 border-b border-blue-100 dark:border-blue-900;
@@ -132,6 +132,24 @@ html:not(.dark) .bg-gray-50 {
 /* App wrapper, progress bars, code blocks */
 html:not(.dark) .bg-gray-100 {
   background-color: #e0e7ff !important; /* indigo-100 */
+}
+
+/* ── Glass card — light mode ──────────────────────────────────────────────── */
+html:not(.dark) .card {
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow:
+    0 4px 24px -4px rgba(99, 102, 241, 0.14),
+    0 2px 8px  -2px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ── Glass card — dark mode ───────────────────────────────────────────────── */
+html.dark .card {
+  background: rgb(17, 24, 39);
+  border-color: rgb(55, 65, 81);
+  box-shadow:
+    0 4px 24px -4px rgba(0, 0, 0, 0.45),
+    0 2px 8px  -2px rgba(0, 0, 0, 0.30);
 }
 
 /* ── Ultra-narrow (≤300px) micro-adjustments ──────────────────────────────── */
