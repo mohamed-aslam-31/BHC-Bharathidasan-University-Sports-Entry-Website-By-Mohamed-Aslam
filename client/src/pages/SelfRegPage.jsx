@@ -23,7 +23,7 @@ function ComboBox({ value, onChange, options, placeholder, error }) {
   return (
     <div ref={ref} className="relative">
       <button type="button" onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm text-left bg-white dark:bg-gray-700 transition-colors
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm text-left bg-slate-50 dark:bg-gray-700 transition-colors
           ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'}
           ${open ? 'ring-2 ring-blue-500/30 border-blue-500' : ''}`}>
         <span className={value ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}>
@@ -40,7 +40,7 @@ function ComboBox({ value, onChange, options, placeholder, error }) {
         </span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-slate-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-700">
             <input ref={sRef} type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search…"
@@ -72,7 +72,7 @@ const CONTACT = 'Department of Physical Education, Bishop Heber College';
 /* ── Status screens ─────────────────────────────────────────────────────────── */
 function PendingScreen({ onBack }) {
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+    <div className="w-full max-w-md bg-slate-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 p-8 text-center">
       <div className="w-14 h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
         <Clock className="w-7 h-7 text-yellow-600 dark:text-yellow-400" />
       </div>
@@ -91,7 +91,7 @@ function PendingScreen({ onBack }) {
 
 function ApprovedScreen({ onBack }) {
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+    <div className="w-full max-w-md bg-slate-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 p-8 text-center">
       <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
         <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
       </div>
@@ -139,7 +139,7 @@ function RejectedScreen({ rejectionReason, form, onBack }) {
   };
 
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
+    <div className="w-full max-w-md bg-slate-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 p-8">
       <div className="text-center mb-5">
         <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
           <XCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
@@ -247,15 +247,15 @@ export default function SelfRegPage() {
   if (screen === 'rejected') return <PageShell><RejectedScreen rejectionReason={rejectionReason} form={form} onBack={handleBack} /></PageShell>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-2 py-6 sm:px-4 sm:py-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-slate-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex flex-col items-center justify-center px-2 py-6 sm:px-4 sm:py-10">
       {/* Theme toggle */}
       <button onClick={toggleTheme}
-        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-slate-100 dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
         {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>
       {/* Header */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 sm:mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
+        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-slate-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 sm:mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
           <img src="/pe-logo.png" alt="Department of Physical Education" className="w-13 h-13 sm:w-20 sm:h-20 object-contain rounded-full" />
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
@@ -263,7 +263,7 @@ export default function SelfRegPage() {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-4 sm:p-8">
+      <div className="w-full max-w-md bg-slate-50 dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 p-4 sm:p-8">
         <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-1">Verify Your Access</h2>
         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">Enter your details below. Your admin must grant access before you can register.</p>
 
@@ -285,7 +285,7 @@ export default function SelfRegPage() {
               value={form.rollNo}
               onChange={e => setForm(f => ({ ...f, rollNo: e.target.value.replace(/\D/g, '').slice(0, 12) }))}
               placeholder="Enter your roll number"
-              className={`w-full px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl border text-xs sm:text-sm outline-none transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
+              className={`w-full px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl border text-xs sm:text-sm outline-none transition-colors bg-slate-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
                 ${errors.rollNo
                   ? 'border-red-400 focus:ring-2 focus:ring-red-300'
                   : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50'}`}

@@ -30,11 +30,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-indigo-50 to-blue-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
       {/* Theme toggle */}
       <button
         onClick={toggleTheme}
-        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform"
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-slate-100 dark:bg-gray-800 shadow-md border border-slate-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform"
       >
         {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>

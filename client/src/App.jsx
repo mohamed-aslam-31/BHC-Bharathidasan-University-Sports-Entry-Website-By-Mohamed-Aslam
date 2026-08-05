@@ -42,7 +42,7 @@ function AppLayout() {
     : '';
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-100 to-blue-50 dark:bg-gray-950 dark:bg-none">
       {user && <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
       <main className={`transition-[padding] duration-300 ease-in-out ${sidebarOffset} ${user ? 'pt-16 lg:pt-0' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

@@ -162,7 +162,7 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
   return (
     <div ref={ref} className="relative">
       <button type="button" disabled={disabled} onClick={() => !disabled && setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm text-left bg-white dark:bg-gray-800 transition-colors
+        className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm text-left bg-slate-50 dark:bg-gray-800 transition-colors
           ${disabled ? 'bg-gray-50 dark:bg-gray-900 cursor-not-allowed opacity-70' : ''}
           ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}
           ${open ? 'ring-2 ring-blue-400/50 border-blue-500' : ''}`}>
@@ -173,10 +173,10 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
         </span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
-          <div className="p-2 border-b border-gray-100 dark:border-gray-800">
+        <div className="absolute z-50 mt-1 w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-slate-100 dark:border-gray-800">
             <input ref={sRef} type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
-              className="w-full text-sm px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
+              className="w-full text-sm px-3 py-1.5 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
           </div>
           <div className="max-h-52 overflow-y-auto">
             {filtered.length === 0 ? <p className="text-xs text-gray-400 text-center py-4">No options</p>
@@ -240,7 +240,7 @@ function Stepper({ step }) {
 }
 
 /* ─── Input helper ─────────────────────────────────────────────────────────── */
-const inputCls = (err) => `w-full px-2 py-2 sm:px-3 sm:py-2.5 rounded-xl border text-xs sm:text-sm outline-none transition-colors bg-white dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 ${err ? 'border-red-400 focus:ring-2 focus:ring-red-300' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50'}`;
+const inputCls = (err) => `w-full px-2 py-2 sm:px-3 sm:py-2.5 rounded-xl border text-xs sm:text-sm outline-none transition-colors bg-slate-50 dark:bg-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 ${err ? 'border-red-400 focus:ring-2 focus:ring-red-300' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/50'}`;
 
 /* ─── Main component ───────────────────────────────────────────────────────── */
 export default function SelfRegFormPage() {
@@ -585,8 +585,8 @@ export default function SelfRegFormPage() {
   /* ── Success screen ── */
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex flex-col items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-10 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-100 via-slate-50 to-blue-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md bg-slate-50 dark:bg-gray-900 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-800 p-10 text-center">
           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-9 h-9 text-white" />
           </div>
@@ -606,15 +606,15 @@ export default function SelfRegFormPage() {
   const opts = options;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-1.5 py-4 sm:px-4 sm:py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-slate-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-1.5 py-4 sm:px-4 sm:py-8">
       {/* Theme toggle */}
       <button onClick={toggleTheme}
-        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-slate-100 dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:scale-105 transition-transform z-50">
         {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
       </button>
       {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
-        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mx-auto mb-2 sm:mb-3 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-slate-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-2 sm:mb-3 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
           <img src="/pe-logo.png" alt="Department of Physical Education" className="w-11 h-11 sm:w-16 sm:h-16 object-contain rounded-full" />
         </div>
         <h1 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
@@ -637,7 +637,7 @@ export default function SelfRegFormPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="selfreg-card bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 p-3 sm:p-6 space-y-4 sm:space-y-6">
+          <div className="selfreg-card bg-slate-50 dark:bg-gray-900 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-800 p-3 sm:p-6 space-y-4 sm:space-y-6">
 
             {/* ═══════════════ STEP 1 ═══════════════ */}
             {step === 1 && (
@@ -1097,7 +1097,7 @@ export default function SelfRegFormPage() {
       {/* ID Card Photo Preview Modal */}
       {showIdCardPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden">
+          <div className="bg-slate-50 dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
               <div>
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">ID Card Photo</h2>

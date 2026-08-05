@@ -42,7 +42,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm print:hidden">
+    <nav className="bg-slate-50/95 dark:bg-gray-900 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -131,7 +131,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 space-y-1">
+        <div className="md:hidden border-t border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-900 px-4 py-3 space-y-1">
           {navLinks.map(({ to, label, icon: Icon, badge }) => (
             <Link
               key={to}
