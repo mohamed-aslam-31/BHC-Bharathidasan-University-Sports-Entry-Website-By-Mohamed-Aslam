@@ -72,7 +72,7 @@ function MultiSelect({ label, options, value, onChange, placeholder, noSearch })
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-[200] mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           {!noSearch && (
             <div className="p-2 border-b border-gray-100 dark:border-gray-800">
               <input
@@ -850,7 +850,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Filter panel (always visible) ── */}
-      <div className="card p-5 space-y-4">
+      <div className="card p-5 space-y-4 relative z-10">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
             Filters

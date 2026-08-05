@@ -80,7 +80,7 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-[200] mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input autoFocus type="text" value={search}
               onChange={e => setSearch(e.target.value)}
@@ -156,7 +156,7 @@ function MultiCombo({ label, options, value, onChange, placeholder }) {
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[180px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-[200] mt-1 w-full min-w-[180px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input autoFocus type="text" value={search}
               onChange={e => setSearch(e.target.value)}
@@ -646,9 +646,9 @@ export default function AdminPage() {
           </div>
 
           {/* Access list */}
-          <div className="card overflow-hidden">
+          <div className="card relative z-10">
             {/* List header + filters */}
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 space-y-3 overflow-visible">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Granted Access</h3>
@@ -729,7 +729,7 @@ export default function AdminPage() {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overflow-y-hidden rounded-b-xl">
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
