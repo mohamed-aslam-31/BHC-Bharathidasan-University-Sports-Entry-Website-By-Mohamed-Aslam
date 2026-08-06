@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, X, CheckCircle, Camera, ArrowLeft, ArrowRight, Upload, Loader2, User, Check, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -150,26 +151,45 @@ function FieldMeta({ value, max, error, always }) {
 function ComboBox({ value, onChange, options = [], placeholder, error, disabled }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
-  const [dropUp, setDropUp] = useState(false);
-  const ref  = useRef(null);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef(null);
+  const dropRef    = useRef(null);
   const sRef = useRef(null);
   useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(''); } };
+    const h = (e) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        dropRef.current && !dropRef.current.contains(e.target)
+      ) { setOpen(false); setSearch(''); }
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      if (triggerRef.current) {
+        const r = triggerRef.current.getBoundingClientRect();
+        setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
+      }
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => { window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update); };
+  }, [open]);
   useEffect(() => { if (open) setTimeout(() => sRef.current?.focus(), 0); }, [open]);
-  const filtered = search ? options.filter(o => o.toLowerCase().includes(search.toLowerCase())) : options;
-  const handleToggle = () => {
-    if (!open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      setDropUp(window.innerHeight - rect.bottom < 260);
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
     }
     if (!disabled) setOpen(o => !o);
   };
+  const filtered = search ? options.filter(o => o.toLowerCase().includes(search.toLowerCase())) : options;
   return (
-    <div ref={ref} className="relative">
-      <button type="button" disabled={disabled} onClick={handleToggle}
+    <div className="relative">
+      <button ref={triggerRef} type="button" disabled={disabled} onClick={handleOpen}
         className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm text-left bg-slate-50 dark:bg-gray-800 transition-colors
           ${disabled ? 'bg-gray-50 dark:bg-gray-900 cursor-not-allowed opacity-70' : ''}
           ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}
@@ -180,8 +200,10 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
           <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
-      {open && (
-        <div className={`absolute z-[200] w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+      {open && createPortal(
+        <div ref={dropRef}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 99999 }}
+          className="bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
           <div className="p-2 border-b border-slate-100 dark:border-gray-800">
             <input ref={sRef} type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
               className="w-full text-sm px-3 py-1.5 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
@@ -195,7 +217,8 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
                 </button>
               ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

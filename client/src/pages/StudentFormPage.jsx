@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams, Link, useLocation, useBlocker } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/Toast';
@@ -419,23 +420,41 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   const [editingOpt,       setEditingOpt]       = useState(null);
   const [editDraft,        setEditDraft]        = useState('');
   const [confirmDeleteOpt, setConfirmDeleteOpt] = useState(null);
-  const [dropUp,           setDropUp]           = useState(false);
-  const ref      = useRef(null);
-  const searchRef = useRef(null);
-  const editRef   = useRef(null);
+  const [dropPos,          setDropPos]          = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef(null);
+  const dropRef    = useRef(null);
+  const searchRef  = useRef(null);
+  const editRef    = useRef(null);
 
   const canManage = !!(onEditOption || onDeleteOption);
 
   /* close on outside click */
   useEffect(() => {
     const h = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        dropRef.current && !dropRef.current.contains(e.target)
+      ) {
         setOpen(false); setSearch(''); setEditingOpt(null); setConfirmDeleteOpt(null);
       }
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
+
+  /* keep dropdown anchored while scrolling/resizing */
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      if (triggerRef.current) {
+        const r = triggerRef.current.getBoundingClientRect();
+        setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
+      }
+    };
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => { window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update); };
+  }, [open]);
 
   useEffect(() => { if (open) setTimeout(() => searchRef.current?.focus(), 0); }, [open]);
   useEffect(() => { if (editingOpt) setTimeout(() => editRef.current?.focus(), 0); }, [editingOpt]);
@@ -457,11 +476,10 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   };
   const clear = (e) => { e.stopPropagation(); onChange(''); setSearch(''); };
 
-  const handleToggle = () => {
-    if (!open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setDropUp(spaceBelow < 260);
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
     }
     setOpen((o) => !o);
   };
@@ -485,9 +503,9 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       {/* Trigger */}
-      <button type="button" onClick={handleToggle} required={required}
+      <button ref={triggerRef} type="button" onClick={handleOpen} required={required}
         className={`input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] ${error ? 'border-red-400 dark:border-red-500' : ''}`}>
         <span className="flex-1 min-w-0 truncate text-sm">
           {value ? <span className="text-gray-900 dark:text-gray-100">{value}</span>
@@ -504,9 +522,10 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
         </span>
       </button>
 
-      {/* Dropdown */}
-      {open && (
-        <div className={`absolute z-[200] w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+      {open && createPortal(
+        <div ref={dropRef}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 99999 }}
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
           {/* Search */}
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input ref={searchRef} type="text" value={search} onChange={handleSearchChange}
@@ -605,7 +624,8 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
               )
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
