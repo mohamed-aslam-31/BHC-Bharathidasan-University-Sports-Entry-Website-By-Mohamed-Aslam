@@ -124,7 +124,7 @@ function RejectedScreen({ rejectionReason, form, onBack }) {
         reapplyReason: '',
       });
       // Store access data + existing student data for the form
-      sessionStorage.setItem('bhc_self_reg', JSON.stringify(form));
+      sessionStorage.setItem('bhc_self_reg', JSON.stringify({ ...form, _ts: Date.now() }));
       sessionStorage.setItem('bhc_self_reg_reapply', JSON.stringify({
         studentId: res.data.studentId,
         studentData: res.data.studentData,
@@ -230,7 +230,7 @@ export default function SelfRegPage() {
         return;
       }
       // success: true — proceed to form
-      sessionStorage.setItem('bhc_self_reg', JSON.stringify(form));
+      sessionStorage.setItem('bhc_self_reg', JSON.stringify({ ...form, _ts: Date.now() }));
       sessionStorage.removeItem('bhc_self_reg_reapply');
       navigate('/self-register/form');
     } catch (err) {

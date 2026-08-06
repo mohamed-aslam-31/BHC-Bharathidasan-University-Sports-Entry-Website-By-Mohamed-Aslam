@@ -251,10 +251,25 @@ export default function SelfRegFormPage() {
   const [accessData, setAccessData] = useState(null);
   const [reapplyData, setReapplyData] = useState(null); // {studentId, studentData, reapplyReason}
 
+  const SESSION_TTL = 30 * 60 * 1000; // 30 minutes
+
   useEffect(() => {
     const stored = sessionStorage.getItem('bhc_self_reg');
     if (!stored) { navigate('/self-register', { replace: true }); return; }
-    try { setAccessData(JSON.parse(stored)); } catch { navigate('/self-register', { replace: true }); return; }
+
+    let parsed;
+    try { parsed = JSON.parse(stored); } catch { navigate('/self-register', { replace: true }); return; }
+
+    // Expire session after 30 minutes
+    if (parsed._ts && Date.now() - parsed._ts > SESSION_TTL) {
+      sessionStorage.removeItem('bhc_self_reg');
+      sessionStorage.removeItem('bhc_self_reg_reapply');
+      sessionStorage.removeItem('bhc_self_reg_draft');
+      navigate('/self-register', { replace: true });
+      return;
+    }
+
+    setAccessData(parsed);
 
     // Check for reapply mode
     const reapplyStored = sessionStorage.getItem('bhc_self_reg_reapply');
@@ -307,6 +322,17 @@ export default function SelfRegFormPage() {
           }
         }
       } catch { /* ignore */ }
+      return; // reapply mode: don't restore draft
+    }
+
+    // Restore in-progress draft (survives mobile browser reloads)
+    const draftStored = sessionStorage.getItem('bhc_self_reg_draft');
+    if (draftStored) {
+      try {
+        const draft = JSON.parse(draftStored);
+        if (draft.form)  setForm(draft.form);
+        if (draft.step)  setStep(draft.step);
+      } catch { /* ignore */ }
     }
   }, []);
 
@@ -323,6 +349,14 @@ export default function SelfRegFormPage() {
   });
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
   const setRaw = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  /* ── Auto-save draft to sessionStorage (survives mobile reloads) ── */
+  useEffect(() => {
+    // Only save if we have a live session (accessData set means session was valid)
+    try {
+      sessionStorage.setItem('bhc_self_reg_draft', JSON.stringify({ form, step }));
+    } catch { /* storage full — ignore */ }
+  }, [form, step]);
 
   /* ── Option lists ── */
   const [options, setOptions] = useState({});
@@ -569,10 +603,12 @@ export default function SelfRegFormPage() {
         await selfRegResubmit(reapplyData.studentId, fd, imageFromUrl);
         sessionStorage.removeItem('bhc_self_reg');
         sessionStorage.removeItem('bhc_self_reg_reapply');
+        sessionStorage.removeItem('bhc_self_reg_draft');
       } else {
         // Normal new submission
         await selfRegSubmit(fd, imageFromUrl);
         sessionStorage.removeItem('bhc_self_reg');
+        sessionStorage.removeItem('bhc_self_reg_draft');
       }
       setSubmitted(true);
     } catch (err) {
