@@ -496,7 +496,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="absolute z-[200] mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
           {/* Search */}
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input ref={searchRef} type="text" value={search} onChange={handleSearchChange}

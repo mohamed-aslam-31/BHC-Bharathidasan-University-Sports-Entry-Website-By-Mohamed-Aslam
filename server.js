@@ -119,8 +119,8 @@ const DEFAULT_OPTION_LISTS = {
     'I M.Com','II M.Com','I M.B.A','II M.B.A','I M.C.A','II M.C.A','I M.Ed','II M.Ed',
     'I M.P.Ed','II M.P.Ed','I Ph.D','II Ph.D','III Ph.D',
   ],
-  duration: ['1 Year','2 Years','3 Years','4 Years','5 Years'],
-  iut: ['NIL','1 Year','2 Years','3 Years','4 Years','5 Years'],
+  duration: ['1-Year','2-Years','3-Years','4-Years','5-Years'],
+  iut: ['NIL','1-Year','2-Years','3-Years','4-Years','5-Years'],
   course: [
     'B.A English','B.A Tamil','B.A History','B.A Economics','B.A Sociology',
     'B.Sc Mathematics','B.Sc Physics','B.Sc Chemistry','B.Sc Biology',

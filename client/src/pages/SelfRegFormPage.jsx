@@ -173,7 +173,7 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
         </span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
+        <div className="absolute z-[200] mt-1 w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
           <div className="p-2 border-b border-slate-100 dark:border-gray-800">
             <input ref={sRef} type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
               className="w-full text-sm px-3 py-1.5 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
@@ -980,11 +980,11 @@ export default function SelfRegFormPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Field id="field-graduateCourse" label="Graduate Course — No. of Years" required error={errors.graduateCourse}>
                       <ComboBox value={form.graduateCourse} onChange={v => { set('graduateCourse')(v); touch('graduateCourse', v); }}
-                        options={opts.iut || ['NIL','1 Year','2 Years','3 Years','4 Years','5 Years']} placeholder="Select" error={errors.graduateCourse} />
+                        options={opts.iut || ['NIL','1-Year','2-Years','3-Years','4-Years','5-Years']} placeholder="Select" error={errors.graduateCourse} />
                     </Field>
                     <Field id="field-pgCourse" label="PG Course — No. of Years" required error={errors.pgCourse}>
                       <ComboBox value={form.pgCourse} onChange={v => { set('pgCourse')(v); touch('pgCourse', v); }}
-                        options={opts.iut || ['NIL','1 Year','2 Years','3 Years','4 Years','5 Years']} placeholder="Select" error={errors.pgCourse} />
+                        options={opts.iut || ['NIL','1-Year','2-Years','3-Years','4-Years','5-Years']} placeholder="Select" error={errors.pgCourse} />
                     </Field>
                   </div>
                 </div>
