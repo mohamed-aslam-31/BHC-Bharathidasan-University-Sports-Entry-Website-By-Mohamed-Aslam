@@ -94,7 +94,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       {/* Logo */}
       <div className={`flex items-center h-16 px-3 flex-shrink-0 ${mini ? 'justify-center' : ''}`}>
         <Link to="/" className={`flex items-center min-w-0 ${mini ? 'justify-center' : 'gap-3'}`}>
-          <div className="w-9 h-9 rounded-xl overflow-hidden bg-white shadow-md flex-shrink-0">
+          <div className="w-9 h-9 flex-shrink-0">
             <img src="/dept-logo.png" alt="Department Logo" className="w-full h-full object-contain" />
           </div>
           {!mini && (
