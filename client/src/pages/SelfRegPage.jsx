@@ -258,8 +258,8 @@ export default function SelfRegPage() {
         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-slate-50 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 sm:mb-4 logo-glow ring-2 ring-indigo-300/60 dark:ring-indigo-500/40">
           <img src="/pe-logo.png" alt="Department of Physical Education" className="w-13 h-13 sm:w-20 sm:h-20 object-contain rounded-full" />
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
-        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Bharathidasan University — Student Self Registration</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Department of Physical Education</h1>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Student Registration for Bharathidasan University Sport</p>
       </div>
 
       {/* Card */}
@@ -335,7 +335,7 @@ export default function SelfRegPage() {
         </form>
       </div>
 
-      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">© 2026 · Bishop Heber College · Department of Physical Education</p>
+      <p className="mt-6 text-xs text-gray-400 dark:text-gray-500 text-center w-full">© 2026 · Bishop Heber College · Department of Physical Education</p>
     </div>
   );
 }
