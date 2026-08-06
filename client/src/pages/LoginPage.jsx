@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Dumbbell, Eye, EyeOff, Sun, Moon, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Sun, Moon, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const { login, user } = useAuth();
@@ -42,8 +42,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 mb-4">
-            <Dumbbell className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-lg mb-4 overflow-hidden bg-white">
+            <img src="/dept-logo.png" alt="Department Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BHC Sports Entry</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Department of Physical Education — Sports Management</p>

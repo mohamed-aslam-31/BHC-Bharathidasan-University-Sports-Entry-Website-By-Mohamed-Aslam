@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
-  Dumbbell, Sun, Moon, LogOut, Menu, X,
+  Sun, Moon, LogOut, Menu, X,
   Home, Plus, BookOpen, Clock, Settings,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
@@ -94,8 +94,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       {/* Logo */}
       <div className={`flex items-center h-16 px-3 flex-shrink-0 ${mini ? 'justify-center' : ''}`}>
         <Link to="/" className={`flex items-center min-w-0 ${mini ? 'justify-center' : 'gap-3'}`}>
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/30 flex-shrink-0">
-            <Dumbbell className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl overflow-hidden bg-white shadow-md flex-shrink-0">
+            <img src="/dept-logo.png" alt="Department Logo" className="w-full h-full object-contain" />
           </div>
           {!mini && (
             <div className="overflow-hidden">
