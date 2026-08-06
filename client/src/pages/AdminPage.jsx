@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useToast } from '../components/Toast';
 import {
@@ -35,14 +36,34 @@ function TabButton({ active, onClick, children, count }) {
 function SmallCombo({ value, onChange, options, placeholder, error, onAddOption }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
-  const ref  = useRef(null);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef(null);
+  const dropRef    = useRef(null);
 
   useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(''); } };
+    const h = (e) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        dropRef.current && !dropRef.current.contains(e.target)
+      ) { setOpen(false); setSearch(''); }
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
-  useEffect(() => { if (open) setTimeout(() => ref.current?.querySelector('input')?.focus(), 0); }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      if (triggerRef.current) {
+        const r = triggerRef.current.getBoundingClientRect();
+        setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
+      }
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => { window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update); };
+  }, [open]);
+  useEffect(() => { if (open) setTimeout(() => dropRef.current?.querySelector('input')?.focus(), 0); }, [open]);
 
   const filtered   = search ? options.filter(o => o.toLowerCase().includes(search.toLowerCase())) : options;
   const trimmed    = search.trim();
@@ -56,9 +77,17 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
     if (e.key === 'Enter') { e.preventDefault(); if (filtered.length === 1) select(filtered[0]); else if (showAdd) handleAdd(); }
   };
 
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
+    setOpen(o => !o);
+  };
+
   return (
-    <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen(o => !o)}
+    <div className="relative">
+      <button ref={triggerRef} type="button" onClick={handleOpen}
         className={`input-field flex items-center justify-between gap-2 text-left min-h-[38px] py-1.5
           ${error ? '!border-red-400' : ''}
           ${open ? '!ring-2 !ring-blue-500 !border-blue-500' : ''}`}>
@@ -79,8 +108,10 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
         </span>
       </button>
 
-      {open && (
-        <div className="absolute z-[200] mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+      {open && createPortal(
+        <div ref={dropRef}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 99999 }}
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input autoFocus type="text" value={search}
               onChange={e => setSearch(e.target.value)}
@@ -112,7 +143,8 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
               </button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -122,22 +154,50 @@ function SmallCombo({ value, onChange, options, placeholder, error, onAddOption 
 function MultiCombo({ label, options, value, onChange, placeholder }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
-  const ref  = useRef(null);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef(null);
+  const dropRef    = useRef(null);
 
   useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const h = (e) => {
+      if (
+        triggerRef.current && !triggerRef.current.contains(e.target) &&
+        dropRef.current && !dropRef.current.contains(e.target)
+      ) setOpen(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      if (triggerRef.current) {
+        const r = triggerRef.current.getBoundingClientRect();
+        setDropPos({ top: r.bottom + 4, left: r.left, width: Math.max(r.width, 180) });
+      }
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => { window.removeEventListener('scroll', update, true); window.removeEventListener('resize', update); };
+  }, [open]);
 
   const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
   const toggle   = (opt) => onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt]);
   const clear    = (e)   => { e.stopPropagation(); onChange([]); setSearch(''); };
 
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, left: r.left, width: Math.max(r.width, 180) });
+    }
+    setOpen(o => !o);
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       {label && <label className="label">{label}</label>}
-      <button type="button" onClick={() => setOpen(o => !o)}
+      <button ref={triggerRef} type="button" onClick={handleOpen}
         className="input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] py-1.5">
         <span className="flex-1 min-w-0">
           {value.length === 0
@@ -155,8 +215,10 @@ function MultiCombo({ label, options, value, onChange, placeholder }) {
         </span>
       </button>
 
-      {open && (
-        <div className="absolute z-[200] mt-1 w-full min-w-[180px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+      {open && createPortal(
+        <div ref={dropRef}
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 99999 }}
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input autoFocus type="text" value={search}
               onChange={e => setSearch(e.target.value)}
@@ -190,7 +252,8 @@ function MultiCombo({ label, options, value, onChange, placeholder }) {
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
