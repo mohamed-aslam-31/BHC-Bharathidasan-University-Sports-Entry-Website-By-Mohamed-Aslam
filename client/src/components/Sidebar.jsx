@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   Trophy, Sun, Moon, LogOut, Menu, X,
-  Home, Plus, BookOpen, Clock, Users, Settings,
+  Home, Plus, BookOpen, Clock, Settings,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { getDrafts } from '../utils/drafts';
@@ -34,7 +34,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     { to: '/drafts',       label: 'Draft',                 icon: BookOpen, badge: draftCount || null },
     ...(user?.role === 'admin' ? [
       { to: '/admin',        label: 'Student Self Register', icon: Clock },
-      { to: '/user-account', label: 'User Account',          icon: Users },
     ] : []),
   ];
 

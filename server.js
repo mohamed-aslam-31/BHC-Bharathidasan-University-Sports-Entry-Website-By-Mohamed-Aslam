@@ -974,30 +974,6 @@ app.get('/api/admin/stats', authMiddleware, adminOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get('/api/admin/users', authMiddleware, adminOnly, async (req, res) => {
-  try {
-    const users = await User.find().select('-password').lean();
-    res.json(users);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post('/api/admin/users', authMiddleware, adminOnly, async (req, res) => {
-  try {
-    const { username, password, role } = req.body;
-    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
-    if (await User.findOne({ username })) return res.status(409).json({ error: 'Username already exists' });
-    await User.create({ username, password: bcrypt.hashSync(password, 10), role: role || 'user' });
-    res.json({ message: 'User created successfully' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.delete('/api/admin/users/:id', authMiddleware, adminOnly, async (req, res) => {
-  try {
-    if (req.params.id === String(req.user.id)) return res.status(400).json({ error: 'Cannot delete yourself' });
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: 'User deleted' });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
 // ─── SELF-REGISTRATION (PUBLIC) ───────────────────────────────────────────────
 

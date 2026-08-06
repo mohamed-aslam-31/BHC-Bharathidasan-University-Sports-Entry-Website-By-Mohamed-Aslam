@@ -29,10 +29,6 @@ export const getPendingStudents = () => axios.get('/api/admin/pending');
 export const approveStudent = (id) => axios.post(`/api/admin/approve/${id}`);
 export const rejectStudent = (id, reason) => axios.post(`/api/admin/reject/${id}`, { reason });
 export const getAdminStats = () => axios.get('/api/admin/stats');
-export const getUsers = () => axios.get('/api/admin/users');
-export const createUser = (data) => axios.post('/api/admin/users', data);
-export const deleteUser = (id) => axios.delete(`/api/admin/users/${id}`);
-
 // Draft files (server-side storage for draft PDFs)
 export const uploadDraftFiles = (formData) => axios.post('/api/draft-files', formData, {
   headers: { 'Content-Type': 'multipart/form-data' },
