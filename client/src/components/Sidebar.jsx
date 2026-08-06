@@ -94,13 +94,13 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       {/* Logo */}
       <div className={`flex items-center h-16 px-3 flex-shrink-0 ${mini ? 'justify-center' : ''}`}>
         <Link to="/" className={`flex items-center min-w-0 ${mini ? 'justify-center' : 'gap-3'}`}>
-          <div className="w-9 h-9 flex-shrink-0">
+          <div className="w-11 h-11 flex-shrink-0">
             <img src="/dept-logo.png" alt="Department Logo" className="w-full h-full object-contain" />
           </div>
           {!mini && (
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight whitespace-nowrap">BHC Sports</p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 leading-tight whitespace-nowrap">Department of Physical Education</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 leading-tight whitespace-nowrap">Physical Education</p>
             </div>
           )}
         </Link>
