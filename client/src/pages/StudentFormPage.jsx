@@ -419,6 +419,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   const [editingOpt,       setEditingOpt]       = useState(null);
   const [editDraft,        setEditDraft]        = useState('');
   const [confirmDeleteOpt, setConfirmDeleteOpt] = useState(null);
+  const [dropUp,           setDropUp]           = useState(false);
   const ref      = useRef(null);
   const searchRef = useRef(null);
   const editRef   = useRef(null);
@@ -456,6 +457,15 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   };
   const clear = (e) => { e.stopPropagation(); onChange(''); setSearch(''); };
 
+  const handleToggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setDropUp(spaceBelow < 260);
+    }
+    setOpen((o) => !o);
+  };
+
   /* edit helpers */
   const startEdit   = (opt) => { setEditingOpt(opt); setEditDraft(opt); setConfirmDeleteOpt(null); };
   const cancelEdit  = () => { setEditingOpt(null); setEditDraft(''); };
@@ -477,7 +487,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
   return (
     <div ref={ref} className="relative">
       {/* Trigger */}
-      <button type="button" onClick={() => setOpen((o) => !o)} required={required}
+      <button type="button" onClick={handleToggle} required={required}
         className={`input-field flex items-center justify-between gap-2 text-left w-full min-h-[38px] ${error ? 'border-red-400 dark:border-red-500' : ''}`}>
         <span className="flex-1 min-w-0 truncate text-sm">
           {value ? <span className="text-gray-900 dark:text-gray-100">{value}</span>
@@ -496,7 +506,7 @@ function ComboBox({ value, onChange, options, placeholder, required, error, sani
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-[200] mt-1 w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+        <div className={`absolute z-[200] w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           {/* Search */}
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">
             <input ref={searchRef} type="text" value={search} onChange={handleSearchChange}

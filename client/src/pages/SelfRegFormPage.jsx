@@ -150,6 +150,7 @@ function FieldMeta({ value, max, error, always }) {
 function ComboBox({ value, onChange, options = [], placeholder, error, disabled }) {
   const [open, setOpen]     = useState(false);
   const [search, setSearch] = useState('');
+  const [dropUp, setDropUp] = useState(false);
   const ref  = useRef(null);
   const sRef = useRef(null);
   useEffect(() => {
@@ -159,9 +160,16 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
   }, []);
   useEffect(() => { if (open) setTimeout(() => sRef.current?.focus(), 0); }, [open]);
   const filtered = search ? options.filter(o => o.toLowerCase().includes(search.toLowerCase())) : options;
+  const handleToggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      setDropUp(window.innerHeight - rect.bottom < 260);
+    }
+    if (!disabled) setOpen(o => !o);
+  };
   return (
     <div ref={ref} className="relative">
-      <button type="button" disabled={disabled} onClick={() => !disabled && setOpen(o => !o)}
+      <button type="button" disabled={disabled} onClick={handleToggle}
         className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm text-left bg-slate-50 dark:bg-gray-800 transition-colors
           ${disabled ? 'bg-gray-50 dark:bg-gray-900 cursor-not-allowed opacity-70' : ''}
           ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}
@@ -173,7 +181,7 @@ function ComboBox({ value, onChange, options = [], placeholder, error, disabled 
         </span>
       </button>
       {open && (
-        <div className="absolute z-[200] mt-1 w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden">
+        <div className={`absolute z-[200] w-full bg-slate-50 dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden ${dropUp ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
           <div className="p-2 border-b border-slate-100 dark:border-gray-800">
             <input ref={sRef} type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
               className="w-full text-sm px-3 py-1.5 bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" />
